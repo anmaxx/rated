@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="ru" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Тимур Тэд – Rated Tattoo | Авторские татуировки</title>
+  <meta
+    name="description"
+    content="Тимур Тэд – Rated Tattoo | профессиональный тату-мастер в Москве. Создаю авторские татуировки с 2015 года. Индивидуальный подход, стерильность, гарантия качества. Запишитесь на консультацию уже сегодня!"
+  />
+  <!-- Open Graph -->
+  <meta property="og:title" content="Тимур Тэд – Rated Tattoo | Тату-мастер в Москве | Авторские татуировки" />
+  <meta
+    property="og:description"
+    content="Профессиональные татуировки от мастера Тимура Тэда. Москва. Гарантия качества. Запись онлайн."
+  />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://timurted.ru/"  />
+  <meta
+    property="og:image"
+    content="https://images.unsplash.com/photo-1605649487212-47bdab064df7?ixlib=rb-4.0.3&w=1200&q=80"
+  />
+ 
+  <!-- Fonts & CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+  <!-- Tailwind config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#FFFFFF", 
+            secondary: "#FF6B6B",
+            accent: "#eb0505",
+            dark: "#1A1A2E",
+            light: "#2A2A40",
+          },
+          fontFamily: {
+            sans: ["Facon", "sans-serif"],
+          },
+          animation: {
+            "pulse-slow": "pulse 3s infinite",
+          },
+        },
+      },
+    };
+  </script>
+  <!-- Yandex Maps API -->
+  <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+  <!-- Custom Styles -->
+  <style type="text/css">
+    .hero-bg {
+      background:
+        linear-gradient(rgba(26, 26, 46, 0.8), rgba(26, 26, 46, 0.8)),
+        url("https://images.unsplash.com/photo-1605649487212-47bdab064df7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80");
+      background-size: cover;
+      background-position: center;
+    }
+    .benefit-card:hover {
+      transform: translateY(-10px);
+      box-shadow:
+        0 20px 25px -5px rgba(255, 255, 255, 0.1),
+        0 10px 10px -5px rgba(255, 255, 255, 0.04);
+    }
+    .portfolio-item {
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .portfolio-item:hover {
+      transform: scale(1.05);
+    }
+    @font-face {
+    font-family: "Facon";
+    src: url("font/facon.otf") format("opentype");
+}
+    .hover-effect {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+   .hover-effect:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+  }  
+  </style>
+</head>
+<body class="font-sans text-gray-300 bg-dark antialiased">
+  <!-- Header -->
+  <header class="fixed w-full bg-light shadow-lg z-50">
+    <div class="container mx-auto px-4 py-3">
+      <div class="flex justify-between items-center">
+        <a href="#" class="flex items-center group"> 
+          <span class="text-2xl font-bold text-primary group-hover:text-secondary transition">Тимур Тэд - Rated Tattoo</span>
+	  <img src="img/white_logo-2.png" alt="Логотип" class="ml-2" style="height: 55px; width: auto;" />
+	</a>
+        <nav class="hidden lg:flex space-x-8">
+          <a href="#about" class="font-semibold hover:text-secondary transition flex items-center" title="Обо мне">
+            <i class="fas fa-user-tie mr-2 text-sm"></i> О мастере
+          </a>
+          <a href="#portfolio" class="font-semibold hover:text-secondary transition flex items-center" title="Портфолио работ">
+            <i class="fas fa-images mr-2 text-sm"></i> Портфолио
+          </a>
+          <a href="#benefits" class="font-semibold hover:text-secondary transition flex items-center" title="Преимущества">
+            <i class="fas fa-medal mr-2 text-sm"></i> Преимущества
+          </a>
+          <a href="#faq" class="font-semibold hover:text-secondary transition flex items-center" title="Частые вопросы">
+            <i class="fas fa-question-circle mr-2 text-sm"></i> Вопросы
+          </a>
+        </nav>
+        <div class="flex items-center space-x-4">
+          <a href="tel:+79689752099" class="hidden md:flex items-center text-primary hover:text-secondary transition" title="Связаться по телефону">
+            <i class="fas fa-phone-alt mr-2"></i>
+            <span class="font-semibold">+7 (968) 975-20-99</span>
+          </a>
+        </div>
+        <button class="lg:hidden text-2xl text-primary" id="menu-toggle" aria-label="Открыть меню">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+      <!-- Mobile menu -->
+      <div class="lg:hidden hidden bg-light py-4 px-4 shadow-xl rounded-b-lg" id="mobile-menu">
+        <div class="flex flex-col space-y-4">
+          <a href="#about" class="block py-2 font-medium border-b border-dark">О мастере</a>
+          <a href="#portfolio" class="block py-2 font-medium border-b border-dark">Портфолио</a>
+          <a href="#benefits" class="block py-2 font-medium border-b border-dark">Преимущества</a>
+          <a href="#faq" class="block py-2 font-medium border-b border-dark">Вопросы</a>
+          <a href="tel:+79689752099" class="block py-2 font-medium border-b border-dark">
+            <i class="fas fa-phone-alt mr-2"></i> +7 (968) 975-20-99
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+   <!-- Hero Section -->
+<section class="pt-32 pb-24 md:pt-40 md:pb-32 text-white relative overflow-hidden">
+  <!-- Video Background -->
+  <div class="absolute inset-0 z-0">
+    <video autoplay muted loop playsinline class="object-cover w-full h-full">
+      <source src="img/back.mp4" type="video/mp4" />
+      Ваш браузер не поддерживает видео.
+    </video>
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black opacity-70"></div>
+  </div>
+
+  <!-- Content -->
+  <div class="container mx-auto px-4 text-center relative z-10">
+    <div class="inline-block bg-black bg-opacity-50 px-4 py-2 rounded-full mb-4">
+      <span class="text-accent font-bold">ТОП-10 тату-мастеров Москвы 2023</span>
+    </div>
+    <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+      <span class="text-accent">Элитные татуировки</span> от мастера Тимура Тэда
+    </h1>
+    <p class="text-xl md:text-2xl max-w-3xl mx-auto mb-8 leading-relaxed">
+      Создаю уникальные татуировки в центре Москвы. Ваш комфорт, безопасность и идеальный результат — моя главная цель.
+    </p>
+    <div class="flex flex-wrap justify-center items-center gap-4 mb-10">
+      <div class="flex items-center bg-black bg-opacity-50 px-4 py-2 rounded-full">
+        <div class="text-yellow-400 text-lg mr-2">
+          <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+        </div>
+        <span class="font-medium">5 (127+ отзывов)</span>
+      </div>
+      <div class="flex items-center bg-black bg-opacity-50 px-4 py-2 rounded-full">
+        <i class="fas fa-award text-accent mr-2"></i>
+        <span class="font-medium">Более 10 лет безупречной работы</span>
+      </div>
+      <div class="flex items-center bg-black bg-opacity-50 px-4 py-2 rounded-full">
+        <i class="fas fa-shield-alt text-accent mr-2"></i>
+        <span class="font-medium">Гарантия стерильности</span>
+      </div>
+    </div>
+    <div class="flex flex-col sm:flex-row justify-center gap-4">
+      <a href="#portfolio" class="hover-effect bg-white bg-opacity-20 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-opacity-30 transition border-2 border-white border-opacity-30">
+        <i class="fas fa-images mr-2"></i> Посмотреть работы
+      </a>
+    </div>
+    <div class="mt-16 animate-bounce">
+      <a href="#about" class="inline-block bg-white bg-opacity-20 text-white p-3 rounded-full">
+        <i class="fas fa-chevron-down"></i>
+      </a>
+    </div>
+  </div>
+</section>
+  <!-- About Me -->
+  <section id="about" class="py-20 bg-dark">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-bold mb-6 text-primary">
+          Тимур Тэд —
+          <span class="text-secondary">эталон качества</span> в мире татуировки
+        </h2>
+        <p class="text-xl text-gray-400 max-w-4xl mx-auto">
+          Я создаю не просто татуировки, а произведения искусства, которые будут радовать вас всю жизнь.
+        </p>
+      </div>
+      <div class="flex flex-col lg:flex-row items-center gap-12 mb-20">
+        <div class="lg:w-1/2">
+          <div class="relative rounded-xl overflow-hidden shadow-2xl">
+            <img src="img/timur_ted.jpg" alt="Фото Тимура Тэда" loading="lazy" class="w-full h-auto" />
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-dark to-transparent p-6 text-white">
+              <h3 class="text-xl font-bold">Студия Rated в центре Москвы</h3>
+              <p>Современный дизайн, чистота и комфорт</p>
+            </div>
+          </div>
+        </div>
+        <div class="lg:w-1/2">
+          <h3 class="text-2xl md:text-3xl font-bold mb-6 text-primary">Почему клиенты выбирают именно меня?</h3>
+          <ul class="space-y-6">
+            <li class="flex items-start">
+              <div class="flex-shrink-0 bg-accent text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1">
+                <i class="fas fa-check"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-lg mb-1 text-primary">Профессионализм мирового уровня</h4>
+                <p class="text-gray-400">
+                  Участник международных тату-конвенций и лауреат премий в области тату-искусства. Постоянно совершенствую навыки, посещаю мастер-классы по всему миру.
+                </p>
+              </div>
+            </li>
+            <li class="flex items-start">
+              <div class="flex-shrink-0 bg-accent text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1">
+                <i class="fas fa-check"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-lg mb-1 text-primary">Исключительная безопасность</h4>
+                <p class="text-gray-400">
+                  Работаю только с одноразовыми материалами и сертифицированным оборудованием. Все инструменты стерилизуются в медицинских автоклавах класса B.
+                </p>
+              </div>
+            </li>
+            <li class="flex items-start">
+              <div class="flex-shrink-0 bg-accent text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1">
+                <i class="fas fa-check"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-lg mb-1 text-primary">Индивидуальный подход</h4>
+                <p class="text-gray-400">
+                  Каждый эскиз создаю лично, учитывая ваши пожелания, стиль жизни и особенности тела.
+                </p>
+              </div>
+            </li>
+          </ul>
+          <div class="mt-8">
+            <a href="#portfolio" class="inline-flex items-center text-secondary font-bold group">
+              Посмотреть мои работы
+              <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- My Services -->
+      <div class="bg-light rounded-2xl p-8 md:p-12 shadow-inner">
+        <h3 class="text-2xl md:text-3xl font-bold text-center mb-12 text-primary">
+          Мои <span class="text-secondary">услуги</span>
+        </h3>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div class="bg-dark p-6 rounded-xl shadow-md border-t-4 border-secondary">
+            <div class="text-secondary text-3xl mb-4"><i class="fas fa-paint-brush"></i></div>
+            <h4 class="font-bold text-xl mb-3 text-primary">Авторские татуировки</h4>
+            <p class="text-gray-400">Уникальные художественные работы по вашему эскизу или моему дизайну.</p>
+          </div>
+          <div class="bg-dark p-6 rounded-xl shadow-md border-t-4 border-secondary">
+            <div class="text-secondary text-3xl mb-4"><i class="fas fa-magic"></i></div>
+            <h4 class="font-bold text-xl mb-3 text-primary">Коррекция и перекрытие</h4>
+            <p class="text-gray-400">Профессиональное исправление неудачных татуировок.</p>
+          </div>
+          <div class="bg-dark p-6 rounded-xl shadow-md border-t-4 border-secondary">
+            <div class="text-secondary text-3xl mb-4"><i class="fas fa-user-shield"></i></div>
+            <h4 class="font-bold text-xl mb-3 text-primary">Тату на шрамах</h4>
+            <p class="text-gray-400">Специальные техники нанесения татуировок на рубцовую ткань.</p>
+          </div>
+          <div class="bg-dark p-6 rounded-xl shadow-md border-t-4 border-secondary">
+            <div class="text-secondary text-3xl mb-4"><i class="fas fa-eye"></i></div>
+            <h4 class="font-bold text-xl mb-3 text-primary">Перманентный татуаж</h4>
+            <p class="text-gray-400">Микроблейдинг и перманентный макияж бровей, губ и век для идеального образа каждый день.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Portfolio -->
+  <section id="portfolio" class="py-20 bg-dark">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6 text-primary">
+          Мое <span class="text-secondary">портфолио</span> — лучшая реклама
+        </h2>
+        <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+          Взгляните на реальные работы. Каждая татуировка — это уникальная история.
+        </p>
+      </div>
+      <!-- Filters -->
+      <div class="flex flex-wrap justify-center gap-2 mb-12">
+        <button class=" hover-effect px-4 py-2 rounded-full font-medium bg-secondary text-white filter-btn" data-filter="все">Все работы</button>
+        <button class="hover-effect px-4 py-2 rounded-full font-medium bg-light hover:bg-dark border border-dark transition filter-btn" data-filter="реализм">Реализм</button>
+        <button class="hover-effect px-4 py-2 rounded-full font-medium bg-light hover:bg-dark border border-dark transition filter-btn" data-filter="графика">Графика</button>
+        <button class="hover-effect px-4 py-2 rounded-full font-medium bg-light hover:bg-dark border border-dark transition filter-btn" data-filter="графика">Орнаменты</button>
+        <button class="hover-effect px-4 py-2 rounded-full font-medium bg-light hover:bg-dark border border-dark transition">Перекрытия</button>
+        <button class="hover-effect px-4 py-2 rounded-full font-medium bg-light hover:bg-dark border border-dark transition filter-btn" data-filter="шрамы">Татуировка на рубцовую ткань</button>
+        <button class="hover-effect px-4 py-2 rounded-full font-medium bg-light hover:bg-dark border border-dark transition filter-btn" data-filter="татуаж">Татуаж</button>
+
+
+      </div>
+      <!-- Portfolio Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div class="portfolio-item overflow-hidden rounded-xl shadow-lg" data-category="шрамы">
+          <div class="relative group">
+            <img src="img/real_wolf.jpg" alt="Реалистичный волк" loading="lazy" class="w-full h-80 object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-6">
+              <div>
+                <h3 class="text-white font-bold text-xl mb-1">Реалистичный волк - татуировка на рубцовую ткань</h3>
+                <p class="text-gray-300">Время работы: 8 часов</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="portfolio-item overflow-hidden rounded-xl shadow-lg" data-category="графика">
+          <div class="relative group">
+            <img src="img/geom.jpg" alt="Геометрическая композиция" loading="lazy" class="w-full h-80 object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-6">
+              <div>
+                <h3 class="text-white font-bold text-xl mb-1">Геометрический орнамент</h3>
+                <p class="text-gray-300">Время работы: 6 часов</p>
+              </div>
+            </div>
+          </div>
+          </div>
+          <div class="portfolio-item overflow-hidden rounded-xl shadow-lg" data-category="реализм">
+          <div class="relative group">
+            <img src="img/real_bear.webp" alt="Медведь - уроза" loading="lazy" class="w-full h-80 object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-6">
+              <div>
+                <h3 class="text-white font-bold text-xl mb-1">Медведь - угроза</h3>
+                <p class="text-gray-300">Время работы: 6 часов</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="portfolio-item overflow-hidden rounded-xl shadow-lg">
+          <div class="relative group">
+            <img src="img/sphinx.webp" alt="Сфинкс" loading="lazy" class="w-full h-80 object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-6">
+              <div>
+                <h3 class="text-white font-bold text-xl mb-1">Сфинкс</h3>
+                <p class="text-gray-300">Время работы: 5 часов</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="portfolio-item overflow-hidden rounded-xl shadow-lg" data-category="татуаж">
+          <div class="relative group">
+            <img src="img/lips.webp" alt="Татуаж губ" loading="lazy" class="w-full h-80 object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-6">
+              <div>
+                <h3 class="text-white font-bold text-xl mb-1">Татуаж губ</h3>
+                <p class="text-gray-300">Время работы: 1 час</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="portfolio-item overflow-hidden rounded-xl shadow-lg" data-category="графика">
+          <div class="relative group">
+            <img src="img/graph_bear.jpg" alt="Графический медведь" loading="lazy" class="w-full h-80 object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-6">
+              <div>
+                <h3 class="text-white font-bold text-xl mb-1">Медведь</h3>
+                <p class="text-gray-300">Время работы: 5 часов</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="text-center">
+        <a href="https://ratedtattoo.ru/albums/" target="_blank" class="inline-flex items-center px-8 py-3 border-2 border-white text-white rounded-full font-bold hover:bg-white hover:text-dark transition">
+          <i class="fas fa-images mr-2"></i> Смотреть все работы (150+)
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits -->
+  <section id="benefits" class="py-20 bg-light">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6 text-primary">
+          Почему клиенты доверяют <span class="text-secondary">мне </span>?
+        </h2>
+        <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+          6 причин выбрать именно меня
+        </p>
+      </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="benefit-card bg-dark p-8 rounded-xl shadow-md transition transform hover:-translate-y-2">
+          <div class="text-secondary text-4xl mb-4"><i class="fas fa-shield-alt"></i></div>
+          <h3 class="font-bold text-xl mb-3 text-primary">100% стерильность</h3>
+          <p class="text-gray-400">Только одноразовые иглы и медицинская стерилизация инструментов в автоклаве.</p>
+        </div>
+        <div class="benefit-card bg-dark p-8 rounded-xl shadow-md transition transform hover:-translate-y-2">
+          <div class="text-secondary text-4xl mb-4"><i class="fas fa-palette"></i></div>
+          <h3 class="font-bold text-xl mb-3 text-primary">Премиальные пигменты</h3>
+          <p class="text-gray-400">Использую Eternal Ink, Dynamic Color и Fusion Ink — яркие, безопасные и долговечные.</p>
+        </div>
+        <div class="benefit-card bg-dark p-8 rounded-xl shadow-md transition transform hover:-translate-y-2">
+          <div class="text-secondary text-4xl mb-4"><i class="fas fa-gem"></i></div>
+          <h3 class="font-bold text-xl mb-3 text-primary">Эксклюзивные эскизы</h3>
+          <p class="text-gray-400">Каждый дизайн создается специально для вас, чтобы тату была уникальной.</p>
+        </div>
+        <div class="benefit-card bg-dark p-8 rounded-xl shadow-md transition transform hover:-translate-y-2">
+          <div class="text-secondary text-4xl mb-4"><i class="fas fa-heart"></i></div>
+          <h3 class="font-bold text-xl mb-3 text-primary">Пожизненная гарантия</h3>
+          <p class="text-gray-400">Если потребуется коррекция через годы — сделаю бесплатно.</p>
+        </div>
+        <div class="benefit-card bg-dark p-8 rounded-xl shadow-md transition transform hover:-translate-y-2">
+          <div class="text-secondary text-4xl mb-4"><i class="fas fa-couch"></i></div>
+          <h3 class="font-bold text-xl mb-3 text-primary">Максимальный комфорт</h3>
+          <p class="text-gray-400">Просторный кабинет, удобное кресло, во время сеанса доступны: музыкальное сопровождение, просмотр кино или увлекательные видеоигры.</p>
+        </div>
+        <div class="benefit-card bg-dark p-8 rounded-xl shadow-md transition transform hover:-translate-y-2">
+          <div class="text-secondary text-4xl mb-4"><i class="fas fa-map-marker-alt"></i></div>
+          <h3 class="font-bold text-xl mb-3 text-primary">Удобное расположение</h3>
+          <p class="text-gray-400">Студия находится в центре Москвы, рядом со станцией метро «Смоленская».</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="py-20 bg-secondary text-white">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6">Отзывы <span class="text-primary">моих клиентов</span></h2>
+        <p class="text-xl text-white text-opacity-80 max-w-3xl mx-auto">
+          Более 200 довольных клиентов, которые стали моими друзьями
+        </p>
+      </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="bg-white bg-opacity-10 p-8 rounded-xl backdrop-blur-sm">
+          <div class="flex items-center mb-4">
+            <div class="text-yellow-400 text-xl mr-2">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            </div>
+            <span class="font-bold">5.0</span>
+          </div>
+          <p class="italic mb-6">"Делал масштабный реализм на руке. Результат превзошел ожидания — тату выглядит живой!"</p>
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-gray-300 mr-4 overflow-hidden">
+              <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Алексей" loading="lazy" class="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h4 class="font-bold">Алексей</h4>
+              <p class="text-sm text-white text-opacity-70">Реалистичный волк</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white bg-opacity-10 p-8 rounded-xl backdrop-blur-sm">
+          <div class="flex items-center mb-4">
+            <div class="text-yellow-400 text-xl mr-2">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            </div>
+            <span class="font-bold">5.0</span>
+          </div>
+          <p class="italic mb-6">"Пришла с неудачным старым тату. Получилось шедевральное перекрытие!"</p>
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-gray-300 mr-4 overflow-hidden">
+              <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Мария" loading="lazy" class="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h4 class="font-bold">Мария</h4>
+              <p class="text-sm text-white text-opacity-70">Перекрытие старого тату</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white bg-opacity-10 p-8 rounded-xl backdrop-blur-sm">
+          <div class="flex items-center mb-4">
+            <div class="text-yellow-400 text-xl mr-2">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            </div>
+            <span class="font-bold">5.0</span>
+          </div>
+          <p class="italic mb-6">"Делал первую татуировку. Атмосфера дружеская, работа аккуратная. Уже планирую следующую."</p>
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-gray-300 mr-4 overflow-hidden">
+              <img src="https://randomuser.me/api/portraits/men/67.jpg" alt="Дмитрий" loading="lazy" class="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h4 class="font-bold">Дмитрий</h4>
+              <p class="text-sm text-white text-opacity-70">Первая татуировка</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="text-center mt-12">
+        <a href="https://yandex.ru/maps/-/CHGZMU3p" class="hover-effect inline-flex items-center px-6 py-3 bg-white text-dark rounded-full font-bold hover:bg-primary hover:text-white transition">
+          <i class="fas fa-book-open mr-2"></i> Читать все отзывы (127+)
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="py-20 bg-dark">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6 text-primary">
+          Часто задаваемые <span class="text-secondary">вопросы</span>
+        </h2>
+        <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+          Мы собрали ответы на самые популярные вопросы наших клиентов
+        </p>
+      </div>
+      <div class="max-w-3xl mx-auto">
+        <!-- FAQ Item 1 -->
+        <div class="mb-4 border border-gray-700 rounded-xl overflow-hidden">
+          <button class="faq-question w-full text-left p-6 bg-light hover:bg-dark font-semibold flex justify-between items-center text-primary" aria-expanded="false" role="button" aria-controls="faq-answer-1">
+            <span class="text-lg">Как узнать стоимость татуировки?</span>
+            <span class="text-xl" aria-hidden="true">+</span>
+          </button>
+          <div id="faq-answer-1" class="faq-answer bg-dark hidden" role="region">
+            <div class="p-6 pt-0 text-gray-400">
+              <p class="mb-4">Стоимость зависит от:</p>
+              <ul class="list-disc pl-5 space-y-2 mb-4">
+                <li>Размера и сложности</li>
+                <li>Места нанесения</li>
+                <li>Цвета и деталей</li>
+                <li>Создания эскиза</li>
+              </ul>
+              <p>Минимальная стоимость сеанса — 15 000 рублей. Запишитесь на бесплатную консультацию для точного расчета.</p>
+            </div>
+          </div>
+        </div>
+        <!-- FAQ Item 2 -->
+        <div class="mb-4 border border-gray-700 rounded-xl overflow-hidden">
+          <button class="faq-question w-full text-left p-6 bg-light hover:bg-dark font-semibold flex justify-between items-center text-primary" aria-expanded="false" role="button" aria-controls="faq-answer-2">
+            <span class="text-lg">Больно ли делать тату?</span>
+            <span class="text-xl" aria-hidden="true">+</span>
+          </button>
+          <div id="faq-answer-2" class="faq-answer bg-dark hidden" role="region">
+            <div class="p-6 pt-0 text-gray-400">
+              <p class="mb-4">Ощущения индивидуальны и зависят от:</p>
+              <ul class="list-disc pl-5 space-y-2 mb-4">
+                <li>Зоны тела</li>
+                <li>Болевого порога</li>
+                <li>Длительности сеанса</li>
+              </ul>
+              <p class="mb-4">Использую обезболивающие гели. Также рекомендую:</p>
+              <ul class="list-disc pl-5 space-y-2 mb-4">
+                <li>Хорошо выспаться</li>
+                <li>Плотно поесть перед сеансом</li>
+                <li>Не пить алкоголь за 24 часа</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <!-- FAQ Item 3 -->
+        <div class="mb-4 border border-gray-700 rounded-xl overflow-hidden">
+          <button class="faq-question w-full text-left p-6 bg-light hover:bg-dark font-semibold flex justify-between items-center text-primary" aria-expanded="false" role="button" aria-controls="faq-answer-3">
+            <span class="text-lg">Как ухаживать за татуировкой?</span>
+            <span class="text-xl" aria-hidden="true">+</span>
+          </button>
+          <div id="faq-answer-3" class="faq-answer bg-dark hidden" role="region">
+            <div class="p-6 pt-0 text-gray-400">
+              <p class="mb-4">После сеанса вы получите подробные рекомендации, но основные правила:</p>
+              <ol class="list-decimal pl-5 space-y-2 mb-4">
+                <li>Не снимать защитную пленку 2-4 часа</li>
+                <li>Аккуратно мыть теплой водой с мылом</li>
+                <li>Наносить мазь 2-3 раза в день</li>
+                <li>Избегать солнца и бассейнов</li>
+              </ol>
+              <p>Мы всегда на связи и поможем при заживлении.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 bg-gradient-to-r from-primary to-secondary text-white">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold mb-6">
+        Готовы создать свою <span class="text-accent">уникальную татуировку</span>?
+      </h2>
+      <p class="text-xl mb-8 max-w-3xl mx-auto">
+        Запишитесь на консультацию прямо сейчас и получите бесплатную консультацию
+      </p>
+      <div class="flex flex-col sm:flex-row justify-center gap-4 max-w-2xl mx-auto">
+        <a href="tel:+79689752099" class="bg-transparent border-2 border-white px-8 py-4 rounded-full font-bold hover:bg-white hover:text-primary transition flex items-center justify-center">
+          <i class="fas fa-phone-alt mr-2"></i> +7 (968) 975-20-99
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-white py-12">
+    <div class="container mx-auto px-4">
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- О мастере -->
+        <div>
+          <h3 class="text-xl font-bold mb-4">Тимур Тэд - Rated Tattoo</h3>
+          <p class="text-gray-400 mb-4">
+            Премиум татуировки в центре Москвы. Авторский подход и абсолютная безопасность.
+          </p>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-400 hover:text-white transition" title="Instagram"> 
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition" title="Telegram">
+              <i class="fab fa-telegram"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition" title="VK">
+              <i class="fab fa-vk"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition" title="YouTube">
+              <i class="fab fa-youtube"></i>
+            </a>
+          </div>
+        </div>
+        <!-- Быстрые ссылки -->
+        <div>
+          <h3 class="text-xl font-bold mb-4">Быстрые ссылки</h3>
+          <ul class="space-y-2">
+            <li><a href="#about" class="text-gray-400 hover:text-white transition">Обо мне</a></li>
+            <li><a href="#portfolio" class="text-gray-400 hover:text-white transition">Портфолио</a></li>
+            <li><a href="#benefits" class="text-gray-400 hover:text-white transition">Преимущества</a></li>
+            <li><a href="#faq" class="text-gray-400 hover:text-white transition">Частые вопросы</a></li>
+          </ul>
+        </div>
+        <!-- Контакты -->
+        <div>
+          <h3 class="text-xl font-bold mb-4">Контакты</h3>
+          <ul class="space-y-3 text-gray-400">
+            <li class="flex items-start">
+              <i class="fas fa-phone-alt mr-3 mt-1 text-secondary"></i>
+              <span>
+                <strong>Телефон:</strong><br />
+                <a href="tel:+79689752099" class="hover:text-white transition">+7 (968) 975-20-99</a>
+              </span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-map-marker-alt mr-3 mt-1 text-secondary"></i>
+              <span>
+                <strong>Адрес:</strong><br />
+                Москва, Новинский бульвар, д. 10/12<br />
+                Рядом со станцией метро «Смоленская», ориентир — кинотеатр «Октябрь»
+              </span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-clock mr-3 mt-1 text-secondary"></i>
+              <span>
+                <strong>Время работы:</strong><br />
+                Пн–Вс: 11:00 – 20:00
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <!-- Карта -->
+      <div id="map" class="mt-10 rounded-lg overflow-hidden shadow-lg h-80 w-full"></div>
+      <!-- Copyright -->
+      <div class="mt-12 pt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
+        © 2025 Тимур Тэд. Все права защищены.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script> 
+  <script>
+    AOS.init();
+    document.getElementById("menu-toggle").addEventListener("click", () => {
+      document.getElementById("mobile-menu").classList.toggle("hidden");
+    });
+    // FAQ Accordion
+    const questions = document.querySelectorAll(".faq-question");
+    questions.forEach((q) => {
+      q.addEventListener("click", () => {
+        const answer = q.nextElementSibling;
+        answer.classList.toggle("hidden");
+        q.querySelector("span:last-child").textContent = answer.classList.contains("hidden") ? "+" : "−";
+      });
+    });
+  </script>
+  <!-- Yandex Map with Custom Balloon -->
+  <script type="text/javascript">
+    ymaps.ready(function () {
+      var map = new ymaps.Map("map", {
+        center: [55.753137, 37.585115],
+        zoom: 17,
+        controls: ["zoomControl", "geolocationControl"],
+      });
+      var balloonContentLayout = ymaps.templateLayoutFactory.createClass(
+        '<div style="padding: 15px; background: #fff; color: #000; border-radius: 8px; max-width: 300px;">' +
+          "<strong>Студия Тимура Тэда</strong><br>" +
+          "📍 Москва, Новинский бульвар, д. 10/12<br>" +
+          "🕘 Время работы: Пн–Вс 11:00 – 20:00<br>" +
+          "📞 +7 (968) 975-20-99<br>" +
+          '<a href="tel:+79689752099" style="color: #e53935; text-decoration: underline;">Записаться</a>' +
+          "</div>",
+      );
+      var placemark = new ymaps.Placemark(
+        [55.753137, 37.585115],
+        { balloonContentHeader: "Тимур Тэд", balloonContentBody: "Москва, Новинский бульвар, д. 10/12" },
+        { balloonContentLayout: balloonContentLayout }
+      );
+      map.geoObjects.add(placemark);
+      placemark.balloon.open();
+    });
+  </script>
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const buttons = document.querySelectorAll(".filter-btn");
+    const items = document.querySelectorAll(".portfolio-item");
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const filter = button.getAttribute("data-filter");
+
+        // Удалить активный класс у всех кнопок
+        buttons.forEach((btn) => {
+          btn.classList.remove("bg-secondary", "text-white");
+          btn.classList.add("bg-light", "border", "border-dark");
+        });
+
+        // Добавить активный класс к выбранной кнопке
+        button.classList.remove("bg-light", "border", "border-dark");
+        button.classList.add("bg-secondary", "text-white");
+
+        // Фильтрация элементов
+        items.forEach((item) => {
+          const category = item.getAttribute("data-category");
+
+          if (filter === "все" || category === filter) {
+            item.style.display = "block";
+          } else {
+            item.style.display = "none";
+          }
+        });
+      });
+    });
+  });
+</script>
+<script>
+  // Скролл эффекты
+  window.addEventListener("scroll", () => {
+    const header = document.querySelector("header");
+    if (window.scrollY > 50) {
+      header.classList.add("scrolled");
+    } else {
+      header.classList.remove("scrolled");
+    }
+
+    // Появление элементов при скролле
+  const fadeUpElements = document.querySelectorAll(".fade-up");
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+      }
+    });
+  }, { threshold: 0.2 });
+
+  fadeUpElements.forEach(el => observer.observe(el));
+</script>	  
+  </body>
+</html>
+
+
