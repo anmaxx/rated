@@ -25,6 +25,7 @@ const WORKS = [
   ["./assets/img/work-sphinx.webp", "Сфинкс", "графика"],
   ["./assets/img/work-robber.jpg", "Налётчик", "чикано"],
   ["./assets/img/work-sphynx-cat.jpg", "Кот сфинкс", "реализм"],
+  ["./assets/img/work-tiger-sleeve.jpg", "Тигриный рукав", "реализм"],
   ["./assets/img/work-clown.jpg", "Клоун", "хоррор"],
   ["./assets/img/work-chief.jpg", "Вождь", "реализм"],
   ["./assets/img/work-bear-graphic.jpg", "Графический медведь", "графика"],
