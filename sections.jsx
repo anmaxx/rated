@@ -138,7 +138,7 @@ function About() {
     ["./assets/img/studio.jpg", "Студия", "center 28%"],
   ];
   return (
-    <section id="about" className="rt-snap" style={{ position: "relative", background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "120px 0", overflow: "hidden" }}>
+    <section id="about" className="rt-snap" style={{ position: "relative", background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "100px 0", overflow: "hidden" }}>
       {/* atmospheric oversize wordmark */}
       <div aria-hidden="true" style={{ position: "absolute", right: "-2.5%", top: "6%", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(140px, 23vw, 360px)", lineHeight: 0.8, color: "var(--bone)", opacity: 0.028, textTransform: "uppercase", letterSpacing: "-0.03em", pointerEvents: "none", userSelect: "none" }}>Тэд</div>
 
