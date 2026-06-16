@@ -393,10 +393,10 @@ function Footer() {
 }
 
 /* -------------------------------------------------------- Booking modal */
-/* Formspree endpoint — create a form at https://formspree.io and paste its
-   form ID here (the part after /f/). Until this is replaced, submits will fail
-   gracefully with an error message instead of silently dropping the lead. */
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID";
+/* Formspree endpoint. Submissions land in the Formspree dashboard / forwarded
+   email for form xaqzkbwy. Plain fetch POST (no @formspree/* package — this
+   site has no bundler), with loading + error states handled below. */
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xaqzkbwy";
 
 function BookingModal({ open, onClose }) {
   const [done, setDone] = React.useState(false);
