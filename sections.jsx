@@ -133,40 +133,66 @@ function About() {
     ["Безопасность", "Только одноразовые материалы и стерилизация в автоклавах класса B."],
     ["Индивидуальный подход", "Каждый эскиз создаю лично, учитывая ваши пожелания и особенности тела."],
   ];
+  const gallery = [
+    ["./assets/img/about-stencil.jpg", "Процесс", "center"],
+    ["./assets/img/studio.jpg", "Студия", "center 28%"],
+  ];
   return (
-    <section id="about" className="rt-snap" style={{ background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "120px 0" }}>
-      <div className="rt-reveal rt-about-grid" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "0.9fr 1.1fr", gap: "72px", alignItems: "center" }}>
-        <div style={{ position: "relative", paddingRight: "20px", paddingBottom: "20px" }}>
-          <div style={{ position: "absolute", right: 0, bottom: 0, width: "calc(100% - 44px)", height: "calc(100% - 44px)", border: "1px solid var(--accent)", pointerEvents: "none" }}></div>
-          <div style={{ position: "relative", overflow: "hidden", aspectRatio: "4 / 5" }}>
-            <img src="./assets/img/about-master.jpg" alt="Тимур Тэд — мастер Rated Tattoo за работой" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 22%", display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
+    <section id="about" className="rt-snap" style={{ position: "relative", background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "120px 0", overflow: "hidden" }}>
+      {/* atmospheric oversize wordmark */}
+      <div aria-hidden="true" style={{ position: "absolute", right: "-2.5%", top: "6%", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(140px, 23vw, 360px)", lineHeight: 0.8, color: "var(--bone)", opacity: 0.028, textTransform: "uppercase", letterSpacing: "-0.03em", pointerEvents: "none", userSelect: "none" }}>Тэд</div>
+
+      <div className="rt-reveal rt-about-grid" style={{ position: "relative", maxWidth: MAXW, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "0.94fr 1.06fr", gap: "72px", alignItems: "center", width: "100%" }}>
+        {/* ----- portrait ----- */}
+        <div className="rt-about-media" style={{ position: "relative" }}>
+          <div className="rt-edge-label" style={{ position: "absolute", left: "-30px", top: "50%", transform: "translateY(-50%) rotate(180deg)", writingMode: "vertical-rl", zIndex: 2, fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.32em", textTransform: "uppercase", color: "var(--text-faint)" }}>
+            Tattoo master · с 2015
           </div>
-          <div style={{ position: "absolute", left: "0", bottom: "20px", background: "var(--accent)", color: "#fff", padding: "16px 22px", fontFamily: "var(--font-display)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 600, fontSize: "15px", lineHeight: 1.1 }}>
-            Студия Rated<br /><span style={{ fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.14em", opacity: 0.85 }}>центр Москвы</span>
+          <div style={{ position: "relative", paddingRight: "22px", paddingBottom: "22px" }}>
+            <div style={{ position: "absolute", right: 0, bottom: 0, width: "calc(100% - 46px)", height: "calc(100% - 46px)", border: "1px solid var(--accent)", pointerEvents: "none" }}></div>
+            <div style={{ position: "relative", overflow: "hidden", aspectRatio: "4 / 5" }}>
+              <img src="./assets/img/about-master.jpg" alt="Тимур Тэд — мастер Rated Tattoo за работой" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%", display: "block", filter: "grayscale(0.35) contrast(1.06)" }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,10,12,0.62), rgba(10,10,12,0) 46%)", pointerEvents: "none" }}></div>
+            </div>
+            <div style={{ position: "absolute", left: "-2px", bottom: "40px", background: "var(--accent)", color: "var(--white)", padding: "15px 24px 17px" }}>
+              <div style={{ fontFamily: "var(--font-display)", textTransform: "uppercase", fontWeight: 600, fontSize: "27px", lineHeight: 0.92, letterSpacing: "0.02em" }}>Тимур Тэд</div>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.16em", textTransform: "uppercase", opacity: 0.88, marginTop: "6px" }}>основатель · мастер</div>
+            </div>
           </div>
-          <div style={{ position: "absolute", right: "-14px", bottom: "-8px", width: "40%", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div style={{ aspectRatio: "4 / 5", overflow: "hidden", border: "5px solid var(--bg-base)", outline: "1px solid var(--border-hair)", boxShadow: "0 18px 44px rgba(0,0,0,.55)" }}>
-              <img src="./assets/img/about-stencil.jpg" alt="Нанесение трафарета перед сеансом" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
-            </div>
-            <div style={{ aspectRatio: "4 / 5", overflow: "hidden", border: "5px solid var(--bg-base)", outline: "1px solid var(--border-hair)", boxShadow: "0 18px 44px rgba(0,0,0,.55)" }}>
-              <img src="./assets/img/studio.jpg" alt="Студия Rated Tattoo" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 28%", display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "14px", paddingRight: "22px" }}>
+            {gallery.map(([src, cap, pos]) => (
+              <figure key={cap} style={{ margin: 0, position: "relative", overflow: "hidden", aspectRatio: "4 / 3" }}>
+                <img src={src} alt={cap} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: pos, display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,10,12,0.7), rgba(10,10,12,0) 55%)", pointerEvents: "none" }}></div>
+                <figcaption style={{ position: "absolute", left: "11px", bottom: "9px", fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--bone)" }}>{cap}</figcaption>
+              </figure>
+            ))}
           </div>
         </div>
+
+        {/* ----- profile copy ----- */}
         <div>
           <Kicker index="01" label="О мастере" />
-          <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(36px, 4.5vw, 60px)", lineHeight: 0.98, letterSpacing: "-0.01em", margin: "24px 0 22px" }}>
-            Эталон<br />качества
+          <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(36px, 4.5vw, 60px)", lineHeight: 0.96, letterSpacing: "-0.01em", margin: "24px 0 0" }}>
+            Эталон<br />качества<span style={{ color: "var(--accent)" }}>.</span>
           </h2>
-          <p style={{ fontSize: "var(--fs-lead)", color: "var(--text-body)", lineHeight: 1.6, margin: "0 0 40px", maxWidth: "52ch" }}>
-            Я создаю не просто татуировки, а произведения искусства, которые будут радовать вас всю жизнь.
+          <p style={{ fontSize: "var(--fs-lead)", color: "var(--text-body)", lineHeight: 1.6, margin: "22px 0 0", maxWidth: "50ch" }}>
+            Я создаю не просто татуировки, а произведения искусства, которые будут радовать вас всю жизнь. Реализм, графика и орнаменты — авторский подход к каждому эскизу.
           </p>
+          <div style={{ display: "flex", margin: "32px 0 8px", borderTop: "1px solid var(--border-hair)", borderBottom: "1px solid var(--border-hair)" }}>
+            {[["10+", "лет практики"], ["ТОП-10", "Москвы 2023"], ["∞", "гарантия"]].map(([n, l], i) => (
+              <div key={l} style={{ flex: 1, padding: "18px 0", paddingLeft: i === 0 ? 0 : "24px", borderLeft: i === 0 ? "none" : "1px solid var(--border-hair)" }}>
+                <div style={{ fontFamily: "var(--font-display)", fontSize: "29px", fontWeight: 600, color: "var(--bone)", lineHeight: 1 }}>{n}</div>
+                <div style={{ fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "6px" }}>{l}</div>
+              </div>
+            ))}
+          </div>
           <div>
             {reasons.map(([h, p], i) => (
-              <div key={h} style={{ display: "grid", gridTemplateColumns: "48px 1fr", gap: "8px 20px", padding: "24px 0", borderTop: "1px solid var(--border-hair)", ...(i === reasons.length - 1 ? { borderBottom: "1px solid var(--border-hair)" } : {}) }}>
-                <span style={{ fontFamily: "var(--font-display)", color: "var(--accent)", fontSize: "20px", fontWeight: 600 }}>{String(i + 1).padStart(2, "0")}</span>
-                <h4 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.02em", fontSize: "19px", fontWeight: 500, margin: 0, alignSelf: "center" }}>{h}</h4>
-                <p style={{ gridColumn: "2", color: "var(--text-muted)", margin: 0, lineHeight: 1.6 }}>{p}</p>
+              <div key={h} style={{ display: "grid", gridTemplateColumns: "42px 1fr", gap: "4px 18px", padding: "20px 0", borderBottom: "1px solid var(--border-hair)" }}>
+                <span style={{ gridRow: "span 2", fontFamily: "var(--font-display)", color: "var(--accent)", fontSize: "18px", fontWeight: 600, paddingTop: "3px" }}>{String(i + 1).padStart(2, "0")}</span>
+                <h4 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.02em", fontSize: "18px", fontWeight: 500, margin: 0 }}>{h}</h4>
+                <p style={{ color: "var(--text-muted)", margin: "6px 0 0", lineHeight: 1.55, fontSize: "14px" }}>{p}</p>
               </div>
             ))}
           </div>
