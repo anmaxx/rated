@@ -1,0 +1,18 @@
+/* ===========================================================================
+   Rated Tattoo — Webfonts
+   - Oswald: the Cyrillic-capable condensed display face for all Russian
+     headings (Facon has no Cyrillic glyphs, so headings must use this).
+   - Facon: the studio's custom face, kept for the Latin "RATED" logotype
+     and Latin display where its character shines. Single weight .otf.
+   - Manrope: loaded from Google Fonts for body/UI text.
+   =========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Oswald:wght@300;400;500;600;700&display=swap");
+
+@font-face {
+  font-family: "Facon";
+  src: url("./assets/fonts/facon.otf") format("opentype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}

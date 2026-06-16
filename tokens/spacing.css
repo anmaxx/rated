@@ -1,0 +1,53 @@
+/* ===========================================================================
+   Rated Tattoo — Spacing, radii, shadows, motion
+   The site leans on generous section padding, large pill radii on buttons,
+   rounded-xl cards, and soft white-tinted shadows on a dark ground.
+   =========================================================================== */
+
+:root {
+  /* ---- Spacing scale (4px base) ----------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;     /* section rhythm (py-20 ≈ 80–96px) */
+
+  /* ---- Radii ------------------------------------------------------------- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;     /* cards (rounded-xl) */
+  --radius-xl: 24px;     /* feature panels (rounded-2xl) */
+  --radius-pill: 999px;  /* buttons, badges, chips */
+
+  /* ---- Borders ----------------------------------------------------------- */
+  --border-width: 1px;            /* @kind spacing */
+  --border-width-strong: 2px;     /* outline buttons @kind spacing */
+  --border-accent-top: 4px;       /* service cards: border-t-4 @kind spacing */
+
+  /* ---- Shadows (white-tinted lift on a dark ground) --------------------- */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 10px 20px rgba(255, 255, 255, 0.06);
+  --shadow-lg: 0 20px 30px -8px rgba(0, 0, 0, 0.55);
+  --shadow-lift: 0 20px 25px -5px rgba(255, 255, 255, 0.10),
+                 0 10px 10px -5px rgba(255, 255, 255, 0.04);
+  --shadow-glow: 0 0 0 1px rgba(235, 5, 5, 0.5), 0 8px 30px rgba(235, 5, 5, 0.25);
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  /* ---- Motion ------------------------------------------------------------ */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --ease-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275); /* @kind other */
+  --dur-fast: 0.18s; /* @kind other */
+  --dur-base: 0.3s; /* @kind other */
+  --dur-slow: 0.4s; /* @kind other */
+
+  /* ---- Layout ------------------------------------------------------------ */
+  --container-max: 1200px; /* @kind spacing */
+  --header-h: 76px; /* @kind spacing */
+}

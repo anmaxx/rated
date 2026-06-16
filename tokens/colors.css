@@ -1,0 +1,71 @@
+/* ===========================================================================
+   Rated Tattoo — Color tokens
+   A refined studio palette: warm near-black surfaces, bone-white ink, and a
+   sharp signature red used sparingly. Evolved from the brand's original site
+   config (#EB0505 red) toward a more premium, editorial monochrome ground.
+   =========================================================================== */
+
+:root {
+  /* ---- Signature accent: oxblood / burgundy ------------------------------ */
+  --ox-500: #9b1d30;           /* accent — brighter oxblood */
+  --ox-400: #bd2b41;           /* hover lift */
+  --ox-600: #6e1320;           /* pressed / darker */
+  --ox-300: #d44a5d;           /* bright accent for small text / glints */
+  /* ---- Original brand red (kept for reference / compat) ------------------- */
+  --red-500: #eb0505;          /* the original loud brand red */
+  --red-600: #c20606;
+  --red-400: #ff2418;
+  --blood-700: #7a1212;        /* deep oxblood — borders, depth */
+  --coral-400: #ff6b6b;        /* legacy soft red (kept for compat) */
+  --coral-300: #ff8f8f;
+
+  /* ---- Carbon / surface scale (warm near-black) -------------------------- */
+  --ink-950: #0a0a0c;          /* deepest — page base */
+  --ink-900: #101013;          /* primary surface */
+  --ink-800: #16161b;          /* raised */
+  --ink-700: #1c1c22;          /* cards, header, inputs */
+  --ink-600: #2a2a31;          /* borders / hover surfaces */
+  --ink-500: #3a3a42;          /* muted lines */
+
+  /* ---- Neutrals / text (warm bone, not cold white) ----------------------- */
+  --bone: #ece7df;             /* warm off-white — premium headings */
+  --white: #ffffff;            /* pure white (sparingly) */
+  --gray-200: #d8d4cc;
+  --gray-300: #b6b2a9;         /* body text on dark */
+  --gray-400: #88857d;         /* secondary / muted body */
+  --gray-500: #5f5d57;         /* faint captions / copyright */
+
+  /* ---- Status ------------------------------------------------------------ */
+  --star: #e8b53a;             /* review stars (warm gold) */
+  --success: #3f9e74;
+  --danger: var(--red-500);
+
+  /* =========================================================================
+     Semantic aliases — prefer these in components
+     ========================================================================= */
+  --bg-base: var(--ink-950);
+  --bg-surface: var(--ink-900);
+  --bg-raised: var(--ink-700);
+  --bg-input: var(--ink-800);
+
+  --border-subtle: var(--ink-600);
+  --border-strong: var(--ink-500);
+  --border-hair: rgba(236, 231, 223, 0.10);   /* bone hairline on dark @kind color */
+
+  --text-strong: var(--bone);
+  --text-body: var(--gray-300);
+  --text-muted: var(--gray-400);
+  --text-faint: var(--gray-500);
+
+  --accent: var(--ox-500);
+  --accent-hover: var(--ox-400);
+  --accent-press: var(--ox-600);
+  --accent-soft: var(--ox-300);
+
+  --focus-ring: color-mix(in srgb, var(--ox-500) 60%, transparent); /* @kind color */
+
+  /* Image protection scrim (bottom-up) over photography */
+  --scrim-bottom: linear-gradient(to top, rgba(10, 10, 12, 0.96) 0%, rgba(10, 10, 12, 0.45) 40%, rgba(10, 10, 12, 0) 75%); /* @kind other */
+  --scrim-hover: linear-gradient(to top, rgba(10, 10, 12, 0.92) 0%, rgba(10, 10, 12, 0) 60%); /* @kind other */
+  --scrim-hero: linear-gradient(180deg, rgba(10, 10, 12, 0.55) 0%, rgba(10, 10, 12, 0.78) 55%, rgba(10, 10, 12, 0.97) 100%); /* @kind other */
+}

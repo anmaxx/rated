@@ -1,0 +1,43 @@
+/* ===========================================================================
+   Rated Tattoo — Typography tokens
+   Oswald (condensed, Cyrillic-capable) sets all headings; Facon is reserved
+   for the Latin "RATED" logotype; Manrope carries body/UI. Headings run
+   large, uppercase, and tight.
+   =========================================================================== */
+
+:root {
+  /* ---- Families ---------------------------------------------------------- */
+  --font-display: "Oswald", "Manrope", system-ui, sans-serif;
+  --font-logo: "Facon", "Oswald", sans-serif;
+  --font-body: "Manrope", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* ---- Weights ----------------------------------------------------------- */
+  --fw-regular: 400;   /* @kind other */
+  --fw-medium: 500;    /* @kind other */
+  --fw-semibold: 600;  /* @kind other */
+  --fw-bold: 700;      /* @kind other */
+  --fw-extrabold: 800; /* @kind other */
+
+  /* ---- Type scale -------------------------------------------------------- */
+  --fs-display: 5.5rem;    /* 88px — hero headline (Oswald, uppercase) */
+  --fs-h1: 3.5rem;         /* 56px */
+  --fs-h2: 2.5rem;         /* 40px */
+  --fs-h3: 1.625rem;       /* 26px */
+  --fs-h4: 1.25rem;        /* 20px */
+  --fs-lead: 1.25rem;      /* 20px — intro paragraphs */
+  --fs-body: 1rem;         /* 16px */
+  --fs-sm: 0.875rem;       /* 14px */
+  --fs-xs: 0.75rem;        /* 12px — eyebrows, meta */
+
+  /* ---- Line heights ------------------------------------------------------ */
+  --lh-tight: 0.95;        /* @kind other */
+  --lh-snug: 1.15;         /* @kind other */
+  --lh-normal: 1.65;       /* @kind other */
+
+  /* ---- Tracking ---------------------------------------------------------- */
+  --ls-tight: -0.01em;     /* big display @kind other */
+  --ls-normal: 0;          /* @kind other */
+  --ls-wide: 0.04em;       /* @kind other */
+  --ls-eyebrow: 0.22em;    /* uppercase eyebrows / badges @kind other */
+}
