@@ -104,7 +104,7 @@ function Hero({ onBook }) {
 
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 1, borderTop: "1px solid var(--border-hair)", background: "rgba(10,10,12,0.4)", backdropFilter: "blur(8px)" }}>
         <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }} className="rt-stats">
-          {[["10+", "лет практики"], ["150+", "работ в портфолио"], ["127", "отзывов · 5.0"], ["100%", "стерильность"]].map(([n, l], i) => (
+          {[["10+", "лет практики"], ["150+", "работ в портфолио"], ["150+", "отзывов · 5.0"], ["100%", "стерильность"]].map(([n, l], i) => (
             <div key={l} style={{ padding: "20px 24px", borderLeft: i === 0 ? "none" : "1px solid var(--border-hair)", display: "flex", flexDirection: "column", gap: "2px" }}>
               <span style={{ fontFamily: "var(--font-display)", fontSize: "30px", fontWeight: 600, color: "var(--bone)", lineHeight: 1 }}>{n}</span>
               <span style={{ fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)" }}>{l}</span>
@@ -277,7 +277,7 @@ function Testimonials() {
             <Kicker index="05" label="Отзывы" />
             <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Что говорят клиенты</h2>
           </div>
-          <StarRating value={5} score="5.0" count="127+ отзывов" size="18px" />
+          <StarRating value={5} score="5.0" count="150+ отзывов" size="18px" />
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }} className="rt-reviews-grid">
           {REVIEWS.map((r) => (
