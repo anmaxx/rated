@@ -209,8 +209,8 @@ function WorkTile({ w }) {
   const [hover, setHover] = React.useState(false);
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ position: "relative", flexShrink: 0, width: "clamp(220px, 24vw, 320px)", height: "clamp(300px, 34vw, 420px)", margin: "0 8px", overflow: "hidden", background: "var(--ink-800)" }}>
-      <img src={w[0]} alt={w[1]} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", filter: "grayscale(0.5) contrast(1.06)", transform: hover ? "scale(1.06)" : "scale(1)", transition: "transform .7s var(--ease-out), filter .4s" }} />
+      style={{ position: "relative", flexShrink: 0, width: "clamp(248px, 27vw, 348px)", height: "clamp(330px, 40vw, 500px)", margin: "0 8px", overflow: "hidden", background: "var(--ink-800)" }}>
+      <img src={w[0]} alt={w[1]} loading="lazy" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", userSelect: "none", pointerEvents: "none", filter: "grayscale(0.5) contrast(1.06)", transform: hover ? "scale(1.06)" : "scale(1)", transition: "transform .7s var(--ease-out), filter .4s" }} />
       <div style={{ position: "absolute", inset: 0, background: "var(--scrim-hover)", opacity: hover ? 1 : 0.5, transition: "opacity .35s" }}></div>
       <div style={{ position: "absolute", top: "14px", left: "14px", fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--bone)", background: "rgba(10,10,12,.5)", padding: "5px 9px", backdropFilter: "blur(4px)" }}>{w[2]}</div>
       <h3 style={{ position: "absolute", left: "16px", right: "16px", bottom: "16px", fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.01em", fontSize: "18px", fontWeight: 500, margin: 0, transform: hover ? "translateY(0)" : "translateY(6px)", opacity: hover ? 1 : 0.9, transition: "all .35s" }}>{w[1]}</h3>
@@ -219,20 +219,74 @@ function WorkTile({ w }) {
 }
 
 function Works({ onBook }) {
-  const rowA = [...WORKS, ...WORKS];
-  const rowB = [...WORKS.slice().reverse(), ...WORKS.slice().reverse()];
+  const items = [...WORKS, ...WORKS];
+  const wrapRef = React.useRef(null);
+  const trackRef = React.useRef(null);
+  const progRef = React.useRef(null);
+  const S = React.useRef({ offset: 0, setW: 1, paused: false, dragging: false, lastX: 0, tween: 0 });
+
+  React.useEffect(() => {
+    const track = trackRef.current;
+    const measure = () => { S.current.setW = Math.max(1, track.scrollWidth / 2); };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(track);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let raf, last = performance.now();
+    const loop = (now) => {
+      const s = S.current;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (Math.abs(s.tween) > 0.5) {
+        const step = s.tween * Math.min(1, dt * 7);
+        s.offset += step; s.tween -= step;
+      } else {
+        s.tween = 0;
+        if (!s.paused && !s.dragging && !reduce) s.offset += 34 * dt;
+      }
+      s.offset = ((s.offset % s.setW) + s.setW) % s.setW;
+      track.style.transform = "translate3d(" + (-s.offset) + "px,0,0)";
+      if (progRef.current) progRef.current.style.left = ((s.offset / s.setW) * 82) + "%";
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, []);
+
+  const nudge = (dir) => { S.current.tween += dir * ((wrapRef.current ? wrapRef.current.clientWidth : 600) * 0.6); };
+  const down = (e) => { const s = S.current; s.dragging = true; s.lastX = e.clientX; s.tween = 0; wrapRef.current.style.cursor = "grabbing"; if (wrapRef.current.setPointerCapture) wrapRef.current.setPointerCapture(e.pointerId); };
+  const move = (e) => { const s = S.current; if (!s.dragging) return; s.offset -= (e.clientX - s.lastX); s.lastX = e.clientX; };
+  const up = (e) => { const s = S.current; if (!s.dragging) return; s.dragging = false; wrapRef.current.style.cursor = "grab"; try { wrapRef.current.releasePointerCapture(e.pointerId); } catch (_) {} };
+
+  const ctrl = { width: "46px", height: "46px", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "transparent", color: "var(--text-body)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "14px", transition: "all .2s" };
+  const ctrlOn = (e) => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--white)"; };
+  const ctrlOff = (e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border-hair)"; e.currentTarget.style.color = "var(--text-body)"; };
+
   return (
     <section id="works" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "110px 0", overflow: "hidden" }}>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto 44px", padding: "0 32px", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px" }}>
+      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto 40px", padding: "0 32px", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px" }}>
         <div>
           <Kicker index="02" label="Работы" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4.5vw, 56px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Избранное</h2>
         </div>
-        <Button variant="ghost" onClick={onBook} iconRight="fas fa-arrow-right">Записаться на сеанс</Button>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <button aria-label="Предыдущие работы" onClick={() => nudge(-1)} onMouseEnter={ctrlOn} onMouseLeave={ctrlOff} style={ctrl}><i className="fas fa-arrow-left" aria-hidden="true"></i></button>
+          <button aria-label="Следующие работы" onClick={() => nudge(1)} onMouseEnter={ctrlOn} onMouseLeave={ctrlOff} style={ctrl}><i className="fas fa-arrow-right" aria-hidden="true"></i></button>
+          <div style={{ width: "1px", height: "28px", background: "var(--border-hair)", margin: "0 6px" }}></div>
+          <Button variant="ghost" onClick={onBook} iconRight="fas fa-arrow-right">Записаться на сеанс</Button>
+        </div>
       </div>
-      <div className="rt-marquee" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <div className="rt-marquee-track">{rowA.map((w, i) => <WorkTile key={"a" + i} w={w} />)}</div>
-        <div className="rt-marquee-track rt-marquee-rev">{rowB.map((w, i) => <WorkTile key={"b" + i} w={w} />)}</div>
+      <div ref={wrapRef} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+        onMouseEnter={() => { S.current.paused = true; }} onMouseLeave={() => { S.current.paused = false; }}
+        style={{ overflow: "hidden", cursor: "grab", touchAction: "pan-y", userSelect: "none" }}>
+        <div ref={trackRef} style={{ display: "flex", width: "max-content", willChange: "transform" }}>
+          {items.map((w, i) => <WorkTile key={i} w={w} />)}
+        </div>
+      </div>
+      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "30px auto 0", padding: "0 32px", width: "100%", display: "flex", alignItems: "center", gap: "16px" }}>
+        <div style={{ position: "relative", flex: 1, height: "2px", background: "var(--border-hair)", overflow: "hidden" }}>
+          <div ref={progRef} style={{ position: "absolute", top: 0, left: 0, height: "2px", width: "18%", background: "var(--accent)" }}></div>
+        </div>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--text-faint)", whiteSpace: "nowrap" }}>Потяните или листайте&nbsp;→</span>
       </div>
     </section>
   );
