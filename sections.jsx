@@ -393,17 +393,71 @@ function Footer() {
 }
 
 /* -------------------------------------------------------- Booking modal */
+/* Formspree endpoint — create a form at https://formspree.io and paste its
+   form ID here (the part after /f/). Until this is replaced, submits will fail
+   gracefully with an error message instead of silently dropping the lead. */
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID";
+
 function BookingModal({ open, onClose }) {
   const [done, setDone] = React.useState(false);
-  React.useEffect(() => { if (open) setDone(false); }, [open]);
+  const [sending, setSending] = React.useState(false);
+  const [error, setError] = React.useState("");
+  const [form, setForm] = React.useState({ name: "", phone: "", idea: "" });
+
+  React.useEffect(() => {
+    if (open) { setDone(false); setError(""); setSending(false); setForm({ name: "", phone: "", idea: "" }); }
+  }, [open]);
   React.useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (sending) return;
+    setError("");
+    if (!form.name.trim() || !form.phone.trim()) {
+      setError("Укажите имя и телефон.");
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: { "Accept": "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          idea: form.idea,
+          _subject: "Новая заявка с сайта Rated Tattoo",
+        }),
+      });
+      if (res.ok) {
+        setDone(true);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        const msg = data && data.errors && data.errors.map((x) => x.message).join(", ");
+        setError(msg || "Не удалось отправить заявку. Попробуйте позже или позвоните нам.");
+      }
+    } catch (_) {
+      setError("Нет связи с сервером. Проверьте интернет или позвоните по телефону.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (!open) return null;
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.82)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: "460px", background: "var(--bg-surface)", border: "1px solid var(--border-hair)", padding: "40px", position: "relative" }}>
+      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Запись на консультацию" style={{ width: "100%", maxWidth: "460px", background: "var(--bg-surface)", border: "1px solid var(--border-hair)", padding: "40px", position: "relative" }}>
         <span style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "3px", background: "var(--accent)" }}></span>
         {done ? (
           <div style={{ textAlign: "center" }}>
@@ -413,21 +467,24 @@ function BookingModal({ open, onClose }) {
             <Button variant="primary" block onClick={onClose}>Готово</Button>
           </div>
         ) : (
-          <div>
+          <form onSubmit={submit}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "26px" }}>
               <div>
                 <Kicker index="—" label="Запись" />
                 <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", margin: "14px 0 0", fontSize: "28px", fontWeight: 600, lineHeight: 1 }}>Бесплатная<br />консультация</h3>
               </div>
-              <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: "20px", cursor: "pointer" }}><i className="fas fa-xmark"></i></button>
+              <button type="button" onClick={onClose} aria-label="Закрыть" style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: "20px", cursor: "pointer" }}><i className="fas fa-xmark"></i></button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <Input label="Имя" icon="fas fa-user" placeholder="Как вас зовут?" />
-              <Input label="Телефон" icon="fas fa-phone" type="tel" placeholder="+7 (___) ___-__-__" />
-              <Input label="Опишите идею" as="textarea" placeholder="Стиль, размер, место на теле…" />
-              <Button variant="primary" block onClick={() => setDone(true)} iconRight="fas fa-arrow-right">Отправить заявку</Button>
+              <Input label="Имя" icon="fas fa-user" name="name" value={form.name} onChange={set("name")} disabled={sending} required placeholder="Как вас зовут?" />
+              <Input label="Телефон" icon="fas fa-phone" type="tel" name="phone" value={form.phone} onChange={set("phone")} disabled={sending} required placeholder="+7 (___) ___-__-__" />
+              <Input label="Опишите идею" as="textarea" name="idea" value={form.idea} onChange={set("idea")} disabled={sending} placeholder="Стиль, размер, место на теле…" />
+              {error ? (
+                <div role="alert" style={{ color: "var(--accent-soft)", fontSize: "13px", lineHeight: 1.5 }}>{error}</div>
+              ) : null}
+              <Button variant="primary" block type="submit" disabled={sending} iconRight={sending ? undefined : "fas fa-arrow-right"}>{sending ? "Отправка…" : "Отправить заявку"}</Button>
             </div>
-          </div>
+          </form>
         )}
       </div>
     </div>
