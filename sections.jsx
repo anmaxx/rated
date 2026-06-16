@@ -492,7 +492,7 @@ function Cta({ onBook }) {
 function Footer() {
   const socials = [
     ["fab fa-vk", "VK", "https://vk.com/ratedtattoo"],
-    ["fas fa-star", "Яндекс Услуги", "https://uslugi.yandex.ru/profile/RatedTattoo-sprav1269715236"],
+    ["fab fa-yandex", "Яндекс Услуги", "https://uslugi.yandex.ru/profile/RatedTattoo-sprav1269715236"],
   ];
   return (
     <footer style={{ background: "var(--bg-base)", borderTop: "1px solid var(--border-hair)", padding: "72px 0 36px" }}>
