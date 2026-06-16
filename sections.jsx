@@ -347,7 +347,10 @@ function Cta({ onBook }) {
 
 /* ----------------------------------------------------------------- Footer */
 function Footer() {
-  const socials = [["fab fa-instagram", "Instagram"], ["fab fa-telegram", "Telegram"], ["fab fa-vk", "VK"], ["fab fa-youtube", "YouTube"]];
+  const socials = [
+    ["fab fa-vk", "VK", "https://vk.com/ratedtattoo"],
+    ["fas fa-star", "Яндекс Услуги", "https://uslugi.yandex.ru/profile/RatedTattoo-sprav1269715236"],
+  ];
   return (
     <footer style={{ background: "var(--bg-base)", borderTop: "1px solid var(--border-hair)", padding: "72px 0 36px" }}>
       <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px" }}>
@@ -359,10 +362,10 @@ function Footer() {
             </div>
             <p style={{ color: "var(--text-muted)", margin: "0 0 22px", maxWidth: "38ch", lineHeight: 1.6 }}>Премиум татуировки в центре Москвы. Авторский подход и абсолютная безопасность.</p>
             <div style={{ display: "flex", gap: "10px" }}>
-              {socials.map(([s, t]) => (
-                <a key={s} href="#" title={t} style={{ width: "42px", height: "42px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--border-hair)", color: "var(--text-body)", fontSize: "16px", transition: "all .2s" }}
+              {socials.map(([s, t, u]) => (
+                <a key={s} href={u} title={t} aria-label={t} target="_blank" rel="noopener noreferrer" style={{ width: "42px", height: "42px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--border-hair)", color: "var(--text-body)", fontSize: "16px", transition: "all .2s" }}
                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--bone)"; e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "var(--accent)"; }}
-                   onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-body)"; e.currentTarget.style.borderColor = "var(--border-hair)"; e.currentTarget.style.background = "transparent"; }}><i className={s}></i></a>
+                   onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-body)"; e.currentTarget.style.borderColor = "var(--border-hair)"; e.currentTarget.style.background = "transparent"; }}><i className={s} aria-hidden="true"></i></a>
               ))}
             </div>
           </div>
@@ -378,8 +381,8 @@ function Footer() {
             <h4 style={{ fontFamily: "var(--font-body)", color: "var(--text-faint)", fontSize: "12px", letterSpacing: "0.18em", textTransform: "uppercase", margin: "0 0 18px" }}>Контакты</h4>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "12px", color: "var(--text-body)", fontSize: "15px" }}>
               <li><a href="tel:+79689752099">+7 (968) 975-20-99</a></li>
-              <li>Новинский бульвар, 10/12</li>
-              <li>Пн–Вс · 11:00 – 20:00</li>
+              <li>Новинский бульвар, 10, стр. 1</li>
+              <li>Пн–Вс · 11:00 – 21:00</li>
             </ul>
           </div>
         </div>
