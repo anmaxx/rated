@@ -98,7 +98,7 @@ function Hero({ onBook }) {
       </div>
 
       <div className="rt-edge-label" style={{ position: "absolute", left: "32px", top: "50%", transform: "rotate(180deg)", writingMode: "vertical-rl", zIndex: 2, fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.3em", textTransform: "uppercase", color: "var(--text-muted)" }}>
-        Tattoo &amp; Body · Moscow · с 2015
+        Rated Tattoo · Moscow · с 2015
       </div>
 
       <div className="rt-reveal rt-in" style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: MAXW, margin: "0 auto", padding: "150px 32px 150px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
@@ -531,7 +531,7 @@ function Footer() {
         </div>
         <div style={{ marginTop: "56px", paddingTop: "24px", borderTop: "1px solid var(--border-hair)", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", color: "var(--text-faint)", fontSize: "12px", letterSpacing: "0.04em" }}>
           <span>© 2026 Тимур Тэд · Rated Tattoo</span>
-          <span>Москва · Tattoo &amp; Body</span>
+          <span>Москва · с 2015</span>
         </div>
       </div>
     </footer>
