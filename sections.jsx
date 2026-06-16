@@ -147,6 +147,9 @@ function About() {
           <div style={{ position: "absolute", right: "-14px", bottom: "-8px", width: "42%", aspectRatio: "3 / 4", overflow: "hidden", border: "5px solid var(--bg-base)", outline: "1px solid var(--border-hair)", boxShadow: "0 18px 44px rgba(0,0,0,.55)" }}>
             <img src="./assets/img/about-stencil.jpg" alt="Нанесение трафарета перед сеансом" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
           </div>
+          <div style={{ position: "absolute", left: "-16px", top: "-10px", width: "34%", aspectRatio: "1 / 1", overflow: "hidden", border: "5px solid var(--bg-base)", outline: "1px solid var(--border-hair)", boxShadow: "0 18px 44px rgba(0,0,0,.55)" }}>
+            <img src="./assets/img/studio.jpg" alt="Студия Rated Tattoo" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 28%", display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
+          </div>
         </div>
         <div>
           <Kicker index="01" label="О мастере" />
