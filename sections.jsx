@@ -144,11 +144,13 @@ function About() {
           <div style={{ position: "absolute", left: "0", bottom: "20px", background: "var(--accent)", color: "#fff", padding: "16px 22px", fontFamily: "var(--font-display)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 600, fontSize: "15px", lineHeight: 1.1 }}>
             Студия Rated<br /><span style={{ fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.14em", opacity: 0.85 }}>центр Москвы</span>
           </div>
-          <div style={{ position: "absolute", right: "-14px", bottom: "-8px", width: "42%", aspectRatio: "3 / 4", overflow: "hidden", border: "5px solid var(--bg-base)", outline: "1px solid var(--border-hair)", boxShadow: "0 18px 44px rgba(0,0,0,.55)" }}>
-            <img src="./assets/img/about-stencil.jpg" alt="Нанесение трафарета перед сеансом" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
-          </div>
-          <div style={{ position: "absolute", left: "-16px", top: "-10px", width: "34%", aspectRatio: "1 / 1", overflow: "hidden", border: "5px solid var(--bg-base)", outline: "1px solid var(--border-hair)", boxShadow: "0 18px 44px rgba(0,0,0,.55)" }}>
-            <img src="./assets/img/studio.jpg" alt="Студия Rated Tattoo" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 28%", display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
+          <div style={{ position: "absolute", right: "-14px", bottom: "-8px", width: "40%", display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ aspectRatio: "4 / 5", overflow: "hidden", border: "5px solid var(--bg-base)", outline: "1px solid var(--border-hair)", boxShadow: "0 18px 44px rgba(0,0,0,.55)" }}>
+              <img src="./assets/img/about-stencil.jpg" alt="Нанесение трафарета перед сеансом" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
+            </div>
+            <div style={{ aspectRatio: "4 / 5", overflow: "hidden", border: "5px solid var(--bg-base)", outline: "1px solid var(--border-hair)", boxShadow: "0 18px 44px rgba(0,0,0,.55)" }}>
+              <img src="./assets/img/studio.jpg" alt="Студия Rated Tattoo" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 28%", display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
+            </div>
           </div>
         </div>
         <div>
