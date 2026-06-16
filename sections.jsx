@@ -370,35 +370,63 @@ function Benefits() {
 }
 
 /* ----------------------------------------------------------- Testimonials */
+const YANDEX_REVIEWS = "https://yandex.ru/maps/org/rated_tattoo/1269715236/reviews/";
 const REVIEWS = [
-  ["Делал масштабный реализм на руке. Результат превзошёл ожидания — тату выглядит живой!", "Алексей", "Реалистичный волк", "https://randomuser.me/api/portraits/men/32.jpg"],
-  ["Пришла с неудачным старым тату. Получилось шедевральное перекрытие!", "Мария", "Перекрытие старого тату", "https://randomuser.me/api/portraits/women/44.jpg"],
-  ["Делал первую татуировку. Атмосфера дружеская, работа аккуратная. Уже планирую следующую.", "Дмитрий", "Первая татуировка", "https://randomuser.me/api/portraits/men/67.jpg"],
+  { name: "Артур", date: "08.05.2026", avatar: "./assets/img/reviews/av-artur.jpg", photo: "./assets/img/reviews/ph-artur.jpg", text: "Очень круто, всё понравилось — лучшее место, где я набивал тату." },
+  { name: "Елизавета З.", date: "21.02.2026", avatar: "./assets/img/reviews/av-elizaveta.jpg", photo: "./assets/img/reviews/ph-elizaveta.jpg", text: "Решалась долго, но когда созрела — нашла Тимура и не прогадала. Работы зацепили даже через экран, а в кабинете невероятная атмосфера. Всё аккуратно и стерильно." },
+  { name: "Лидия Лукьянова", date: "29.10.2025", avatar: "./assets/img/reviews/av-lidiya.jpg", photo: "./assets/img/reviews/ph-lidiya.jpg", text: "Тимур — профессионал, и при этом с ним кайфово: поболтать, фильм, поржать. Кайфуешь от всего процесса, а не только от результата. Теперь только ему доверяю." },
+  { name: "Владимир З.", date: "24.10.2025", avatar: "./assets/img/reviews/av-vladimir.jpg", photo: null, text: "Татуировка огонь, качественная работа, рука мастера. Вайбовая атмосфера, приятное общение." },
+  { name: "Елена Пушкина", date: "07.08.2025", avatar: "./assets/img/reviews/av-elena.jpg", photo: null, text: "Всё прошло идеально: профессионально, аккуратно и очень красиво. Тимур внимателен к деталям и создаёт комфортную атмосферу." },
+  { name: "Дмитрий Кэт", date: "24.03.2025", avatar: null, photo: "./assets/img/reviews/ph-dmitriy.jpg", text: "Тимур лучший мастер! Судьба свела с ним повторно после долгого перерыва — невероятно круто. Профессионализм и внимание к деталям." },
+  { name: "Нина Г.", date: "05.11.2024", avatar: "./assets/img/reviews/av-nina.jpg", photo: "./assets/img/reviews/ph-nina.jpg", text: "Была у Тимура ещё 7 лет назад — и снова знала, к кому ехать. Мои друзья тоже ездили, все остались довольны!" },
+  { name: "Юлия В.", date: "26.05.2024", avatar: "./assets/img/reviews/av-yulia.jpg", photo: "./assets/img/reviews/ph-yulia.jpg", text: "Невозможно выразить словами восторг от результата! Тимур — не просто тату-мастер, а художник, реализующий любую фантазию." },
 ];
+
+function ReviewStars() {
+  return (
+    <div style={{ display: "flex", gap: "3px", color: "var(--star)", fontSize: "12px" }} aria-label="5 из 5">
+      {[0, 1, 2, 3, 4].map((i) => <i key={i} className="fas fa-star" aria-hidden="true"></i>)}
+    </div>
+  );
+}
 
 function Testimonials() {
   return (
     <section id="reviews" className="rt-snap" style={{ background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0", borderTop: "1px solid var(--border-hair)" }}>
       <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px", marginBottom: "48px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px", marginBottom: "44px" }}>
           <div>
             <Kicker index="05" label="Отзывы" />
             <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Что говорят клиенты</h2>
           </div>
-          <StarRating value={5} score="5.0" count="150+ отзывов" size="18px" />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "12px" }}>
+            <StarRating value={5} score="5.0" count="160 оценок · Яндекс" size="18px" />
+            <a href={YANDEX_REVIEWS} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)", transition: "color .2s" }}
+               onMouseEnter={(e) => (e.currentTarget.style.color = "var(--bone)")}
+               onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}>Все отзывы на Яндексе →</a>
+          </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }} className="rt-reviews-grid">
+        <div className="rt-reviews-cols">
           {REVIEWS.map((r) => (
-            <div key={r[1]} style={{ border: "1px solid var(--border-hair)", padding: "34px 30px", display: "flex", flexDirection: "column", gap: "20px", background: "var(--bg-surface)" }}>
-              <span style={{ color: "var(--accent)", fontFamily: "var(--font-display)", fontSize: "52px", lineHeight: 0.6, height: "26px" }}>“</span>
-              <p style={{ color: "var(--text-body)", margin: 0, lineHeight: 1.65, fontSize: "16px", flex: 1 }}>{r[0]}</p>
-              <div style={{ display: "flex", alignItems: "center", gap: "14px", paddingTop: "18px", borderTop: "1px solid var(--border-hair)" }}>
-                <img src={r[3]} alt={r[1]} style={{ width: "44px", height: "44px", borderRadius: "50%", objectFit: "cover", filter: "grayscale(0.5)" }} />
-                <div>
-                  <div style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.04em", fontSize: "16px", fontWeight: 500 }}>{r[1]}</div>
-                  <div style={{ color: "var(--text-faint)", fontSize: "12px", letterSpacing: "0.06em", textTransform: "uppercase" }}>{r[2]}</div>
+            <div key={r.name + r.date} style={{ border: "1px solid var(--border-hair)", background: "var(--bg-surface)", padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                {r.avatar
+                  ? <img src={r.avatar} alt={r.name} loading="lazy" style={{ width: "46px", height: "46px", borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "var(--ink-700)" }} />
+                  : <div style={{ width: "46px", height: "46px", borderRadius: "50%", flexShrink: 0, background: "var(--accent)", color: "var(--white)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "20px" }}>{r.name[0]}</div>}
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.03em", fontSize: "16px", fontWeight: 500, lineHeight: 1.1 }}>{r.name}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "5px" }}>
+                    <ReviewStars />
+                    <span style={{ color: "var(--text-faint)", fontSize: "12px", letterSpacing: "0.04em" }}>{r.date}</span>
+                  </div>
                 </div>
               </div>
+              <p style={{ color: "var(--text-body)", margin: 0, lineHeight: 1.6, fontSize: "15px" }}>{r.text}</p>
+              {r.photo ? (
+                <a href={YANDEX_REVIEWS} target="_blank" rel="noopener noreferrer" style={{ display: "block", overflow: "hidden", lineHeight: 0 }}>
+                  <img src={r.photo} alt={"Татуировка — отзыв " + r.name} loading="lazy" style={{ width: "100%", height: "230px", objectFit: "cover", objectPosition: "center", display: "block" }} />
+                </a>
+              ) : null}
             </div>
           ))}
         </div>
