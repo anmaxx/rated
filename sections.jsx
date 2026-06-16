@@ -406,7 +406,7 @@ function Testimonials() {
                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}>Все отзывы на Яндексе →</a>
           </div>
         </div>
-        <div className="rt-reviews-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", alignItems: "stretch" }}>
+        <div className="rt-reviews-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px", alignItems: "stretch" }}>
           {REVIEWS.map((r) => (
             <div key={r.name + r.date} style={{ border: "1px solid var(--border-hair)", background: "var(--bg-surface)", padding: "22px", display: "flex", flexDirection: "column", gap: "16px", height: "100%" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
