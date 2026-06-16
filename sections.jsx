@@ -406,27 +406,34 @@ function Testimonials() {
                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}>Все отзывы на Яндексе →</a>
           </div>
         </div>
-        <div className="rt-reviews-cols">
+        <div className="rt-reviews-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", alignItems: "stretch" }}>
           {REVIEWS.map((r) => (
-            <div key={r.name + r.date} style={{ border: "1px solid var(--border-hair)", background: "var(--bg-surface)", padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div key={r.name + r.date} style={{ border: "1px solid var(--border-hair)", background: "var(--bg-surface)", padding: "22px", display: "flex", flexDirection: "column", gap: "16px", height: "100%" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 {r.avatar
                   ? <img src={r.avatar} alt={r.name} loading="lazy" style={{ width: "46px", height: "46px", borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "var(--ink-700)" }} />
                   : <div style={{ width: "46px", height: "46px", borderRadius: "50%", flexShrink: 0, background: "var(--accent)", color: "var(--white)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "20px" }}>{r.name[0]}</div>}
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.03em", fontSize: "16px", fontWeight: 500, lineHeight: 1.1 }}>{r.name}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "5px" }}>
+                  <div style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.03em", fontSize: "16px", fontWeight: 500, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px" }}>
                     <ReviewStars />
                     <span style={{ color: "var(--text-faint)", fontSize: "12px", letterSpacing: "0.04em" }}>{r.date}</span>
                   </div>
                 </div>
               </div>
-              <p style={{ color: "var(--text-body)", margin: 0, lineHeight: 1.6, fontSize: "15px" }}>{r.text}</p>
-              {r.photo ? (
-                <a href={YANDEX_REVIEWS} target="_blank" rel="noopener noreferrer" style={{ display: "block", overflow: "hidden", lineHeight: 0 }}>
-                  <img src={r.photo} alt={"Татуировка — отзыв " + r.name} loading="lazy" style={{ width: "100%", height: "230px", objectFit: "cover", objectPosition: "center", display: "block" }} />
-                </a>
-              ) : null}
+              <p style={{ color: "var(--text-body)", margin: 0, lineHeight: 1.55, fontSize: "14.5px", minHeight: "67px", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3, overflow: "hidden" }}>{r.text}</p>
+              <div style={{ marginTop: "auto", overflow: "hidden", height: "188px", border: "1px solid var(--border-hair)" }}>
+                {r.photo ? (
+                  <a href={YANDEX_REVIEWS} target="_blank" rel="noopener noreferrer" aria-label={"Татуировка — отзыв " + r.name} style={{ display: "block", height: "100%", lineHeight: 0 }}>
+                    <img src={r.photo} alt={"Татуировка — отзыв " + r.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
+                  </a>
+                ) : (
+                  <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-base)", position: "relative" }}>
+                    <span style={{ fontFamily: "var(--font-display)", color: "var(--accent)", fontSize: "120px", lineHeight: 0.5, opacity: 0.5 }}>”</span>
+                    <span style={{ position: "absolute", bottom: "14px", fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--text-faint)" }}>Отзыв с Яндекса</span>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
