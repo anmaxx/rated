@@ -384,7 +384,7 @@ function Footer() {
           </div>
         </div>
         <div style={{ marginTop: "56px", paddingTop: "24px", borderTop: "1px solid var(--border-hair)", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", color: "var(--text-faint)", fontSize: "12px", letterSpacing: "0.04em" }}>
-          <span>© 2025 Тимур Тэд · Rated Tattoo</span>
+          <span>© 2026 Тимур Тэд · Rated Tattoo</span>
           <span>Москва · Tattoo &amp; Body</span>
         </div>
       </div>
