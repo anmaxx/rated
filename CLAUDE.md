@@ -40,7 +40,9 @@ This file is **generated**, not hand-authored. Its header comment (`@ds-bundle: 
 
 - **Page content / layout / new sections** → `sections.jsx`. Each `function X()` is one full-viewport panel (`Hero`, `About`, `Works`, `Services`, `Benefits`, `Testimonials`, `Faq`, `Cta`, `Footer`, plus `Header`, `DotNav`, `BookingModal`). Panels are wired together in the inline `App()` in `index.html`.
 - **Styling** → CSS custom properties in `tokens/`, aggregated by `styles.css` (an `@import` manifest, the only stylesheet `index.html` links). Files: `colors.css`, `typography.css`, `spacing.css`, `fonts.css`, `base.css`. Components and sections style almost exclusively via `var(--token)` inline styles — **change a design value at the token, not at the call site**.
-- Section-specific behavior (scroll-snap, film grain, marquee, entrance reveals, responsive breakpoints) lives in the inline `<style>` block in `index.html`, keyed off `rt-` class names (`rt-snap`, `rt-grain`, `rt-reveal`/`rt-in`, `rt-marquee`).
+- Section-specific behavior (scroll-snap, film grain, entrance reveals, responsive breakpoints) lives in the inline `<style>` block in `index.html`, keyed off `rt-` class names (`rt-snap`, `rt-grain`, `rt-reveal`/`rt-in`, `rt-reviews-grid`).
+- The **Works** gallery is a custom drag/arrow carousel driven by a `requestAnimationFrame` loop in `sections.jsx` (CSS `transform` + modulo for seamless infinite looping), **not** a CSS marquee.
+- The **booking form** (`BookingModal` in `sections.jsx`) submits to Formspree via the `FORMSPREE_ENDPOINT` constant. Change that constant to redirect where leads are delivered.
 
 ## Conventions and constraints
 
@@ -50,4 +52,6 @@ This file is **generated**, not hand-authored. Its header comment (`@ds-bundle: 
 
 ## Deployment
 
-`.github/workflows/static.yml` deploys the whole repo to GitHub Pages on push to **`master`** (the default branch), or manually via `workflow_dispatch`.
+`.github/workflows/static.yml` deploys the whole repo to GitHub Pages on push to **`master`** (the default branch), or manually via `workflow_dispatch`. The live site is **ratedtattoo.ru** (custom domain via the `CNAME` file).
+
+**`.nojekyll` (repo root) is required and must not be deleted.** GitHub Pages runs Jekyll by default, which ignores files starting with `_` — without `.nojekyll`, `_ds_bundle.js` returns 404 and the page renders blank.
