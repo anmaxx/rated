@@ -163,7 +163,7 @@ function About() {
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {gallery.map(([src, cap, pos]) => (
                 <figure key={cap} style={{ margin: 0, position: "relative", flex: 1, minHeight: 0, overflow: "hidden" }}>
-                  <img src={src} alt={cap} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: pos, display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
+                  <img src={src} alt={cap} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: pos, display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,10,12,0.72), rgba(10,10,12,0) 52%)", pointerEvents: "none" }}></div>
                   <figcaption style={{ position: "absolute", left: "11px", bottom: "9px", fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--bone)" }}>{cap}</figcaption>
                 </figure>
