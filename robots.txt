@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Служебные файлы репозитория — не страницы сайта
+Disallow: /CLAUDE.md
+Disallow: /CNAME
+Disallow: /.gitignore
+
+# styles.css, sections.jsx и _ds_bundle.js намеренно открыты:
+# без них поисковый робот не отрисует страницу и увидит пустой экран.
+
+Sitemap: https://ratedtattoo.ru/sitemap.xml

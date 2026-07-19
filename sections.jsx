@@ -142,7 +142,7 @@ function Header({ onBook }) {
     sc.addEventListener("scroll", onScroll);
     return () => sc.removeEventListener("scroll", onScroll);
   }, []);
-  const links = [["#about", "Мастер"], ["#works", "Работы"], ["#benefits", "Преимущества"], ["#faq", "Вопросы"]];
+  const links = [["#about", "Мастер"], ["#works", "Работы"], ["#process", "Процесс"], ["#benefits", "Преимущества"], ["#faq", "Вопросы"]];
   return (
     <header style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
@@ -604,6 +604,251 @@ function Works({ onBook }) {
   );
 }
 
+/* ---------------------------------------------------------------- Процесс */
+/* [id ролика в Cloud Video, название, категория, обложка, сек, ширина, высота] */
+const CLIPS = [
+  ["vplvrja4qp3ps3fonejk", "Змея", "процесс", "./assets/img/video/v01.webp", 22, 540, 960],
+  ["vplvxwh3dnpgcnqcxzrj", "Медведь", "процесс", "./assets/img/video/v02.webp", 12, 540, 960],
+  ["vplvp4tgzzga2un52nna", "Биомеханика", "процесс", "./assets/img/video/v03.webp", 28, 764, 960],
+  ["vplvhiavnn74sa3ad2hz", "Портрет", "процесс", "./assets/img/video/v04.webp", 33, 768, 960],
+  ["vplv63sw637q4xgtjwjc", "Гризли", "процесс", "./assets/img/video/v05.webp", 17, 540, 960],
+  ["vplvn7i2a6l6b2y3xzeq", "Цветной рукав", "процесс", "./assets/img/video/v06.webp", 23, 576, 720],
+  ["vplvxwfyyymbucdbuzn2", "It's alive !!!", "процесс", "./assets/img/video/v07.webp", 28, 576, 720],
+  ["vplvmsh2zy23inmeyaxv", "Скорпион", "процесс", "./assets/img/video/v08.webp", 36, 576, 720],
+  ["vplvovbcxpfwrrtqifjh", "Кинжал", "процесс", "./assets/img/video/v09.webp", 22, 576, 720],
+  ["vplveewfxat7z3sqekdv", "Тимур за работой", "процесс", "./assets/img/video/v10.webp", 23, 528, 960],
+  ["vplvql3ud6lpffedk4lj", "Персик", "процесс", "./assets/img/video/v11.webp", 32, 540, 960],
+  ["vplvuapkkbbpheyzvrbw", "Клоун", "процесс", "./assets/img/video/v12.webp", 22, 576, 720],
+  ["vplvxwcmg67sld53q7sz", "Взгляд", "процесс", "./assets/img/video/v13.webp", 17, 720, 720],
+  ["vplvrmu6ndlyfzpuizmj", "Череп в шлеме", "процесс", "./assets/img/video/v14.webp", 29, 576, 720],
+  ["vplvdepowfldj4muyxv4", "Lars", "процесс", "./assets/img/video/v15.webp", 37, 768, 960],
+  ["vplvnmmmdtnjf32tzesl", "Череп", "процесс", "./assets/img/video/v16.webp", 22, 540, 960],
+  ["vplv7dm2fazospgd5sjx", "Зверь", "процесс", "./assets/img/video/v17.webp", 16, 720, 720],
+  ["vplvy4urfrwgh2sps5sl", "Triangle", "финал", "./assets/img/video/v18.webp", 12, 540, 960],
+  ["vplv34slx5lve5p7j4tm", "Шаманка", "финал", "./assets/img/video/v19.webp", 14, 540, 960],
+  ["vplv2hpr4stl3yklrnuw", "Сова", "процесс", "./assets/img/video/v20.webp", 13, 560, 960],
+  ["vplvhsvigv4bgohwi45v", "Бабочки", "процесс", "./assets/img/video/v21.webp", 18, 540, 960],
+  ["vplvgq57pvyskz2gs2bb", "Via the End", "процесс", "./assets/img/video/v22.webp", 13, 540, 960],
+  ["vplvhsuvqkpjpl65bay7", "Харли — Джокер", "процесс", "./assets/img/video/v23.webp", 11, 540, 960],
+  ["vplv4i6vmqnttvts7epq", "Волк и птица", "финал", "./assets/img/video/v24.webp", 29, 1707, 960],
+];
+
+/* Пропорция сцены. В передаче было 16:10, но под неё подходит один ролик из 24 —
+   остальные вертикальные, их резало на 65%. 4:5 садится на основную массу, а что
+   не совпало, вписывается целиком: рамку добирает размытая обложка того же кадра. */
+const STAGE_AR = 0.8;
+const STAGE_H = "clamp(340px, 60vh, 600px)";
+
+/* Родной интерфейс плеера убран (hidden=*) — вся обвязка своя, как в макете.
+   mute=1 обязателен: без него браузеры не дают автозапуск. */
+const clipSrc = (id) =>
+  "https://runtime.video.cloud.yandex.net/player/video/" + id +
+  "?autoplay=1&mute=1&hidden=*&preload=false&background_color=0A0A0C";
+
+const mmss = (s) => {
+  s = Math.max(0, Math.floor(s || 0));
+  return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+};
+
+/* Кадр вписывается в сцену целиком: считаем его коробку внутри 4:5. */
+const clipBox = (w, h) => {
+  const a = w / h;
+  return a > STAGE_AR
+    ? { width: "100%", height: (STAGE_AR / a * 100).toFixed(3) + "%" }
+    : { width: (a / STAGE_AR * 100).toFixed(3) + "%", height: "100%" };
+};
+
+function Process() {
+  const [active, setActive] = React.useState(0);
+  const [playing, setPlaying] = React.useState(true);
+  const [progress, setProgress] = React.useState(0);
+  const [time, setTime] = React.useState("00:00");
+  const [live, setLive] = React.useState(false);   /* плеер создан только когда секция в кадре */
+  const [fade, setFade] = React.useState(false);
+  const frameRef = React.useRef(null);
+  const stageRef = React.useRef(null);
+  const listRef = React.useRef(null);
+  const durRef = React.useRef(0);
+  const activeRef = React.useRef(0);
+
+  const cur = CLIPS[active];
+  React.useEffect(() => { activeRef.current = active; }, [active]);
+
+  const send = (method, params) => {
+    const f = frameRef.current;
+    if (f && f.contentWindow) f.contentWindow.postMessage(Object.assign({ method: method }, params || {}), "*");
+  };
+
+  /* Плеер весит около 2 МБ, поэтому создаём его только когда секция доехала до экрана. */
+  React.useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => {
+        if (e.isIntersecting) setLive(true);
+        else if (live) send("pause");
+      });
+    }, { threshold: 0.25 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [live]);
+
+  /* События плеера приходят через postMessage — строкой JSON, а не объектом.
+     В примере из документации Яндекса разбора строки нет, и без него
+     event всегда undefined, а вся обвязка стоит на нулях. */
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      let d = e.data;
+      if (typeof d === "string") { try { d = JSON.parse(d); } catch (_) { return; } }
+      if (!d || !d.event) return;
+      if (d.duration) durRef.current = d.duration;
+      if (d.event === "timeupdate" || d.event === "started" || d.event === "resumed" || d.event === "rewound") {
+        setTime(mmss(d.time));
+        if (durRef.current) setProgress(Math.min(1, (d.time || 0) / durRef.current));
+        if (d.event !== "timeupdate") setPlaying(true);
+      } else if (d.event === "paused") {
+        setPlaying(false); setTime(mmss(d.time));
+      } else if (d.event === "ended") {
+        step((activeRef.current + 1) % CLIPS.length);
+      }
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
+  /* Активный пункт подтягиваем внутри списка вручную: scrollIntoView утянул бы
+     за собой и саму страницу. */
+  React.useEffect(() => {
+    const l = listRef.current;
+    if (!l) return;
+    const el = l.children[active];
+    if (!el) return;
+    const top = el.offsetTop - l.clientHeight / 2 + el.clientHeight / 2;
+    l.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  }, [active]);
+
+  const step = (i) => {
+    if (i === activeRef.current) return;
+    setFade(true);
+    setTimeout(() => {
+      setActive(i); setProgress(0); setTime("00:00"); durRef.current = CLIPS[i][4];
+      setFade(false);
+      send("updateSource", { id: CLIPS[i][0] });
+      send("play");
+      setPlaying(true);
+    }, 260);
+  };
+
+  const toggle = () => {
+    if (playing) { send("pause"); setPlaying(false); }
+    else { send("play"); setPlaying(true); }
+  };
+
+  const seek = (e) => {
+    e.stopPropagation();
+    const r = e.currentTarget.getBoundingClientRect();
+    const frac = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    const d = durRef.current || cur[4];
+    send("seek", { time: frac * d });
+    setProgress(frac);
+  };
+
+  const glass = { background: "rgba(10,10,12,.55)", backdropFilter: "blur(4px)" };
+
+  return (
+    <section id="process" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "96px 0" }}>
+      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto 34px", padding: "0 32px", width: "100%" }}>
+        <Kicker index="03" label="Процесс" />
+        <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Как это делается</h2>
+      </div>
+
+      <div className="rt-reveal" style={{ maxWidth: "1040px", margin: "0 auto", padding: "0 32px", width: "100%" }}>
+        <div className="rt-clip-grid" style={{ display: "grid", gridTemplateColumns: "auto 1fr", border: "1px solid var(--border-hair)", background: "var(--bg-base)" }}>
+
+          {/* Сцена */}
+          <div ref={stageRef} onClick={toggle} className="rt-clip-stage"
+            style={{ position: "relative", height: STAGE_H, width: "calc(" + STAGE_H + " * " + STAGE_AR + ")", overflow: "hidden", background: "var(--ink-800)", cursor: "pointer" }}>
+
+            {/* Размытая подложка — тот же кадр, чтобы поля не были пустыми */}
+            <div style={{ position: "absolute", inset: 0, backgroundImage: "url(" + cur[3] + ")", backgroundSize: "cover", backgroundPosition: "center", filter: "blur(26px) brightness(0.45) saturate(0.7)", transform: "scale(1.15)" }}></div>
+
+            <div style={{ position: "absolute", inset: 0, margin: "auto", opacity: fade ? 0 : 1, transition: "opacity .26s ease", ...clipBox(cur[5], cur[6]) }}>
+              {live ? (
+                <iframe ref={frameRef} title={cur[1]} src={clipSrc(cur[0])} frameBorder="0" scrolling="no"
+                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                  style={{ width: "100%", height: "100%", display: "block", border: 0, pointerEvents: "none" }}></iframe>
+              ) : (
+                <img src={cur[3]} alt={cur[1]} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              )}
+            </div>
+
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,10,12,.55), rgba(10,10,12,0) 45%)", pointerEvents: "none" }}></div>
+
+            <div style={{ position: "absolute", top: "18px", left: "18px", display: "flex", alignItems: "center", gap: "9px", fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.14em", color: "var(--bone)", padding: "7px 12px", pointerEvents: "none", ...glass }}>
+              <span className="rt-rec-dot" style={{ width: "7px", height: "7px", borderRadius: "50%", background: "var(--accent)" }}></span>
+              REC {String(active + 1).padStart(2, "0")} · {time} / {mmss(cur[4])}
+            </div>
+
+            <button type="button" onClick={(e) => { e.stopPropagation(); toggle(); }}
+              aria-label={playing ? "Пауза" : "Смотреть"}
+              className="rt-clip-btn"
+              style={{ position: "absolute", right: "18px", top: "18px", width: "38px", height: "38px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--bone)", fontSize: "12px", border: 0, cursor: "pointer", ...glass }}>
+              <i className={playing ? "fas fa-pause" : "fas fa-play"} aria-hidden="true"></i>
+            </button>
+
+            <div style={{ position: "absolute", left: "20px", right: "20px", bottom: "22px", pointerEvents: "none" }}>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "6px" }}>{cur[2]}</div>
+              <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(20px, 2.2vw, 30px)", fontWeight: 500, margin: 0, letterSpacing: "0.01em" }}>{cur[1]}</h3>
+            </div>
+
+            <div onClick={seek} role="slider" aria-label="Перемотка" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}
+              style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "14px", display: "flex", alignItems: "flex-end", cursor: "pointer" }}>
+              <div style={{ width: "100%", height: "3px", background: "rgba(236,231,223,0.12)", pointerEvents: "none" }}>
+                <div style={{ width: (progress * 100) + "%", height: "100%", background: "var(--accent)", transition: "width .2s linear" }}></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Плейлист */}
+          <div className="rt-clip-side" style={{ display: "flex", flexDirection: "column", borderLeft: "1px solid var(--border-hair)", height: STAGE_H, minWidth: 0 }}>
+            <div style={{ flexShrink: 0, padding: "20px 24px 13px", display: "flex", alignItems: "center", gap: "12px", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--text-muted)", borderBottom: "1px solid var(--border-hair)" }}>
+              <span style={{ color: "var(--accent)" }}>▶</span> Видео из студии
+              <span style={{ marginLeft: "auto", color: "var(--text-faint)", letterSpacing: "0.1em" }}>{CLIPS.length}</span>
+            </div>
+            {/* position: relative обязателен — от него берётся offsetTop пунктов,
+                иначе центрирование считает от чужого предка и промахивается. */}
+            <div ref={listRef} className="rt-clip-list" style={{ position: "relative", overflowY: "auto", flex: 1, minHeight: 0 }}>
+              {CLIPS.map((v, i) => {
+                const on = i === active;
+                return (
+                  <button key={v[0]} type="button" onClick={() => step(i)} aria-current={on ? "true" : undefined}
+                    className="rt-clip-item"
+                    style={{ position: "relative", width: "100%", display: "grid", gridTemplateColumns: "40px 1fr 24px", gap: "14px", alignItems: "center", textAlign: "left", padding: "14px 24px", background: on ? "rgba(236,231,223,0.04)" : "transparent", border: 0, borderBottom: "1px solid var(--border-hair)", borderLeft: on ? "2px solid var(--accent)" : "2px solid transparent", cursor: "pointer", transition: "background .25s, border-color .25s" }}>
+                    {on ? <span style={{ position: "absolute", left: 0, bottom: "-1px", height: "1px", width: (progress * 100) + "%", background: "var(--accent)", transition: "width .2s linear" }}></span> : null}
+                    <span style={{ fontFamily: "var(--font-display)", fontSize: "19px", fontWeight: 600, color: on ? "var(--accent)" : "var(--text-faint)", transition: "color .25s" }}>{String(i + 1).padStart(2, "0")}</span>
+                    <span style={{ minWidth: 0 }}>
+                      <span style={{ display: "block", fontFamily: "var(--font-display)", color: on ? "var(--bone)" : "var(--text-body)", textTransform: "uppercase", letterSpacing: "0.02em", fontSize: "16px", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", transition: "color .25s" }}>{v[1]}</span>
+                      <span style={{ display: "block", fontFamily: "var(--font-body)", color: "var(--text-faint)", fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "3px" }}>{v[2]} · {mmss(v[4])}</span>
+                    </span>
+                    <span style={{ color: on ? "var(--accent)" : "var(--text-faint)", fontSize: "12px", transition: "color .25s" }}>
+                      {on ? (
+                        <span className="rt-eq" style={{ display: "inline-flex", alignItems: "flex-end", gap: "2px", height: "14px" }}>
+                          <span style={{ height: "60%" }}></span><span style={{ height: "100%" }}></span><span style={{ height: "40%" }}></span>
+                        </span>
+                      ) : <i className="fas fa-play" aria-hidden="true"></i>}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* --------------------------------------------------------------- Services */
 const SERVICES = [
   ["Авторские татуировки", "Уникальные художественные работы по вашему эскизу или моему дизайну.", "fas fa-pen-nib"],
@@ -619,7 +864,7 @@ function Services({ onBook }) {
       <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "56px", flexWrap: "wrap", gap: "20px" }}>
           <div>
-            <Kicker index="03" label="Услуги" />
+            <Kicker index="04" label="Услуги" />
             <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Что я делаю</h2>
           </div>
           <Button variant="ghost" onClick={onBook} iconRight="fas fa-arrow-right">Рассчитать стоимость</Button>
@@ -656,7 +901,7 @@ function Benefits() {
     <section id="benefits" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
       <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ marginBottom: "48px" }}>
-          <Kicker index="04" label="Преимущества" />
+          <Kicker index="05" label="Преимущества" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0", maxWidth: "16ch" }}>Почему мне доверяют</h2>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1px", background: "var(--border-hair)", border: "1px solid var(--border-hair)" }} className="rt-benefits-grid">
@@ -700,7 +945,7 @@ function Testimonials() {
       <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px", marginBottom: "44px" }}>
           <div>
-            <Kicker index="05" label="Отзывы" />
+            <Kicker index="06" label="Отзывы" />
             <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Что говорят клиенты</h2>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "12px" }}>
@@ -758,7 +1003,7 @@ function Faq() {
     <section id="faq" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
       <div className="rt-reveal rt-faq-grid" style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 32px", width: "100%", display: "grid", gridTemplateColumns: "0.7fr 1.3fr", gap: "64px", alignItems: "start" }}>
         <div>
-          <Kicker index="06" label="FAQ" />
+          <Kicker index="07" label="FAQ" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(30px, 3.4vw, 46px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Частые вопросы</h2>
         </div>
         <Accordion items={FAQ} />
@@ -943,7 +1188,7 @@ function BookingModal({ open, onClose }) {
 
 /* --------------------------------------------------------------- Dot nav */
 function DotNav() {
-  const items = [["hero", "Главная"], ["about", "Мастер"], ["works", "Работы"], ["services", "Услуги"], ["benefits", "Преимущества"], ["reviews", "Отзывы"], ["faq", "Вопросы"], ["cta", "Запись"]];
+  const items = [["hero", "Главная"], ["about", "Мастер"], ["works", "Работы"], ["process", "Процесс"], ["services", "Услуги"], ["benefits", "Преимущества"], ["reviews", "Отзывы"], ["faq", "Вопросы"], ["cta", "Запись"]];
   const [active, setActive] = React.useState("hero");
   React.useEffect(() => {
     const io = new IntersectionObserver((entries) => {

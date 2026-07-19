@@ -93,6 +93,21 @@
   .rt-dot-label { opacity: 0; }
   .rt-dot:hover .rt-dot-label { opacity: 1 !important; transform: translateX(0) !important; color: var(--bone) !important; }
 
+  /* process: пульсирующая точка REC и эквалайзер активного пункта */
+  @keyframes rt-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @keyframes rt-eq { 0%, 100% { transform: scaleY(0.4); } 50% { transform: scaleY(1); } }
+  .rt-rec-dot { animation: rt-pulse 1.6s ease-in-out infinite; }
+  .rt-eq > span { width: 3px; background: var(--accent); transform-origin: bottom;
+                  animation: rt-eq 0.9s ease-in-out infinite; }
+  .rt-eq > span:nth-child(2) { animation-delay: .2s; }
+  .rt-eq > span:nth-child(3) { animation-delay: .4s; }
+  .rt-clip-item:hover { background: rgba(236, 231, 223, 0.025) !important; }
+  .rt-clip-item:focus-visible, .rt-clip-btn:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: -2px; }
+  /* полоса прокрутки плейлиста — тонкая, в тон */
+  .rt-clip-list { scrollbar-width: thin; scrollbar-color: var(--ink-600) transparent; }
+  .rt-clip-list::-webkit-scrollbar { width: 6px; }
+  .rt-clip-list::-webkit-scrollbar-thumb { background: var(--ink-600); }
+
   /* works: плитки и индекс стилей — кнопки, фокус должен быть виден */
   .rt-work-tile:focus-visible,
   .rt-work-styles button:focus-visible,
@@ -102,6 +117,7 @@
   @media (prefers-reduced-motion: reduce) {
     html { scroll-snap-type: none; }
     .rt-reveal { opacity: 1; transform: none; transition: none; }
+    .rt-rec-dot, .rt-eq > span { animation: none; }
   }
   @media (max-width: 1080px) {
     .rt-reviews-grid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -116,6 +132,11 @@
     .rt-footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
     .rt-svc-row { grid-template-columns: 48px 1fr 28px !important; }
     .rt-svc-desc { display: none !important; }
+    /* процесс: сцена во всю ширину, плейлист под ней */
+    .rt-clip-grid { grid-template-columns: 1fr !important; }
+    .rt-clip-stage { width: 100% !important; height: auto !important; aspect-ratio: 4 / 5; }
+    .rt-clip-side { border-left: none !important; border-top: 1px solid var(--border-hair);
+                    height: auto !important; max-height: 46vh; }
   }
   @media (max-width: 600px) {
     .rt-stats { grid-template-columns: 1fr 1fr !important; }
@@ -150,6 +171,7 @@
           <Hero onBook={book} />
           <About />
           <Works onBook={book} />
+          <Process />
           <Services onBook={book} />
           <Benefits />
           <Testimonials />

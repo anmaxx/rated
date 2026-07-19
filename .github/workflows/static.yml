@@ -31,6 +31,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      # CLAUDE.md — инструкция для разработки, а не страница сайта.
+      # Поисковики индексировали её как страницу без description.
+      - name: Drop dev-only files
+        run: rm -f CLAUDE.md
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
