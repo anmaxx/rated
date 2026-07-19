@@ -8,32 +8,119 @@ const { Button, StarRating, Input, Accordion } = NS;
 const LOGO = "./assets/logos/rated-logo-white.png";
 const MAXW = "1240px";
 
+/* [путь, название, стиль, пропорция кадра ш/в]
+   Пропорция снята с исходников — плитки в ленте строятся по ней, чтобы
+   работы не обрезались под общий бокс. */
 const WORKS = [
-  ["./assets/img/work-wolf.jpg", "Реалистичный волк", "реализм"],
-  ["./assets/img/work-angel-sleeve.jpg", "Ангел · рукав", "реализм"],
-  ["./assets/img/work-geisha.jpg", "Гейша", "ориентал"],
-  ["./assets/img/work-mandala.jpg", "Геометрический орнамент", "орнамент"],
-  ["./assets/img/work-oni-mask.jpg", "Маска они", "ориентал"],
-  ["./assets/img/work-gaze.jpg", "Взгляд", "реализм"],
-  ["./assets/img/work-warrior.jpg", "Северный воин", "реализм"],
-  ["./assets/img/work-rat.jpg", "Уголовное дело", "нео-традишн"],
-  ["./assets/img/work-catrina.jpg", "Катрина", "реализм"],
-  ["./assets/img/work-bear-realism.webp", "Медведь — угроза", "реализм"],
-  ["./assets/img/work-hourglass.jpg", "Песочные часы", "трэш-полька"],
-  ["./assets/img/work-samurai.jpg", "Самурай", "ориентал"],
-  ["./assets/img/work-girl-rose.jpg", "Девушка с розой", "реализм"],
-  ["./assets/img/work-sphinx.webp", "Сфинкс", "графика"],
-  ["./assets/img/work-robber.jpg", "Налётчик", "чикано"],
-  ["./assets/img/work-sphynx-cat.jpg", "Кот сфинкс", "реализм"],
-  ["./assets/img/work-tiger-sleeve.jpg", "Тигриный рукав", "реализм"],
-  ["./assets/img/work-clown.jpg", "Клоун", "хоррор"],
-  ["./assets/img/work-chief.jpg", "Вождь", "реализм"],
-  ["./assets/img/work-bear-graphic.jpg", "Графический медведь", "графика"],
-  ["./assets/img/work-portrait-peony.jpg", "Портрет с пионами", "реализм"],
-  ["./assets/img/work-eagle-clock.jpg", "Орёл и время", "реализм"],
-  ["./assets/img/work-eye.jpg", "Реалистичный глаз", "реализм"],
-  ["./assets/img/work-lips.webp", "Перманентный татуаж", "татуаж"],
+  ["./assets/img/work-wolf.jpg", "Реалистичный волк", "реализм", 0.706],
+  ["./assets/img/work-angel-sleeve.jpg", "Ангел · рукав", "реализм", 0.869],
+  ["./assets/img/work-geisha.jpg", "Гейша", "ориентал", 0.644],
+  ["./assets/img/work-mandala.jpg", "Геометрический орнамент", "орнамент", 0.664],
+  ["./assets/img/work-oni-mask.jpg", "Маска они", "ориентал", 0.547],
+  ["./assets/img/work-gaze.jpg", "Взгляд", "реализм", 0.989],
+  ["./assets/img/work-warrior.jpg", "Северный воин", "реализм", 0.750],
+  ["./assets/img/work-rat.jpg", "Уголовное дело", "нео-традишн", 0.750],
+  ["./assets/img/work-catrina.jpg", "Катрина", "реализм", 0.750],
+  ["./assets/img/work-bear-realism.webp", "Медведь — угроза", "реализм", 0.750],
+  ["./assets/img/work-hourglass.jpg", "Песочные часы", "трэш-полька", 0.562],
+  ["./assets/img/work-samurai.jpg", "Самурай", "ориентал", 0.799],
+  ["./assets/img/work-girl-rose.jpg", "Девушка с розой", "реализм", 0.750],
+  ["./assets/img/work-sphinx.webp", "Сфинкс", "графика", 0.715],
+  ["./assets/img/work-robber.jpg", "Налётчик", "чикано", 0.592],
+  ["./assets/img/work-sphynx-cat.jpg", "Кот сфинкс", "реализм", 0.664],
+  ["./assets/img/work-tiger-sleeve.jpg", "Тигриный рукав", "реализм", 0.712],
+  ["./assets/img/work-clown.jpg", "Клоун", "хоррор", 0.924],
+  ["./assets/img/work-chief.jpg", "Вождь", "реализм", 0.776],
+  ["./assets/img/work-bear-graphic.jpg", "Графический медведь", "графика", 0.722],
+  ["./assets/img/work-portrait-peony.jpg", "Портрет с пионами", "реализм", 0.562],
+  ["./assets/img/work-eagle-clock.jpg", "Орёл и время", "реализм", 0.750],
+  ["./assets/img/work-eye.jpg", "Реалистичный глаз", "реализм", 0.750],
+  ["./assets/img/work-lips.webp", "Перманентный татуаж", "татуаж", 1.810],
+  ["./assets/img/work-samurai-armor.webp", "Самурай в доспехах", "реализм", 0.8],
+  ["./assets/img/work-chief-feathers.webp", "Вождь в уборе", "реализм", 0.776],
+  ["./assets/img/work-peonies-hip.webp", "Пионы", "графика", 0.671],
+  ["./assets/img/work-dynamite.webp", "Динамит", "нео-традишн", 0.692],
+  ["./assets/img/work-mandala-sternum.webp", "Мандала под грудью", "орнамент", 1.385],
+  ["./assets/img/work-girl-city.webp", "Девушка и город", "реализм", 0.625],
+  ["./assets/img/work-girl-revolver.webp", "Девушка с револьвером", "реализм", 0.694],
+  ["./assets/img/work-samurai-sakura.webp", "Самурай и сакура", "ориентал", 0.664],
+  ["./assets/img/work-antique-statue.webp", "Античная статуя", "реализм", 0.715],
+  ["./assets/img/work-mountain-geometry.webp", "Гора и геометрия", "графика", 0.664],
+  ["./assets/img/work-peony-pattern.webp", "Пионовый узор", "графика", 0.664],
+  ["./assets/img/work-lizard.webp", "Ящерица", "графика", 0.696],
+  ["./assets/img/work-elephant.webp", "Слон", "графика", 1.505],
+  ["./assets/img/work-wolf-girl.webp", "Девушка-волчица", "реализм", 0.671],
+  ["./assets/img/work-gorillas.webp", "Гориллы", "реализм", 0.97],
+  ["./assets/img/work-girl-lilies.webp", "Девушка с лилиями", "реализм", 0.644],
+  ["./assets/img/work-snake-color.webp", "Змея", "нео-традишн", 0.75],
+  ["./assets/img/work-bear-roar.webp", "Медведь", "реализм", 0.75],
+  ["./assets/img/work-jester.webp", "Шут", "нео-традишн", 0.827],
+  ["./assets/img/work-centurion.webp", "Центурион", "реализм", 0.601],
+  ["./assets/img/work-anubis-graphic.webp", "Анубис", "графика", 0.75],
+  ["./assets/img/work-scorpion.webp", "Скорпион", "графика", 0.75],
+  ["./assets/img/work-girl-roses.webp", "Девушка в розах", "реализм", 0.75],
+  ["./assets/img/work-tiger-lotus.webp", "Тигр и лотос", "ориентал", 0.681],
+  ["./assets/img/work-anubis-mech.webp", "Анубис и механизм", "реализм", 0.684],
+  ["./assets/img/work-harley.webp", "Харли Квинн", "нео-традишн", 0.75],
+  ["./assets/img/work-hourglass-skull.webp", "Часы и череп", "нео-традишн", 0.671],
+  ["./assets/img/work-fox-cat.webp", "Лиса и кошка", "нео-традишн", 0.692],
+  ["./assets/img/work-bird-peach.webp", "Птица и персик", "нео-традишн", 0.545],
+  ["./assets/img/work-matryoshka-gzhel.webp", "Матрёшка «Свои»", "нео-традишн", 0.818],
+  ["./assets/img/work-deer-compass.webp", "Северный олень", "реализм", 0.75],
+  ["./assets/img/work-portrait-rose.webp", "Портрет с розой", "реализм", 1.005],
+  ["./assets/img/work-koi-set.webp", "Карпы кои", "ориентал", 1.691],
+  ["./assets/img/work-girl-blue-hair.webp", "Девушка с синими волосами", "реализм", 0.691],
+  ["./assets/img/work-grizzly.webp", "Медведь-гризли", "реализм", 0.819],
+  ["./assets/img/work-fire-sleeve.webp", "Огненный рукав", "ориентал", 1.114],
+  ["./assets/img/work-skulls-roses.webp", "Черепа и розы", "реализм", 1.108],
+  ["./assets/img/work-warrior-wolf.webp", "Воин и волк", "реализм", 0.75],
+  ["./assets/img/work-paws-lettering.webp", "Лапы и надпись", "графика", 1.333],
+  ["./assets/img/work-koi-lotus.webp", "Кои и лотос", "ориентал", 0.722],
+  ["./assets/img/work-crowned-skulls.webp", "Коронованные черепа", "реализм", 1.0],
+  ["./assets/img/work-samurai-mask.webp", "Самурай в маске", "реализм", 0.705],
+  ["./assets/img/work-feet-ornament.webp", "Орнамент на стопах", "орнамент", 1.0],
+  ["./assets/img/work-dark-portrait.webp", "Тёмный портрет", "реализм", 0.799],
+  ["./assets/img/work-lion-egypt.webp", "Лев", "графика", 0.722],
+  ["./assets/img/work-raccoon.webp", "Енот", "нео-традишн", 0.722],
+  ["./assets/img/work-bear-shadow.webp", "Медведь в тени", "реализм", 0.585],
+  ["./assets/img/work-skull-spider.webp", "Череп и паук", "реализм", 0.586],
+  ["./assets/img/work-japan-landscape.webp", "Японский пейзаж", "ориентал", 0.505],
+  ["./assets/img/work-roses-color.webp", "Розы", "реализм", 0.676],
+  ["./assets/img/work-armor.webp", "Доспехи", "реализм", 0.739],
+  ["./assets/img/work-lion-crown.webp", "Лев в короне", "реализм", 0.695],
+  ["./assets/img/work-warrior-statue.webp", "Статуя воина", "реализм", 0.783],
+  ["./assets/img/work-geisha-smoke.webp", "Гейша в дыму", "реализм", 0.724],
+  ["./assets/img/work-gunslinger.webp", "Стрелок", "реализм", 0.729],
+  ["./assets/img/work-cat-geometry.webp", "Кот-геометрия", "графика", 0.722],
+  ["./assets/img/work-roses-bird.webp", "Розы и птица", "реализм", 1.415],
+  ["./assets/img/work-matryoshka-color.webp", "Матрёшка в цветах", "нео-традишн", 0.714],
+  ["./assets/img/work-buddha.webp", "Будда", "ориентал", 0.707],
+  ["./assets/img/work-portrait-flowers.webp", "Портрет в цветах", "реализм", 0.666],
+  ["./assets/img/work-vampiress.webp", "Вампирша", "хоррор", 0.714],
+  ["./assets/img/work-girl-roses-2.webp", "Девушка и розы", "реализм", 0.664],
+  ["./assets/img/work-viking.webp", "Викинг", "реализм", 0.857],
+  ["./assets/img/work-crying-girl.webp", "Плачущая", "реализм", 0.667],
+  ["./assets/img/work-music-soul.webp", "Music of my soul", "трэш-полька", 1.154],
+  ["./assets/img/work-snake-roses.webp", "Змея и розы", "графика", 0.669],
+  ["./assets/img/work-capricorn.webp", "Козерог", "графика", 1.025],
+  ["./assets/img/work-fox-trash.webp", "Лиса", "трэш-полька", 0.722],
+  ["./assets/img/work-dreamcatcher.webp", "Ловец снов", "орнамент", 0.707],
+  ["./assets/img/work-girl-ornament.webp", "Девушка в орнаменте", "реализм", 0.722],
+  ["./assets/img/work-wolf-flag.webp", "Волк и флаг", "графика", 0.722],
+  ["./assets/img/work-sculptor.webp", "Скульптор", "реализм", 0.722],
+  ["./assets/img/work-mandala-underbust.webp", "Мандала", "орнамент", 1.385],
+  ["./assets/img/work-lotus.webp", "Лотос", "графика", 0.722],
 ];
+
+/* Стили в порядке первого появления — служат индексом ленты. */
+const WORK_STYLES = WORKS.map((w) => w[2]).filter((s, i, a) => a.indexOf(s) === i);
+
+/* Высота плитки одна на всю ленту; ширина — производная от пропорции.
+   Крайние пропорции подрезаем, чтобы одна работа не заняла весь экран. */
+const TILE_H = "clamp(320px, 38vw, 480px)";
+const tileRatio = (r) => Math.min(1.35, Math.max(0.52, r));
+/* Порог, за которым нажатие считается протяжкой, а не кликом по работе. */
+const DRAG_SLOP = 8;
 
 /* ---------------------------------------------------------------- helpers */
 function Kicker({ index, label, color }) {
@@ -212,16 +299,85 @@ function About() {
   );
 }
 
-/* ------------------------------------------------------- Works (marquee) */
-function WorkTile({ w }) {
+/* ------------------------------------------------------- Works (карусель) */
+/* clone — второй проход ленты, нужный только для бесшовной прокрутки.
+   Он скрыт от скринридера и выключен из таб-порядка, иначе каждая работа
+   объявляется и обходится дважды. */
+function WorkTile({ w, onOpen, onFocus, clone }) {
   const [hover, setHover] = React.useState(false);
   return (
-    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ position: "relative", flexShrink: 0, width: "clamp(248px, 27vw, 348px)", height: "clamp(330px, 40vw, 500px)", margin: "0 8px", overflow: "hidden", background: "var(--ink-800)" }}>
-      <img src={w[0]} alt={w[1]} loading="lazy" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", userSelect: "none", pointerEvents: "none", filter: "grayscale(0.5) contrast(1.06)", transform: hover ? "scale(1.06)" : "scale(1)", transition: "transform .7s var(--ease-out), filter .4s" }} />
-      <div style={{ position: "absolute", inset: 0, background: "var(--scrim-hover)", opacity: hover ? 1 : 0.5, transition: "opacity .35s" }}></div>
-      <div style={{ position: "absolute", top: "14px", left: "14px", fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--bone)", background: "rgba(10,10,12,.5)", padding: "5px 9px", backdropFilter: "blur(4px)" }}>{w[2]}</div>
-      <h3 style={{ position: "absolute", left: "16px", right: "16px", bottom: "16px", fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.01em", fontSize: "18px", fontWeight: 500, margin: 0, transform: hover ? "translateY(0)" : "translateY(6px)", opacity: hover ? 1 : 0.9, transition: "all .35s" }}>{w[1]}</h3>
+    <button type="button" className="rt-work-tile"
+      onClick={onOpen} onFocus={onFocus}
+      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      aria-hidden={clone ? "true" : undefined} tabIndex={clone ? -1 : undefined}
+      aria-label={w[1] + " — " + w[2] + ". Открыть крупно"}
+      style={{ position: "relative", flexShrink: 0, height: TILE_H, width: "calc(" + TILE_H + " * " + tileRatio(w[3]) + ")", margin: "0 5px", overflow: "hidden", background: "var(--ink-800)", padding: 0, border: 0, display: "block", cursor: "pointer" }}>
+      {/* src проставляет цикл ленты, когда плитка подходит к экрану — см. sweep().
+          Штатный loading="lazy" здесь не работает: React вставляет плитки после
+          отрисовки, и Chrome успевает счесть их близкими к экрану. */}
+      <img data-src={w[0]} alt={w[1] + " — " + w[2]} draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", userSelect: "none", pointerEvents: "none", filter: "grayscale(0.5) contrast(1.06)", transform: hover ? "scale(1.06)" : "scale(1)", transition: "transform .7s var(--ease-out), filter .4s" }} />
+      {/* Заливка держит читаемость подписи и на светлых кадрах — плашки под текстом нет. */}
+      <div style={{ position: "absolute", inset: 0, background: "var(--scrim-hover)", opacity: hover ? 1 : 0.82, transition: "opacity .35s" }}></div>
+      <div style={{ position: "absolute", left: "16px", right: "16px", bottom: "16px", textAlign: "left", transform: hover ? "translateY(0)" : "translateY(6px)", opacity: hover ? 1 : 0.9, transition: "all .35s" }}>
+        <div style={{ fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "6px" }}>{w[2]}</div>
+        <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.01em", fontSize: "18px", fontWeight: 500, margin: 0 }}>{w[1]}</h3>
+      </div>
+    </button>
+  );
+}
+
+/* Просмотр работы крупно: Esc — закрыть, ←/→ — соседние работы. */
+function WorkLightbox({ index, onClose, onStep }) {
+  const closeRef = React.useRef(null);
+  const open = index >= 0;
+
+  React.useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    if (closeRef.current) closeRef.current.focus();
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+      else if (e.key === "ArrowRight") { e.preventDefault(); onStep(1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); onStep(-1); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose, onStep]);
+
+  if (!open) return null;
+  const w = WORKS[index];
+  const nav = { width: "50px", height: "50px", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "rgba(10,10,12,.55)", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "15px", flexShrink: 0 };
+
+  return (
+    <div role="dialog" aria-modal="true" aria-label={"Работа: " + w[1]} onClick={onClose}
+      style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.92)", backdropFilter: "blur(6px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px", padding: "20px" }}>
+      <button ref={closeRef} type="button" aria-label="Закрыть просмотр" onClick={onClose}
+        style={{ position: "absolute", top: "20px", right: "20px", width: "50px", height: "50px", background: "transparent", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "16px" }}>
+        <i className="fas fa-xmark" aria-hidden="true"></i>
+      </button>
+
+      <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 3vw, 28px)", maxWidth: "100%" }}>
+        <button type="button" aria-label="Предыдущая работа" onClick={() => onStep(-1)} style={nav} className="rt-lb-nav">
+          <i className="fas fa-arrow-left" aria-hidden="true"></i>
+        </button>
+        <img src={w[0]} alt={w[1] + " — " + w[2]}
+          style={{ maxHeight: "72vh", maxWidth: "min(1100px, 78vw)", objectFit: "contain", display: "block", border: "1px solid var(--border-hair)" }} />
+        <button type="button" aria-label="Следующая работа" onClick={() => onStep(1)} style={nav} className="rt-lb-nav">
+          <i className="fas fa-arrow-right" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
+        <div style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "8px" }}>{w[2]}</div>
+        <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(20px, 2.4vw, 28px)", fontWeight: 500, margin: 0, letterSpacing: "0.01em" }}>{w[1]}</h3>
+        <div style={{ fontFamily: "var(--font-body)", fontSize: "12px", letterSpacing: "0.14em", color: "var(--text-muted)", marginTop: "10px" }}>
+          {index + 1} / {WORKS.length}
+        </div>
+      </div>
     </div>
   );
 }
@@ -230,40 +386,169 @@ function Works({ onBook }) {
   const items = [...WORKS, ...WORKS];
   const wrapRef = React.useRef(null);
   const trackRef = React.useRef(null);
-  const progRef = React.useRef(null);
-  const S = React.useRef({ offset: 0, setW: 1, paused: false, dragging: false, lastX: 0, tween: 0 });
+  const [style, setStyle] = React.useState(WORK_STYLES[0]);
+  const [shot, setShot] = React.useState(-1);   /* индекс работы в просмотре */
+
+  const S = React.useRef({
+    offset: 0, setW: 1, paused: false, dragging: false,
+    lastX: 0, lastT: 0, tween: 0, vel: 0, moved: 0, geo: [], mid: -1,
+  });
 
   React.useEffect(() => {
     const track = trackRef.current;
-    const measure = () => { S.current.setW = Math.max(1, track.scrollWidth / 2); };
+    const wrap = wrapRef.current;
+    /* Геометрия первого набора — по ней ищем работу в центре кадра. */
+    const measure = () => {
+      const s = S.current;
+      s.setW = Math.max(1, track.scrollWidth / 2);
+      s.geo = Array.prototype.slice.call(track.children, 0, WORKS.length)
+        .map((el) => ({ left: el.offsetLeft, w: el.offsetWidth }));
+    };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(track);
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /* Подгрузка кадров: src получают только плитки, подошедшие к экрану на
+       PRELOAD пикселей. Позиции считаем из geo и offset, без чтения DOM —
+       196 замеров на кадр стоили бы дороже самой ленты. Раз в 10 кадров хватает:
+       при 34 px/s запас в экран шириной вырабатывается минуты за полторы. */
+    const PRELOAD = 1200;
+    let tick = 0;
+    const sweep = () => {
+      const s = S.current;
+      if (!s.geo.length) return;
+      const view = wrap.clientWidth;
+      const kids = track.children;
+      for (let k = 0; k < kids.length; k++) {
+        const img = kids[k].firstElementChild;
+        if (!img || !img.dataset.src) continue;
+        const g = s.geo[k % WORKS.length];
+        const left = g.left + (k >= WORKS.length ? s.setW : 0) - s.offset;
+        if (left < view + PRELOAD && left + g.w > -PRELOAD) {
+          img.src = img.dataset.src;
+          delete img.dataset.src;
+        }
+      }
+    };
+
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let raf, last = performance.now();
     const loop = (now) => {
       const s = S.current;
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
-      if (Math.abs(s.tween) > 0.5) {
-        const step = s.tween * Math.min(1, dt * 7);
-        s.offset += step; s.tween -= step;
+
+      if (s.dragging) {
+        /* offset двигает обработчик move */
+      } else if (Math.abs(s.tween) > 0.5) {
+        const step = s.tween * Math.min(1, dt * 6);
+        s.offset += step; s.tween -= step; s.vel = 0;
+      } else if (Math.abs(s.vel) > 12) {
+        s.offset += s.vel * dt;              /* выбег после броска */
+        s.vel *= Math.pow(0.06, dt);
       } else {
-        s.tween = 0;
-        if (!s.paused && !s.dragging && !reduce) s.offset += 34 * dt;
+        s.tween = 0; s.vel = 0;
+        if (!s.paused && !motion.matches) s.offset += 34 * dt;
       }
+
       s.offset = ((s.offset % s.setW) + s.setW) % s.setW;
       track.style.transform = "translate3d(" + (-s.offset) + "px,0,0)";
-      if (progRef.current) progRef.current.style.left = ((s.offset / s.setW) * 82) + "%";
+
+      /* Стиль работы, попавшей в центр кадра, ведёт индекс под лентой. */
+      if (s.geo.length) {
+        const focus = (s.offset + wrap.clientWidth / 2) % s.setW;
+        let i = s.geo.length - 1;
+        for (let k = 0; k < s.geo.length; k++) {
+          if (focus >= s.geo[k].left && focus < s.geo[k].left + s.geo[k].w) { i = k; break; }
+        }
+        if (i !== s.mid) { s.mid = i; setStyle(WORKS[i][2]); }
+      }
+      if (tick++ % 10 === 0) sweep();
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
   }, []);
 
-  const nudge = (dir) => { S.current.tween += dir * ((wrapRef.current ? wrapRef.current.clientWidth : 600) * 0.6); };
-  const down = (e) => { const s = S.current; s.dragging = true; s.lastX = e.clientX; s.tween = 0; wrapRef.current.style.cursor = "grabbing"; if (wrapRef.current.setPointerCapture) wrapRef.current.setPointerCapture(e.pointerId); };
-  const move = (e) => { const s = S.current; if (!s.dragging) return; s.offset -= (e.clientX - s.lastX); s.lastX = e.clientX; };
-  const up = (e) => { const s = S.current; if (!s.dragging) return; s.dragging = false; wrapRef.current.style.cursor = "grab"; try { wrapRef.current.releasePointerCapture(e.pointerId); } catch (_) {} };
+  /* Горизонтальный трекпад листает ленту; вертикаль оставляем скроллу страницы. */
+  React.useEffect(() => {
+    const wrap = wrapRef.current;
+    const onWheel = (e) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      const s = S.current;
+      s.offset += e.deltaX; s.tween = 0; s.vel = 0;
+    };
+    wrap.addEventListener("wheel", onWheel, { passive: false });
+
+    /* Контейнер с overflow:hidden всё равно прокручивается программно, и браузер
+       делает это сам, подтягивая элемент под фокусом. Позицию ленты держит
+       transform, поэтому чужую прокрутку возвращаем в ноль — иначе смещения
+       складываются и плитка уезжает за кадр. */
+    const unscroll = () => { if (wrap.scrollLeft !== 0) wrap.scrollLeft = 0; };
+    wrap.addEventListener("scroll", unscroll);
+
+    return () => { wrap.removeEventListener("wheel", onWheel); wrap.removeEventListener("scroll", unscroll); };
+  }, []);
+
+  React.useEffect(() => { S.current.paused = shot >= 0; }, [shot]);
+
+  /* Подводит работу i к центру кадра кратчайшим путём по кольцу. */
+  const glideTo = (i) => {
+    const s = S.current;
+    const g = s.geo[i];
+    if (!g || !wrapRef.current) return;
+    const target = g.left + g.w / 2 - wrapRef.current.clientWidth / 2;
+    let d = ((target - s.offset) % s.setW + s.setW) % s.setW;
+    if (d > s.setW / 2) d -= s.setW;
+    s.tween = d; s.vel = 0;
+  };
+
+  /* Показ работы, получившей фокус с клавиатуры. Целимся к левому краю, а не
+     к центру: так offset остаётся в [0, setW), и видимой оказывается именно та
+     плитка, на которой фокус, а не её двойник из второго прохода. */
+  const glideIntoView = (i) => {
+    const s = S.current;
+    const g = s.geo[i];
+    const wrap = wrapRef.current;
+    if (!g || !wrap) return;
+    const x = g.left - s.offset;
+    if (x >= 0 && x + g.w <= wrap.clientWidth) return;   /* уже на виду */
+    s.tween = Math.max(0, g.left - 24) - s.offset;
+    s.vel = 0;
+  };
+
+  const nudge = (dir) => { const s = S.current; s.tween += dir * (wrapRef.current ? wrapRef.current.clientWidth : 600) * 0.6; s.vel = 0; };
+  const step = (d) => setShot((i) => (i + d + WORKS.length) % WORKS.length);
+  /* detail === 0 — нажатие с клавиатуры: там протяжки не было и порог не применим. */
+  const open = (i, e) => { if ((e && e.detail === 0) || S.current.moved < DRAG_SLOP) setShot(i % WORKS.length); };
+
+  const down = (e) => {
+    const s = S.current;
+    s.dragging = true; s.lastX = e.clientX; s.lastT = performance.now();
+    s.tween = 0; s.vel = 0; s.moved = 0; s.held = false;
+    wrapRef.current.style.cursor = "grabbing";
+  };
+  const move = (e) => {
+    const s = S.current;
+    if (!s.dragging) return;
+    const dx = e.clientX - s.lastX;
+    const now = performance.now();
+    const dt = Math.max(8, now - s.lastT) / 1000;
+    s.offset -= dx; s.moved += Math.abs(dx);
+    s.vel = s.vel * 0.7 + (-dx / dt) * 0.3;
+    s.lastX = e.clientX; s.lastT = now;
+    /* Захват включаем только после порога: иначе click уходит обёртке, а не плитке. */
+    if (!s.held && s.moved >= DRAG_SLOP && wrapRef.current.setPointerCapture) {
+      try { wrapRef.current.setPointerCapture(e.pointerId); s.held = true; } catch (_) {}
+    }
+  };
+  const up = (e) => {
+    const s = S.current;
+    if (!s.dragging) return;
+    s.dragging = false;
+    wrapRef.current.style.cursor = "grab";
+    if (s.held) { try { wrapRef.current.releasePointerCapture(e.pointerId); } catch (_) {} s.held = false; }
+  };
 
   const ctrl = { width: "46px", height: "46px", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "transparent", color: "var(--text-body)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "14px", transition: "all .2s" };
   const ctrlOn = (e) => { e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--white)"; };
@@ -283,19 +568,38 @@ function Works({ onBook }) {
           <Button variant="ghost" onClick={onBook} iconRight="fas fa-arrow-right">Записаться на сеанс</Button>
         </div>
       </div>
-      <div ref={wrapRef} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+
+      <div ref={wrapRef} role="group" aria-label="Лента работ"
+        onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
         onMouseEnter={() => { S.current.paused = true; }} onMouseLeave={() => { S.current.paused = false; }}
+        onFocusCapture={() => { S.current.paused = true; }} onBlurCapture={() => { S.current.paused = shot >= 0; }}
         style={{ overflow: "hidden", cursor: "grab", touchAction: "pan-y", userSelect: "none" }}>
         <div ref={trackRef} style={{ display: "flex", width: "max-content", willChange: "transform" }}>
-          {items.map((w, i) => <WorkTile key={i} w={w} />)}
+          {items.map((w, i) => (
+            <WorkTile key={i} w={w} clone={i >= WORKS.length}
+              onOpen={(e) => open(i, e)}
+              onFocus={() => glideIntoView(i % WORKS.length)} />
+          ))}
         </div>
       </div>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "30px auto 0", padding: "0 32px", width: "100%", display: "flex", alignItems: "center", gap: "16px" }}>
-        <div style={{ position: "relative", flex: 1, height: "2px", background: "var(--border-hair)", overflow: "hidden" }}>
-          <div ref={progRef} style={{ position: "absolute", top: 0, left: 0, height: "2px", width: "18%", background: "var(--accent)" }}></div>
-        </div>
-        <span style={{ fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--text-faint)", whiteSpace: "nowrap" }}>Потяните или листайте&nbsp;→</span>
+
+      {/* Индекс стилей: подсвечен стиль работы в центре, клик — переход к ней. */}
+      <div className="rt-reveal rt-work-styles" style={{ maxWidth: MAXW, margin: "28px auto 0", padding: "0 32px", width: "100%", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 22px" }}>
+        {WORK_STYLES.map((s) => {
+          const on = s === style;
+          return (
+            /* Подчёркивание живёт на внутреннем span, поэтому кнопке можно
+               задать крупную область нажатия, не отрывая линию от текста. */
+            <button key={s} type="button" onClick={() => glideTo(WORKS.findIndex((w) => w[2] === s))}
+              aria-current={on ? "true" : undefined}
+              style={{ background: "none", border: 0, padding: "13px 0", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: on ? "var(--bone)" : "var(--text-muted)", transition: "color .25s" }}>
+              <span style={{ display: "inline-block", paddingBottom: "4px", borderBottom: "1px solid " + (on ? "var(--accent)" : "transparent"), transition: "border-color .25s" }}>{s}</span>
+            </button>
+          );
+        })}
       </div>
+
+      <WorkLightbox index={shot} onClose={() => setShot(-1)} onStep={step} />
     </section>
   );
 }

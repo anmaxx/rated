@@ -93,6 +93,12 @@
   .rt-dot-label { opacity: 0; }
   .rt-dot:hover .rt-dot-label { opacity: 1 !important; transform: translateX(0) !important; color: var(--bone) !important; }
 
+  /* works: плитки и индекс стилей — кнопки, фокус должен быть виден */
+  .rt-work-tile:focus-visible,
+  .rt-work-styles button:focus-visible,
+  .rt-lb-nav:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 3px; }
+  .rt-lb-nav:hover { background: var(--accent) !important; border-color: var(--accent) !important; }
+
   @media (prefers-reduced-motion: reduce) {
     html { scroll-snap-type: none; }
     .rt-reveal { opacity: 1; transform: none; transition: none; }
