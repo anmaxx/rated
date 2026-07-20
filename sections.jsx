@@ -123,6 +123,16 @@ const tileRatio = (r) => Math.min(1.35, Math.max(0.52, r));
 /* Порог, за которым нажатие считается протяжкой, а не кликом по работе. */
 const DRAG_SLOP = 8;
 
+/* Слот-машина: клик по стилю разгоняет ленту, перестановка происходит на пике
+   скорости — плитки в этот момент смазаны, и подмена содержимого не читается,
+   — затем лента тормозит и встаёт первой работой стиля точно по центру.
+   SPIN_DIST выведен из производной easeOutCubic в нуле (3·dist/dur): при таком
+   пути торможение начинается ровно с SPIN_VMAX, без рывка на стыке фаз. */
+const SPIN_UP = 0.24;      /* с — разгон */
+const SPIN_DOWN = 1.1;     /* с — торможение */
+const SPIN_VMAX = 5000;    /* px/s — пик, ~14 плиток в секунду */
+const SPIN_DIST = SPIN_VMAX * SPIN_DOWN / 3;
+
 /* ---------------------------------------------------------------- helpers */
 function Kicker({ index, label, color }) {
   return (
@@ -328,7 +338,7 @@ function WorkTile({ w, onOpen, onFocus, clone }) {
 }
 
 /* Просмотр работы крупно: Esc — закрыть, ←/→ — соседние работы. */
-function WorkLightbox({ index, onClose, onStep }) {
+function WorkLightbox({ index, works, onClose, onStep }) {
   const closeRef = React.useRef(null);
   const open = index >= 0;
 
@@ -350,7 +360,7 @@ function WorkLightbox({ index, onClose, onStep }) {
   }, [open, onClose, onStep]);
 
   if (!open) return null;
-  const w = WORKS[index];
+  const w = works[index];
   const nav = { width: "50px", height: "50px", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "rgba(10,10,12,.55)", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "15px", flexShrink: 0 };
 
   return (
@@ -376,7 +386,7 @@ function WorkLightbox({ index, onClose, onStep }) {
         <div style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "8px" }}>{w[2]}</div>
         <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(20px, 2.4vw, 28px)", fontWeight: 500, margin: 0, letterSpacing: "0.01em" }}>{w[1]}</h3>
         <div style={{ fontFamily: "var(--font-body)", fontSize: "12px", letterSpacing: "0.14em", color: "var(--text-muted)", marginTop: "10px" }}>
-          {index + 1} / {WORKS.length}
+          {index + 1} / {works.length}
         </div>
       </div>
     </div>
@@ -384,11 +394,19 @@ function WorkLightbox({ index, onClose, onStep }) {
 }
 
 function Works({ onBook }) {
-  const items = [...WORKS, ...WORKS];
+  /* Порядок ленты живёт в состоянии: клик по стилю не прячет работы, а
+     переставляет их — работы выбранного стиля собираются подряд, и первая
+     встаёт в середину кадра. Набор всегда полный, меняется только очередь. */
+  const [order, setOrder] = React.useState(WORKS);
+  const orderRef = React.useRef(order);
+  orderRef.current = order;
+  const items = [...order, ...order];
   const wrapRef = React.useRef(null);
   const trackRef = React.useRef(null);
   const [style, setStyle] = React.useState(WORK_STYLES[0]);
   const [shot, setShot] = React.useState(-1);   /* индекс работы в просмотре */
+  /* Якорь на время перестановки: какую работу вывести в центр после неё. */
+  const anchor = React.useRef(null);
 
   const S = React.useRef({
     offset: 0, setW: 1, paused: false, dragging: false,
@@ -402,7 +420,7 @@ function Works({ onBook }) {
     const measure = () => {
       const s = S.current;
       s.setW = Math.max(1, track.scrollWidth / 2);
-      s.geo = Array.prototype.slice.call(track.children, 0, WORKS.length)
+      s.geo = Array.prototype.slice.call(track.children, 0, orderRef.current.length)
         .map((el) => ({ left: el.offsetLeft, w: el.offsetWidth }));
     };
     measure();
@@ -423,14 +441,21 @@ function Works({ onBook }) {
       for (let k = 0; k < kids.length; k++) {
         const img = kids[k].firstElementChild;
         if (!img || !img.dataset.src) continue;
-        const g = s.geo[k % WORKS.length];
-        const left = g.left + (k >= WORKS.length ? s.setW : 0) - s.offset;
+        const n = orderRef.current.length;
+        const g = s.geo[k % n];
+        if (!g) continue;
+        const left = g.left + (k >= n ? s.setW : 0) - s.offset;
         if (left < view + PRELOAD && left + g.w > -PRELOAD) {
           img.src = img.dataset.src;
           delete img.dataset.src;
         }
       }
     };
+    /* Кладём в S, чтобы перестановка могла подгрузить кадры синхронно: она
+       меняет offset мгновенно, а цикл дошёл бы до sweep только через 10 кадров
+       — и работы редких стилей, ни разу не подходившие к экрану, показались бы
+       пустыми прямоугольниками. */
+    S.current.sweep = sweep;
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let raf, last = performance.now();
@@ -440,6 +465,23 @@ function Works({ onBook }) {
 
       if (s.dragging) {
         /* offset двигает обработчик move */
+      } else if (s.spin) {
+        const sp = s.spin;
+        if (sp.phase === "up") {
+          sp.t += dt;
+          const u = Math.min(1, sp.t / SPIN_UP);
+          s.offset += (sp.v0 + (SPIN_VMAX - sp.v0) * u * u) * dt;
+          if (u >= 1) { sp.phase = "swap"; setOrder(buildOrder(sp.st)); }
+        } else if (sp.phase === "swap") {
+          /* Крутим на пике, пока React не закоммитит новый порядок. Тормозной
+             путь выставит useLayoutEffect — там есть настоящая геометрия. */
+          s.offset += SPIN_VMAX * dt;
+        } else {
+          sp.u = Math.min(1, sp.u + dt / SPIN_DOWN);
+          const e = 1 - Math.pow(1 - sp.u, 3);
+          s.offset = sp.start + sp.dist * e;
+          if (sp.u >= 1) s.spin = null;
+        }
       } else if (Math.abs(s.tween) > 0.5) {
         const step = s.tween * Math.min(1, dt * 6);
         s.offset += step; s.tween -= step; s.vel = 0;
@@ -461,7 +503,7 @@ function Works({ onBook }) {
         for (let k = 0; k < s.geo.length; k++) {
           if (focus >= s.geo[k].left && focus < s.geo[k].left + s.geo[k].w) { i = k; break; }
         }
-        if (i !== s.mid) { s.mid = i; setStyle(WORKS[i][2]); }
+        if (i !== s.mid) { s.mid = i; setStyle(orderRef.current[i][2]); }
       }
       if (tick++ % 10 === 0) sweep();
       raf = requestAnimationFrame(loop);
@@ -494,16 +536,6 @@ function Works({ onBook }) {
   React.useEffect(() => { S.current.paused = shot >= 0; }, [shot]);
 
   /* Подводит работу i к центру кадра кратчайшим путём по кольцу. */
-  const glideTo = (i) => {
-    const s = S.current;
-    const g = s.geo[i];
-    if (!g || !wrapRef.current) return;
-    const target = g.left + g.w / 2 - wrapRef.current.clientWidth / 2;
-    let d = ((target - s.offset) % s.setW + s.setW) % s.setW;
-    if (d > s.setW / 2) d -= s.setW;
-    s.tween = d; s.vel = 0;
-  };
-
   /* Показ работы, получившей фокус с клавиатуры. Целимся к левому краю, а не
      к центру: так offset остаётся в [0, setW), и видимой оказывается именно та
      плитка, на которой фокус, а не её двойник из второго прохода. */
@@ -519,9 +551,78 @@ function Works({ onBook }) {
   };
 
   const nudge = (dir) => { const s = S.current; s.tween += dir * (wrapRef.current ? wrapRef.current.clientWidth : 600) * 0.6; s.vel = 0; };
-  const step = (d) => setShot((i) => (i + d + WORKS.length) % WORKS.length);
+  const step = (d) => setShot((i) => (i + d + order.length) % order.length);
   /* detail === 0 — нажатие с клавиатуры: там протяжки не было и порог не применим. */
-  const open = (i, e) => { if ((e && e.detail === 0) || S.current.moved < DRAG_SLOP) setShot(i % WORKS.length); };
+  const open = (i, e) => { if ((e && e.detail === 0) || S.current.moved < DRAG_SLOP) setShot(i % order.length); };
+
+  /* Клик по стилю: работы этого стиля собираются подряд, и первая из них встаёт
+     в середину кадра. Ничего не скрывается — набор тот же, меняется очередь.
+
+     Блок ставим не в самое начало ленты, а за несколькими работами — ровно
+     столько, чтобы он начинался правее середины кадра. Иначе offset уходит в
+     конец набора: визуально верно (лента бесшовная), но в центре оказывается
+     плитка-двойник из второго прохода — а он скрыт от скринридера, и фокус с
+     клавиатуры улетает к оригиналу через всю ленту. См. glideIntoView. */
+  const buildOrder = (st) => {
+    const s = S.current, wrap = wrapRef.current, cur = orderRef.current;
+    const tagged = cur.filter((w) => w[2] === st);
+    const others = cur.filter((w) => w[2] !== st);
+    const half = wrap ? wrap.clientWidth / 2 : 0;
+    let lead = 0;
+    for (let acc = 0; lead < others.length && acc <= half; lead++) {
+      const g = s.geo[cur.indexOf(others[lead])];
+      acc += g ? g.w : 0;
+    }
+    anchor.current = tagged[0];
+    return others.slice(0, lead).concat(tagged, others.slice(lead));
+  };
+
+  const sortByStyle = (st) => {
+    const s = S.current;
+    if (!wrapRef.current || !order.some((w) => w[2] === st)) return;
+    /* При выключенной анимации крутить нечего — переставляем сразу. */
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setOrder(buildOrder(st));
+      return;
+    }
+    /* Повторный клик во время вращения не сбрасывает скорость к нулю. */
+    s.spin = { phase: "up", t: 0, v0: s.spin ? SPIN_VMAX : 34, st };
+    s.tween = 0; s.vel = 0;
+  };
+
+  /* Пересчёт после перестановки. Геометрию снимаем заново — ResizeObserver тут
+     молчит: ширина ленты не изменилась, изменился только порядок. */
+  React.useLayoutEffect(() => {
+    const a = anchor.current;
+    if (!a) return;
+    anchor.current = null;
+    const s = S.current, track = trackRef.current, wrap = wrapRef.current;
+    if (!track || !wrap) return;
+    s.setW = Math.max(1, track.scrollWidth / 2);
+    s.geo = Array.prototype.slice.call(track.children, 0, order.length)
+      .map((el) => ({ left: el.offsetLeft, w: el.offsetWidth }));
+    const j = order.indexOf(a);
+    if (j >= 0 && s.geo[j]) {
+      /* Куда лента должна встать: якорная плитка центром в центр кадра.
+         Плитки разной ширины, поэтому целимся центром, а не краем. */
+      const final = s.geo[j].left + s.geo[j].w / 2 - wrap.clientWidth / 2;
+      if (s.spin && s.spin.phase === "swap") {
+        /* Отматываем назад на длину торможения и тормозим вперёд к final.
+           Скачок назад невидим: лента сейчас идёт 5000 px/s и смазана. */
+        s.spin.start = final - SPIN_DIST;
+        s.spin.dist = SPIN_DIST;
+        s.spin.u = 0;
+        s.spin.phase = "down";
+        s.offset = ((s.spin.start % s.setW) + s.setW) % s.setW;
+      } else {
+        s.offset = ((final % s.setW) + s.setW) % s.setW;
+        s.tween = 0; s.vel = 0;
+      }
+      track.style.transform = "translate3d(" + (-s.offset) + "px,0,0)";
+    }
+    s.mid = -1;
+    if (s.sweep) s.sweep();
+  }, [order]);
 
   const down = (e) => {
     const s = S.current;
@@ -576,22 +677,28 @@ function Works({ onBook }) {
         onFocusCapture={() => { S.current.paused = true; }} onBlurCapture={() => { S.current.paused = shot >= 0; }}
         style={{ overflow: "hidden", cursor: "grab", touchAction: "pan-y", userSelect: "none" }}>
         <div ref={trackRef} style={{ display: "flex", width: "max-content", willChange: "transform" }}>
+          {/* Ключ по пути файла, а не по индексу: при перестановке React должен
+              переносить готовые плитки, а не переписывать их содержимое на месте —
+              иначе уже загруженные картинки сбрасываются и лента моргает. */}
           {items.map((w, i) => (
-            <WorkTile key={i} w={w} clone={i >= WORKS.length}
+            <WorkTile key={w[0] + (i >= order.length ? "~2" : "~1")} w={w} clone={i >= order.length}
               onOpen={(e) => open(i, e)}
-              onFocus={() => glideIntoView(i % WORKS.length)} />
+              onFocus={() => glideIntoView(i % order.length)} />
           ))}
         </div>
       </div>
 
-      {/* Индекс стилей: подсвечен стиль работы в центре, клик — переход к ней. */}
+      {/* Стили: подсвечен стиль работы в центре, клик — собрать этот стиль подряд. */}
       <div className="rt-reveal rt-work-styles" style={{ maxWidth: MAXW, margin: "28px auto 0", padding: "0 32px", width: "100%", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 22px" }}>
         {WORK_STYLES.map((s) => {
           const on = s === style;
           return (
             /* Подчёркивание живёт на внутреннем span, поэтому кнопке можно
                задать крупную область нажатия, не отрывая линию от текста. */
-            <button key={s} type="button" onClick={() => glideTo(WORKS.findIndex((w) => w[2] === s))}
+            /* Гасим на время просмотра: лайтбокс не запирает фокус, и Shift+Tab
+               с кнопки закрытия уходит сюда. Перестановка сменила бы работу под
+               открытым просмотром — индекс тот же, работа уже другая. */
+            <button key={s} type="button" onClick={() => sortByStyle(s)} disabled={shot >= 0}
               aria-current={on ? "true" : undefined}
               style={{ background: "none", border: 0, padding: "13px 0", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: on ? "var(--bone)" : "var(--text-muted)", transition: "color .25s" }}>
               <span style={{ display: "inline-block", paddingBottom: "4px", borderBottom: "1px solid " + (on ? "var(--accent)" : "transparent"), transition: "border-color .25s" }}>{s}</span>
@@ -600,7 +707,7 @@ function Works({ onBook }) {
         })}
       </div>
 
-      <WorkLightbox index={shot} onClose={() => setShot(-1)} onStep={step} />
+      <WorkLightbox index={shot} works={order} onClose={() => setShot(-1)} onStep={step} />
     </section>
   );
 }
