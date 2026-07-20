@@ -175,7 +175,7 @@ function Header({ onBook }) {
 /* ------------------------------------------------------------------- Hero */
 function Hero({ onBook }) {
   return (
-    <section id="hero" className="rt-snap" style={{ position: "relative", minHeight: "100vh", display: "flex", overflow: "hidden" }}>
+    <section id="hero" className="rt-snap" style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <video autoPlay muted loop playsInline poster="./assets/img/work-wolf.jpg"
           style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", filter: "grayscale(0.6) contrast(1.08) brightness(0.8)" }}>
@@ -188,7 +188,7 @@ function Hero({ onBook }) {
         Rated Tattoo · Moscow · с 2015
       </div>
 
-      <div className="rt-reveal rt-in" style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: MAXW, margin: "0 auto", padding: "150px 32px 150px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      <div className="rt-reveal rt-in" style={{ position: "relative", zIndex: 1, flex: "1 1 auto", width: "100%", maxWidth: MAXW, margin: "0 auto", padding: "150px 32px 60px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div style={{ marginBottom: "26px" }}><Kicker index="ТОП-10" label="Тату-мастеров Москвы 2023" /></div>
         <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(46px, 7vw, 104px)", lineHeight: 0.9, letterSpacing: "-0.01em", margin: 0 }}>
           Элитные<br />татуировки<span style={{ color: "var(--accent)" }}>.</span>
@@ -207,7 +207,7 @@ function Hero({ onBook }) {
         </div>
       </div>
 
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 1, borderTop: "1px solid var(--border-hair)", background: "rgba(10,10,12,0.4)", backdropFilter: "blur(8px)" }}>
+      <div style={{ position: "relative", zIndex: 1, flex: "0 0 auto", borderTop: "1px solid var(--border-hair)", background: "rgba(10,10,12,0.4)", backdropFilter: "blur(8px)" }}>
         <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }} className="rt-stats">
           {[["10+", "лет практики"], ["150+", "работ в портфолио"], ["150+", "отзывов · 5.0"], ["100%", "стерильность"]].map(([n, l], i) => (
             <div key={l} style={{ padding: "20px 24px", borderLeft: i === 0 ? "none" : "1px solid var(--border-hair)", display: "flex", flexDirection: "column", gap: "2px" }}>
