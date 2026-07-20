@@ -153,7 +153,7 @@ function Header({ onBook }) {
     sc.addEventListener("scroll", onScroll);
     return () => sc.removeEventListener("scroll", onScroll);
   }, []);
-  const links = [["#about", "Мастер"], ["#works", "Работы"], ["#process", "Процесс"], ["#benefits", "Преимущества"], ["#faq", "Вопросы"]];
+  const links = [["#about", "Мастер"], ["#works", "Работы"], ["#process", "Вживую"], ["#benefits", "Преимущества"], ["#faq", "Вопросы"]];
   return (
     <header style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
@@ -715,6 +715,7 @@ function Works({ onBook }) {
 /* ---------------------------------------------------------------- Процесс */
 /* [id ролика в Cloud Video, название, категория, обложка, сек, ширина, высота] */
 const CLIPS = [
+  ["vplveewfxat7z3sqekdv", "Тимур за работой", "процесс", "./assets/img/video/v10.webp", 23, 528, 960],
   ["vplvrja4qp3ps3fonejk", "Змея", "процесс", "./assets/img/video/v01.webp", 22, 540, 960],
   ["vplvxwh3dnpgcnqcxzrj", "Медведь", "процесс", "./assets/img/video/v02.webp", 12, 540, 960],
   ["vplvp4tgzzga2un52nna", "Биомеханика", "процесс", "./assets/img/video/v03.webp", 28, 764, 960],
@@ -724,7 +725,6 @@ const CLIPS = [
   ["vplvxwfyyymbucdbuzn2", "It's alive !!!", "процесс", "./assets/img/video/v07.webp", 28, 576, 720],
   ["vplvmsh2zy23inmeyaxv", "Скорпион", "процесс", "./assets/img/video/v08.webp", 36, 576, 720],
   ["vplvovbcxpfwrrtqifjh", "Кинжал", "процесс", "./assets/img/video/v09.webp", 22, 576, 720],
-  ["vplveewfxat7z3sqekdv", "Тимур за работой", "процесс", "./assets/img/video/v10.webp", 23, 528, 960],
   ["vplvql3ud6lpffedk4lj", "Персик", "процесс", "./assets/img/video/v11.webp", 32, 540, 960],
   ["vplvuapkkbbpheyzvrbw", "Клоун", "процесс", "./assets/img/video/v12.webp", 22, 576, 720],
   ["vplvxwcmg67sld53q7sz", "Взгляд", "процесс", "./assets/img/video/v13.webp", 17, 720, 720],
@@ -866,8 +866,8 @@ function Process() {
   return (
     <section id="process" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "96px 0" }}>
       <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto 34px", padding: "0 32px", width: "100%" }}>
-        <Kicker index="03" label="Процесс" />
-        <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Как это делается</h2>
+        <Kicker index="03" label="Вживую" />
+        <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Ближе, чем фото</h2>
       </div>
 
       <div className="rt-reveal" style={{ maxWidth: "1040px", margin: "0 auto", padding: "0 32px", width: "100%" }}>
@@ -905,7 +905,6 @@ function Process() {
             </button>
 
             <div style={{ position: "absolute", left: "20px", right: "20px", bottom: "22px", pointerEvents: "none" }}>
-              <div style={{ fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "6px" }}>{cur[2]}</div>
               <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(20px, 2.2vw, 30px)", fontWeight: 500, margin: 0, letterSpacing: "0.01em" }}>{cur[1]}</h3>
             </div>
 
@@ -936,7 +935,7 @@ function Process() {
                     <span style={{ fontFamily: "var(--font-display)", fontSize: "19px", fontWeight: 600, color: on ? "var(--accent)" : "var(--text-faint)", transition: "color .25s" }}>{String(i + 1).padStart(2, "0")}</span>
                     <span style={{ minWidth: 0 }}>
                       <span style={{ display: "block", fontFamily: "var(--font-display)", color: on ? "var(--bone)" : "var(--text-body)", textTransform: "uppercase", letterSpacing: "0.02em", fontSize: "16px", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", transition: "color .25s" }}>{v[1]}</span>
-                      <span style={{ display: "block", fontFamily: "var(--font-body)", color: "var(--text-faint)", fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "3px" }}>{v[2]} · {mmss(v[4])}</span>
+                      <span style={{ display: "block", fontFamily: "var(--font-body)", color: "var(--text-faint)", fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: "3px" }}>{mmss(v[4])}</span>
                     </span>
                     <span style={{ color: on ? "var(--accent)" : "var(--text-faint)", fontSize: "12px", transition: "color .25s" }}>
                       {on ? (
@@ -1296,7 +1295,7 @@ function BookingModal({ open, onClose }) {
 
 /* --------------------------------------------------------------- Dot nav */
 function DotNav() {
-  const items = [["hero", "Главная"], ["about", "Мастер"], ["works", "Работы"], ["process", "Процесс"], ["services", "Услуги"], ["benefits", "Преимущества"], ["reviews", "Отзывы"], ["faq", "Вопросы"], ["cta", "Запись"]];
+  const items = [["hero", "Главная"], ["about", "Мастер"], ["works", "Работы"], ["process", "Вживую"], ["services", "Услуги"], ["benefits", "Преимущества"], ["reviews", "Отзывы"], ["faq", "Вопросы"], ["cta", "Запись"]];
   const [active, setActive] = React.useState("hero");
   React.useEffect(() => {
     const io = new IntersectionObserver((entries) => {
