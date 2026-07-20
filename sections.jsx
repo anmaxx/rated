@@ -239,10 +239,6 @@ function About() {
     ["Безопасность", "Только одноразовые материалы и стерилизация в автоклавах класса B."],
     ["Индивидуальный подход", "Каждый эскиз создаю лично, учитывая ваши пожелания и особенности тела."],
   ];
-  const gallery = [
-    ["./assets/img/about-stencil.jpg", "Процесс", "center"],
-    ["./assets/img/studio.jpg", "Студия", "center 28%"],
-  ];
   return (
     <section id="about" className="rt-snap" style={{ position: "relative", background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "100px 0", overflow: "hidden" }}>
       {/* atmospheric oversize wordmark */}
@@ -254,27 +250,14 @@ function About() {
           <div className="rt-edge-label" style={{ position: "absolute", left: "-30px", top: "50%", transform: "translateY(-50%) rotate(180deg)", writingMode: "vertical-rl", zIndex: 2, fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.32em", textTransform: "uppercase", color: "var(--text-faint)" }}>
             Tattoo master · с 2015
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1.55fr 1fr", gap: "12px", alignItems: "stretch" }}>
-            <div style={{ position: "relative", paddingRight: "20px", paddingBottom: "20px" }}>
-              <div style={{ position: "absolute", right: 0, bottom: 0, width: "calc(100% - 44px)", height: "calc(100% - 44px)", border: "1px solid var(--accent)", pointerEvents: "none" }}></div>
-              <div style={{ position: "relative", overflow: "hidden", aspectRatio: "3 / 5" }}>
-                <img src="./assets/img/about-master.jpg" alt="Тимур Тэд — мастер Rated Tattoo за работой" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 16%", display: "block", filter: "grayscale(0.35) contrast(1.06)" }} />
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,10,12,0.66), rgba(10,10,12,0) 44%)", pointerEvents: "none" }}></div>
-              </div>
-              <div style={{ position: "absolute", left: "-2px", bottom: "34px", background: "var(--accent)", color: "var(--white)", padding: "13px 20px 15px" }}>
-                <div style={{ fontFamily: "var(--font-display)", textTransform: "uppercase", fontWeight: 600, fontSize: "23px", lineHeight: 0.92, letterSpacing: "0.02em" }}>Тимур Тэд</div>
-                <div style={{ fontFamily: "var(--font-body)", fontSize: "10px", letterSpacing: "0.16em", textTransform: "uppercase", opacity: 0.88, marginTop: "5px" }}>основатель · мастер</div>
-              </div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {gallery.map(([src, cap, pos]) => (
-                <figure key={cap} style={{ margin: 0, position: "relative", flex: 1, minHeight: 0, overflow: "hidden" }}>
-                  <img src={src} alt={cap} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: pos, display: "block", filter: "grayscale(0.4) contrast(1.05)" }} />
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,10,12,0.72), rgba(10,10,12,0) 52%)", pointerEvents: "none" }}></div>
-                  <figcaption style={{ position: "absolute", left: "11px", bottom: "9px", fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--bone)" }}>{cap}</figcaption>
-                </figure>
-              ))}
-            </div>
+          {/* Фон у фото вырезан (webp с альфой) — мастер стоит прямо на фоне
+              секции, без прямоугольной подложки. Потому ни overflow, ни cover. */}
+          <div style={{ position: "relative" }}>
+            {/* Растворяем прямые кромки в фоне секции: низ (подлокотник) и левый
+                край (коробка) упираются в край кадра прямым резом. Две маски,
+                пересечение — гаснет там, где гасит любая. Контур головы и плеч
+                уже вырезан в самом webp, его маски не трогают. */}
+            <img src="./assets/img/about-master-work.webp" alt="Тимур Тэд за работой — Rated Tattoo" style={{ width: "100%", height: "auto", display: "block", filter: "grayscale(0.55) contrast(1.05) brightness(0.85)", WebkitMaskImage: "linear-gradient(to bottom, #000 78%, transparent 98%), linear-gradient(to right, transparent 1%, #000 13%)", maskImage: "linear-gradient(to bottom, #000 78%, transparent 98%), linear-gradient(to right, transparent 1%, #000 13%)", WebkitMaskComposite: "source-in", maskComposite: "intersect" }} />
           </div>
         </div>
 
