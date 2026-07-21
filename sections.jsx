@@ -2,6 +2,8 @@
    Full-viewport scroll-snap panels, entrance reveals, photo marquee works
    showcase, film grain. Composes design-system primitives from the bundle. */
 
+import React from "react";
+
 const NS = window.RatedTattooDesignSystem_04b525;
 const { Button, StarRating, Input, Accordion } = NS;
 
@@ -1302,4 +1304,4 @@ function DotNav() {
   );
 }
 
-Object.assign(window, { Header, Hero, About, Works, Services, Benefits, Testimonials, Faq, Cta, Footer, BookingModal, DotNav });
+export { Header, DotNav, Hero, About, Works, Process, Services, Benefits, Testimonials, Faq, Cta, Footer, BookingModal };

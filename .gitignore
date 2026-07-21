@@ -1,3 +1,7 @@
+# Vite: зависимости и артефакт сборки (в прод уезжает только dist через Actions)
+node_modules/
+dist/
+
 # Serena MCP: локальный кэш и индекс проекта
 .serena/
 

@@ -68,8 +68,8 @@
 }
 </script>
 
-<link rel="icon" href="./assets/logos/rated-logo-white.png" type="image/png" />
-<link rel="stylesheet" href="./styles.css" />
+<link rel="icon" href="/assets/logos/rated-logo-white.png" type="image/png" />
+<link rel="stylesheet" href="/styles.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
   html { scroll-behavior: smooth; }
@@ -157,47 +157,13 @@
 
     ym(110896748, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
 </script>
-<noscript><div><img src="https://mc.yandex.ru/watch/110896748" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
 </head>
 <body>
   <div class="rt-grain"></div>
   <div id="root"></div>
-  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-  <script src="./_ds_bundle.js"></script>
-  <script type="text/babel" src="sections.jsx"></script>
-  <script type="text/babel">
-    function App() {
-      const [booking, setBooking] = React.useState(false);
-      const book = () => setBooking(true);
-      React.useEffect(() => {
-        const io = new IntersectionObserver((entries) => {
-          entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("rt-in"); io.unobserve(e.target); } });
-        }, { threshold: 0.15 });
-        document.querySelectorAll(".rt-reveal").forEach((el) => io.observe(el));
-        return () => io.disconnect();
-      }, []);
-      return (
-        <React.Fragment>
-          <Header onBook={book} />
-          <DotNav />
-          <Hero onBook={book} />
-          <About />
-          <Works onBook={book} />
-          <Process />
-          <Services onBook={book} />
-          <Benefits />
-          <Testimonials />
-          <Faq />
-          <Cta onBook={book} />
-          <Footer />
-          <BookingModal open={booking} onClose={() => setBooking(false)} />
-        </React.Fragment>
-      );
-    }
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-  </script>
+  <!-- Yandex.Metrika: пиксель для клиентов без JS. В body — в head noscript не может содержать div/img -->
+  <noscript><div><img src="https://mc.yandex.ru/watch/110896748" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
