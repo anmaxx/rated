@@ -3,6 +3,8 @@
    showcase, film grain. Composes design-system primitives from the bundle. */
 
 import React from "react";
+import { Drawer } from "vaul";
+import { motion } from "motion/react";
 
 const NS = window.RatedTattooDesignSystem_04b525;
 const { Button, StarRating, Input, Accordion } = NS;
@@ -23,7 +25,7 @@ const WORKS = [
   ["./assets/img/work-warrior.jpg", "Северный воин", "реализм", 0.750],
   ["./assets/img/work-rat.jpg", "Уголовное дело", "нео-традишн", 0.750],
   ["./assets/img/work-catrina.jpg", "Катрина", "чикано", 0.750],
-  ["./assets/img/work-bear-realism.webp", "Гризли", "реализм", 0.750],
+  ["./assets/img/work-bear-realism.webp", "Гризли", "реализм", 0.750, "vplv63sw637q4xgtjwjc"],
   ["./assets/img/work-hourglass.jpg", "Песочные часы", "трэш-полька", 0.562],
   ["./assets/img/work-samurai.jpg", "Самурай", "ориентал", 0.799],
   ["./assets/img/work-girl-rose.jpg", "Девушка с розой", "реализм", 0.750],
@@ -31,7 +33,7 @@ const WORKS = [
   ["./assets/img/work-robber.jpg", "Налётчик", "реализм", 0.592],
   ["./assets/img/work-sphynx-cat.jpg", "Кот сфинкс", "реализм", 0.664],
   ["./assets/img/work-tiger-sleeve.jpg", "Тигриный рукав", "реализм", 0.712],
-  ["./assets/img/work-clown.jpg", "Клоун", "хоррор", 0.924],
+  ["./assets/img/work-clown.jpg", "Клоун", "хоррор", 0.924, "vplvuapkkbbpheyzvrbw"],
   ["./assets/img/work-chief.jpg", "Вождь", "реализм", 0.776],
   ["./assets/img/work-bear-graphic.jpg", "Графический медведь", "графика", 0.722],
   ["./assets/img/work-portrait-peony.jpg", "Анна", "чикано", 0.562],
@@ -43,7 +45,7 @@ const WORKS = [
   ["./assets/img/work-peonies-hip.webp", "Пионы", "графика", 0.671],
   ["./assets/img/work-dynamite.webp", "Динамит", "нео-традишн", 0.692],
   ["./assets/img/work-mandala-sternum.webp", "Мандала под грудью", "орнамент", 1.385],
-  ["./assets/img/work-girl-city.webp", "Вампирша", "Готика", 0.625],
+  ["./assets/img/work-girl-city.webp", "Вампирша", "Готика", 0.625, "vplvhsvigv4bgohwi45v"],
   ["./assets/img/work-girl-revolver.webp", "Берета", "чикано", 0.694],
   ["./assets/img/work-samurai-sakura.webp", "Самурай и сакура", "ориентал", 0.664],
   ["./assets/img/work-antique-statue.webp", "Античная статуя", "реализм", 0.715],
@@ -51,10 +53,10 @@ const WORKS = [
   ["./assets/img/work-peony-pattern.webp", "Пионовый узор", "графика", 0.664],
   ["./assets/img/work-lizard.webp", "Ящерица", "графика", 0.696],
   ["./assets/img/work-elephant.webp", "Слон", "графика", 1.505],
-  ["./assets/img/work-wolf-girl.webp", "Девушка — Волчица", "реализм", 0.671],
+  ["./assets/img/work-wolf-girl.webp", "Девушка — Волчица", "реализм", 0.671, "vplv4i6vmqnttvts7epq"],
   ["./assets/img/work-gorillas.webp", "Гориллы", "реализм", 0.97],
   ["./assets/img/work-girl-lilies.webp", "Девушка с лилиями", "реализм", 0.644],
-  ["./assets/img/work-snake-color.webp", "Питон", "нео-традишн", 0.75],
+  ["./assets/img/work-snake-color.webp", "Питон", "нео-традишн", 0.75, "vplvrja4qp3ps3fonejk"],
   ["./assets/img/work-bear-roar.webp", "Медведь", "реализм", 0.75],
   ["./assets/img/work-jester.webp", "Смерть", "нео-традишн", 0.827],
   ["./assets/img/work-centurion.webp", "Центурион", "реализм", 0.601],
@@ -63,10 +65,10 @@ const WORKS = [
   ["./assets/img/work-girl-roses.webp", "Химена", "чикано", 0.75],
   ["./assets/img/work-tiger-lotus.webp", "Тигр и лотос", "ориентал", 0.681],
   ["./assets/img/work-anubis-mech.webp", "Анубис и Ра", "ориентал", 0.684],
-  ["./assets/img/work-harley.webp", "Харли — Джокер", "нео-традишн", 0.75],
+  ["./assets/img/work-harley.webp", "Харли — Джокер", "нео-традишн", 0.75, "vplvhsuvqkpjpl65bay7"],
   ["./assets/img/work-hourglass-skull.webp", "Часы и череп", "нео-традишн", 0.671],
   ["./assets/img/work-fox-cat.webp", "Лиса и кошка", "нео-традишн", 0.692],
-  ["./assets/img/work-bird-peach.webp", "Птичка с персиками", "нео-традишн", 0.545],
+  ["./assets/img/work-bird-peach.webp", "Птичка с персиками", "нео-традишн", 0.545, "vplvql3ud6lpffedk4lj"],
   ["./assets/img/work-matryoshka-gzhel.webp", "Матрёшка «Свои»", "нео-традишн", 0.818],
   ["./assets/img/work-deer-compass.webp", "Вендиго", "ориентал", 0.75],
   ["./assets/img/work-portrait-rose.webp", "Портрет с розой", "реализм", 1.005],
@@ -85,7 +87,7 @@ const WORKS = [
   ["./assets/img/work-lion-egypt.webp", "Лев", "графика", 0.722],
   ["./assets/img/work-raccoon.webp", "Енот", "нео-традишн", 0.722],
   ["./assets/img/work-bear-shadow.webp", "Кинг Конг", "реализм", 0.585],
-  ["./assets/img/work-via-the-end.webp", "Via the End", "биомеханика", 0.586],
+  ["./assets/img/work-via-the-end.webp", "Via the End", "биомеханика", 0.586, "vplvgq57pvyskz2gs2bb"],
   ["./assets/img/work-japan-landscape.webp", "Японский пейзаж", "ориентал", 0.505],
   ["./assets/img/work-roses-color.webp", "Розы", "реализм", 0.676],
   ["./assets/img/work-armor.webp", "Доспехи", "реализм", 0.739],
@@ -325,17 +327,38 @@ function WorkTile({ w, onOpen, onFocus, clone }) {
 /* Просмотр работы крупно: Esc — закрыть, ←/→ — соседние работы. */
 function WorkLightbox({ index, works, onClose, onStep }) {
   const closeRef = React.useRef(null);
+  const closeBtnRef = React.useRef(null);        /* кнопка «Закрыть» в видео-листе */
+  const [videoOpen, setVideoOpen] = React.useState(false);
+  const videoOpenRef = React.useRef(false);
+  videoOpenRef.current = videoOpen;              /* всегда актуален на момент keydown */
+  const escSuppressUntilRef = React.useRef(0);   /* окно подавления Esc после закрытия листа */
   const open = index >= 0;
+  const w = open ? works[index] : null;
+  /* 5-й элемент строки WORKS — id связанного ролика; сцену берём из CLIPS. */
+  const clip = w && w[4] ? CLIPS.find((c) => c[0] === w[4]) : null;
 
   React.useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
+  /* Смена работы или закрытие лайтбокса — гасим видео-лист. */
+  React.useEffect(() => { setVideoOpen(false); }, [index]);
+
+  /* Фокус на крестик при открытии. */
+  React.useEffect(() => {
+    if (open && closeRef.current) closeRef.current.focus();
+  }, [open]);
+
+  /* Esc/стрелки лайтбокса. Слушатель держим прикреплённым всё время, а гейтим
+     ВНУТРИ по ref: когда лист открыт — Esc/стрелки принадлежат Vaul, лайтбокс
+     их игнорит. Radix закрывает лист синхронно (flushSync) и тот же Esc успел
+     бы долистать сюда, поэтому после закрытия листа ещё 400мс глушим Esc —
+     иначе одно нажатие схлопнуло бы и лист, и лайтбокс. */
   React.useEffect(() => {
     if (!open) return;
-    if (closeRef.current) closeRef.current.focus();
     const onKey = (e) => {
+      if (videoOpenRef.current || Date.now() < escSuppressUntilRef.current) return;
       if (e.key === "Escape") onClose();
       else if (e.key === "ArrowRight") { e.preventDefault(); onStep(1); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); onStep(-1); }
@@ -345,36 +368,81 @@ function WorkLightbox({ index, works, onClose, onStep }) {
   }, [open, onClose, onStep]);
 
   if (!open) return null;
-  const w = works[index];
   const nav = { width: "50px", height: "50px", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "rgba(10,10,12,.55)", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "15px", flexShrink: 0 };
+  const arNum = clip ? clip[5] / clip[6] : 1;
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={"Работа: " + w[1]} onClick={onClose}
-      style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.92)", backdropFilter: "blur(6px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px", padding: "20px" }}>
-      <button ref={closeRef} type="button" aria-label="Закрыть просмотр" onClick={onClose}
-        style={{ position: "absolute", top: "20px", right: "20px", width: "50px", height: "50px", background: "transparent", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "16px" }}>
-        <i className="fas fa-xmark" aria-hidden="true"></i>
-      </button>
-
-      <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 3vw, 28px)", maxWidth: "100%" }}>
-        <button type="button" aria-label="Предыдущая работа" onClick={() => onStep(-1)} style={nav} className="rt-lb-nav">
-          <i className="fas fa-arrow-left" aria-hidden="true"></i>
+    <React.Fragment>
+      <div role="dialog" aria-modal="true" aria-label={"Работа: " + w[1]} onClick={onClose}
+        style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.92)", backdropFilter: "blur(6px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px", padding: "20px" }}>
+        <button ref={closeRef} type="button" aria-label="Закрыть просмотр" onClick={onClose}
+          style={{ position: "absolute", top: "20px", right: "20px", width: "50px", height: "50px", background: "transparent", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "16px" }}>
+          <i className="fas fa-xmark" aria-hidden="true"></i>
         </button>
-        <img src={w[0]} alt={w[1] + " — " + w[2]}
-          style={{ maxHeight: "72vh", maxWidth: "min(1100px, 78vw)", objectFit: "contain", display: "block", border: "1px solid var(--border-hair)" }} />
-        <button type="button" aria-label="Следующая работа" onClick={() => onStep(1)} style={nav} className="rt-lb-nav">
-          <i className="fas fa-arrow-right" aria-hidden="true"></i>
-        </button>
-      </div>
 
-      <div onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
-        <div style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "8px" }}>{w[2]}</div>
-        <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(20px, 2.4vw, 28px)", fontWeight: 500, margin: 0, letterSpacing: "0.01em" }}>{w[1]}</h3>
-        <div style={{ fontFamily: "var(--font-body)", fontSize: "12px", letterSpacing: "0.14em", color: "var(--text-muted)", marginTop: "10px" }}>
-          {index + 1} / {works.length}
+        <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 3vw, 28px)", maxWidth: "100%" }}>
+          <button type="button" aria-label="Предыдущая работа" onClick={() => onStep(-1)} style={nav} className="rt-lb-nav">
+            <i className="fas fa-arrow-left" aria-hidden="true"></i>
+          </button>
+          <img src={w[0]} alt={w[1] + " — " + w[2]}
+            style={{ maxHeight: "72vh", maxWidth: "min(1100px, 78vw)", objectFit: "contain", display: "block", border: "1px solid var(--border-hair)" }} />
+          <button type="button" aria-label="Следующая работа" onClick={() => onStep(1)} style={nav} className="rt-lb-nav">
+            <i className="fas fa-arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
+          <div style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "8px" }}>{w[2]}</div>
+          <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(20px, 2.4vw, 28px)", fontWeight: 500, margin: 0, letterSpacing: "0.01em" }}>{w[1]}</h3>
+          {clip ? (
+            <motion.button type="button" onClick={() => setVideoOpen(true)} className="rt-lb-live"
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+              style={{ marginTop: "16px", display: "inline-flex", alignItems: "center", gap: "9px", padding: "10px 20px", background: "transparent", color: "var(--bone)", border: "1px solid var(--accent)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>
+              <i className="fas fa-play" aria-hidden="true" style={{ fontSize: "10px" }}></i>
+              Смотреть вживую
+            </motion.button>
+          ) : null}
+          <div style={{ fontFamily: "var(--font-body)", fontSize: "12px", letterSpacing: "0.14em", color: "var(--text-muted)", marginTop: "12px" }}>
+            {index + 1} / {works.length}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Видео-лист (Vaul): выезжает снизу с нативным плеером связанного ролика.
+          Открывается только у работ с парой; Radix даёт фокус-ловушку и Esc. */}
+      <Drawer.Root open={videoOpen} direction="bottom" autoFocus
+        onOpenChange={(o) => { if (!o) escSuppressUntilRef.current = Date.now() + 400; setVideoOpen(o); }}>
+        {/* autoFocus + onOpenAutoFocus (у Content): начальный фокус садим на
+            «Закрыть», а не в iframe. Так Esc работает (фокус на родительском
+            элементе), aria-hidden warning нет, а плеер остаётся доступным с
+            клавиатуры (Tab) — не выключаем его из таб-порядка. */}
+        <Drawer.Portal>
+          <Drawer.Overlay style={{ position: "fixed", inset: 0, zIndex: 110, background: "rgba(5,5,6,.72)", backdropFilter: "blur(3px)" }} />
+          <Drawer.Content aria-describedby={undefined}
+            onOpenAutoFocus={(e) => { e.preventDefault(); if (closeBtnRef.current) closeBtnRef.current.focus(); }}
+            style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 111, display: "flex", flexDirection: "column", alignItems: "center", gap: "14px", maxHeight: "94vh", padding: "10px 16px 26px", background: "var(--bg-base)", borderTopLeftRadius: "var(--radius-lg)", borderTopRightRadius: "var(--radius-lg)", borderTop: "1px solid var(--border-hair)", outline: "none" }}>
+            <Drawer.Handle style={{ width: "44px", height: "5px", borderRadius: "3px", background: "var(--ink-600)", flexShrink: 0 }} />
+            <Drawer.Title style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-soft)", margin: 0 }}>
+              {w[1]} · вживую
+            </Drawer.Title>
+            {clip ? (
+              <div style={{ width: "min(92vw, calc(72vh * " + arNum.toFixed(4) + "))", aspectRatio: clip[5] + " / " + clip[6], background: "var(--ink-900)", border: "1px solid var(--border-hair)", overflow: "hidden", flexShrink: 1 }}>
+                {/* Плеер остаётся в таб-порядке (управляем с клавиатуры). Начальный
+                    фокус сажаем на «Закрыть» через onOpenAutoFocus у Drawer.Content,
+                    поэтому Esc не проваливается в кросс-доменный iframe. */}
+                <iframe title={w[1] + " — вживую"} src={clipSrcNative(clip[0])} frameBorder="0" scrolling="no"
+                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                  style={{ width: "100%", height: "100%", display: "block", border: 0 }}></iframe>
+              </div>
+            ) : null}
+            <Drawer.Close ref={closeBtnRef} className="rt-lb-live"
+              style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "9px 18px", background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", flexShrink: 0 }}>
+              Закрыть
+            </Drawer.Close>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    </React.Fragment>
   );
 }
 
@@ -738,6 +806,12 @@ const clipSrc = (id) =>
   "https://runtime.video.cloud.yandex.net/player/video/" + id +
   "?autoplay=1&mute=1&hidden=*&preload=false&background_color=0A0A0C";
 
+/* Вариант для лайтбокса работ: БЕЗ hidden=* — оставляем родные контролы
+   Яндекса. Обвязки своей нет, поэтому и постмессадж-логика не нужна. */
+const clipSrcNative = (id) =>
+  "https://runtime.video.cloud.yandex.net/player/video/" + id +
+  "?autoplay=1&mute=1&background_color=0A0A0C";
+
 const mmss = (s) => {
   s = Math.max(0, Math.floor(s || 0));
   return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
@@ -791,6 +865,10 @@ function Process() {
      event всегда undefined, а вся обвязка стоит на нулях. */
   React.useEffect(() => {
     const onMsg = (e) => {
+      /* Реагируем только на СВОЙ iframe. Плеер в лайтбоксе работ (нативный
+         Яндекс) тоже шлёт postMessage; без этого фильтра его timeupdate/ended
+         дёргали бы таймкод и переключали ролик здесь. */
+      if (!frameRef.current || e.source !== frameRef.current.contentWindow) return;
       let d = e.data;
       if (typeof d === "string") { try { d = JSON.parse(d); } catch (_) { return; } }
       if (!d || !d.event) return;
