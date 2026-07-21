@@ -327,6 +327,7 @@ function WorkTile({ w, onOpen, onFocus, clone }) {
 /* Просмотр работы крупно: Esc — закрыть, ←/→ — соседние работы. */
 function WorkLightbox({ index, works, onClose, onStep }) {
   const closeRef = React.useRef(null);
+  const closeBtnRef = React.useRef(null);        /* кнопка «Закрыть» в видео-листе */
   const [videoOpen, setVideoOpen] = React.useState(false);
   const videoOpenRef = React.useRef(false);
   videoOpenRef.current = videoOpen;              /* всегда актуален на момент keydown */
@@ -411,11 +412,14 @@ function WorkLightbox({ index, works, onClose, onStep }) {
           Открывается только у работ с парой; Radix даёт фокус-ловушку и Esc. */}
       <Drawer.Root open={videoOpen} direction="bottom" autoFocus
         onOpenChange={(o) => { if (!o) escSuppressUntilRef.current = Date.now() + 400; setVideoOpen(o); }}>
-        {/* autoFocus: переносим фокус в лист при открытии — иначе он остаётся
-            на кнопке внутри #root, которому Radix ставит aria-hidden. */}
+        {/* autoFocus + onOpenAutoFocus (у Content): начальный фокус садим на
+            «Закрыть», а не в iframe. Так Esc работает (фокус на родительском
+            элементе), aria-hidden warning нет, а плеер остаётся доступным с
+            клавиатуры (Tab) — не выключаем его из таб-порядка. */}
         <Drawer.Portal>
           <Drawer.Overlay style={{ position: "fixed", inset: 0, zIndex: 110, background: "rgba(5,5,6,.72)", backdropFilter: "blur(3px)" }} />
           <Drawer.Content aria-describedby={undefined}
+            onOpenAutoFocus={(e) => { e.preventDefault(); if (closeBtnRef.current) closeBtnRef.current.focus(); }}
             style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 111, display: "flex", flexDirection: "column", alignItems: "center", gap: "14px", maxHeight: "94vh", padding: "10px 16px 26px", background: "var(--bg-base)", borderTopLeftRadius: "var(--radius-lg)", borderTopRightRadius: "var(--radius-lg)", borderTop: "1px solid var(--border-hair)", outline: "none" }}>
             <Drawer.Handle style={{ width: "44px", height: "5px", borderRadius: "3px", background: "var(--ink-600)", flexShrink: 0 }} />
             <Drawer.Title style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-soft)", margin: 0 }}>
@@ -423,16 +427,15 @@ function WorkLightbox({ index, works, onClose, onStep }) {
             </Drawer.Title>
             {clip ? (
               <div style={{ width: "min(92vw, calc(72vh * " + arNum.toFixed(4) + "))", aspectRatio: clip[5] + " / " + clip[6], background: "var(--ink-900)", border: "1px solid var(--border-hair)", overflow: "hidden", flexShrink: 1 }}>
-                {/* tabIndex=-1: убираем плеер из таб-порядка, чтобы autoFocus
-                    Vaul сел на кнопку «Закрыть» (элемент родительской страницы),
-                    а не в кросс-доменный iframe — иначе Esc уходит в плеер и
-                    лист не закрывается. Мышью/тачем плеер по-прежнему доступен. */}
-                <iframe title={w[1] + " — вживую"} src={clipSrcNative(clip[0])} frameBorder="0" scrolling="no" tabIndex={-1}
+                {/* Плеер остаётся в таб-порядке (управляем с клавиатуры). Начальный
+                    фокус сажаем на «Закрыть» через onOpenAutoFocus у Drawer.Content,
+                    поэтому Esc не проваливается в кросс-доменный iframe. */}
+                <iframe title={w[1] + " — вживую"} src={clipSrcNative(clip[0])} frameBorder="0" scrolling="no"
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                   style={{ width: "100%", height: "100%", display: "block", border: 0 }}></iframe>
               </div>
             ) : null}
-            <Drawer.Close className="rt-lb-live"
+            <Drawer.Close ref={closeBtnRef} className="rt-lb-live"
               style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "9px 18px", background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", flexShrink: 0 }}>
               Закрыть
             </Drawer.Close>
@@ -865,7 +868,7 @@ function Process() {
       /* Реагируем только на СВОЙ iframe. Плеер в лайтбоксе работ (нативный
          Яндекс) тоже шлёт postMessage; без этого фильтра его timeupdate/ended
          дёргали бы таймкод и переключали ролик здесь. */
-      if (frameRef.current && e.source !== frameRef.current.contentWindow) return;
+      if (!frameRef.current || e.source !== frameRef.current.contentWindow) return;
       let d = e.data;
       if (typeof d === "string") { try { d = JSON.parse(d); } catch (_) { return; } }
       if (!d || !d.event) return;
