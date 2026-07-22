@@ -4,13 +4,124 @@
 
 import React from "react";
 import { Drawer } from "vaul";
-import { motion } from "motion/react";
+import { AnimatePresence, motion, useAnimationFrame } from "motion/react";
 
 const NS = window.RatedTattooDesignSystem_04b525;
 const { Button, StarRating, Input, Accordion } = NS;
 
 const LOGO = "./assets/logos/rated-logo-white.png";
 const MAXW = "1240px";
+
+/* = var(--ease-out) из tokens/spacing.css. Общий для входных раскрытий,
+   ховера карточки работы и модалок — держим одним значением. */
+const EASE_OUT = [0.22, 1, 0.36, 1];
+
+/* = CSS-ключевое слово `ease` (cubic-bezier(0.25,0.1,0.25,1)). У Motion
+   дефолтная кривая другая, поэтому там, где мы заменяем прежний
+   `transition: … .25s` без явной кривой, ease задаём руками — иначе не 1:1. */
+const EASE_CSS = [0.25, 0.1, 0.25, 1];
+
+/* Цвета ховеров, переведённых на Motion: покадровая интерполяция не понимает
+   var(), поэтому токены резолвим в конкретные значения (public/tokens/colors.css). */
+const C_ACCENT = "#9b1d30";     /* --accent  = --ox-500  */
+const C_FAINT = "#5f5d57";      /* --text-faint = --gray-500 */
+const C_MUTED = "#88857d";      /* --text-muted = --gray-400 */
+const C_BONE = "#ece7df";       /* --bone */
+
+/* Живой prefers-reduced-motion. Не `useReducedMotion()` из motion/react:
+   в Motion 12 он читает значение один раз (`useState` без сеттера, в
+   исходнике на этом месте TODO), а прежний CSS-media-query реагировал на
+   переключение сразу — своя подписка возвращает это поведение. */
+const rmMedia = window.matchMedia("(prefers-reduced-motion: reduce)");
+const subscribeRM = (cb) => {
+  rmMedia.addEventListener("change", cb);
+  return () => rmMedia.removeEventListener("change", cb);
+};
+const getRM = () => rmMedia.matches;
+
+function usePrefersReducedMotion() {
+  return React.useSyncExternalStore(subscribeRM, getRM);
+}
+
+/* Скролл-лок — один на обе модалки. Лайтбокс не запирает фокус: с него можно
+   уйти табом на «Записаться на сеанс» и открыть запись поверх. Пока владельцы
+   были независимы, закрытие верхней модалки снимало лок, поставленный нижней,
+   и страница ехала под ещё открытым лайтбоксом. */
+const scrollLockOwners = new Set();
+const setScrollLock = (id, on) => {
+  if (on) scrollLockOwners.add(id);
+  else scrollLockOwners.delete(id);
+  document.body.style.overflow = scrollLockOwners.size ? "hidden" : "";
+};
+
+/* Клавиши document-уровня принадлежат ВЕРХНЕЙ модалке. Запись рисуется выше
+   лайтбокса всегда (тот же zIndex 100, но позже в дереве App), поэтому пока
+   она открыта — Esc и ←/→ её: без этого один Esc схлопывал обе модалки, а
+   ←/→ на кнопке формы листали ленту под ней.
+   Флаг модульный, а не проп: читается прямо в обработчике лайтбокса, так что
+   открытие записи не тянет лишний рендер тяжёлого Works (198 плиток).
+   Гейт по `e.target` был бы дырявым: клик по фону формы уводит фокус на body,
+   и событие тогда не принадлежит ни одному её элементу — а закрыть надо всё
+   равно запись. Порядок безопасен в обе стороны: слушатели document идут в
+   порядке навешивания, а флаг гасит useEffect уже ПОСЛЕ диспатча события,
+   поэтому тот же Esc не достаётся второй модалке ни при каком порядке
+   открытия. Снимаем флаг на закрытии, а НЕ в onExitComplete (в отличие от
+   лока скролла): следующий Esc в ~0.24s окне выхода должен закрывать
+   лайтбокс, как и до фикса. */
+let bookingOnTop = false;
+const setBookingOnTop = (on) => { bookingOnTop = on; };
+
+/* Вход/выход модалок — ДОБАВЛЕННАЯ анимация: раньше обе модалки монтировались
+   мгновенно (`if(!open) return null`). При prefers-reduced-motion длительности
+   нули, то есть прежнее мгновенное появление и есть RM-поведение. */
+function useModalMotion() {
+  const reduced = usePrefersReducedMotion();
+  return {
+    overlay: {
+      /* initial:false при RM — иначе первый кадр рисуется прозрачным (нулевая
+         длительность гасит анимацию, но не стартовое состояние), и вместо
+         прежнего мгновенного появления получается проблеск в ~8 мс. */
+      initial: reduced ? false : { opacity: 0 },
+      /* pointerEvents — не косметика: до `AnimatePresence` оверлей исчезал в тот
+         же кадр (`if(!open) return null`), а теперь висит в DOM все ~0.2 s выхода
+         и всё это время ловит клики (стрелки внутри успели бы открыть лайтбокс
+         заново). Значение неанимируемое — Motion выставляет его сразу. */
+      animate: { opacity: 1, pointerEvents: "auto" },
+      exit: { opacity: 0, pointerEvents: "none" },
+      transition: { duration: reduced ? 0 : 0.2, ease: EASE_CSS },
+    },
+    panel: {
+      initial: reduced ? false : { opacity: 0, scale: 0.96, y: 8 },
+      animate: { opacity: 1, scale: 1, y: 0 },
+      exit: { opacity: 0, scale: 0.98, y: 6 },
+      transition: { duration: reduced ? 0 : 0.24, ease: EASE_OUT },
+    },
+    /* Кнопка «Смотреть вживую» — единственная анимация лайтбокса, доставшаяся
+       от прежнего кода мимо RM-гейта; заводим её сюда, чтобы гейт был один. */
+    live: {
+      initial: reduced ? false : { opacity: 0, y: 6 },
+      animate: { opacity: 1, y: 0 },
+      transition: { duration: reduced ? 0 : 0.45, delay: reduced ? 0 : 0.12, ease: EASE_OUT },
+    },
+  };
+}
+
+/* Входное раскрытие секции: пропсы для motion.<tag> (без обёртки — layout
+   не меняется). amount 0.15 = прежний IO threshold, once — как прежний
+   unobserve. При prefers-reduced-motion старта нет и длительность 0:
+   элемент просто оказывается в конечном состоянии.
+   Вызывать ТОЛЬКО в начале компонента (`const reveal = useReveal()`), а не
+   внутри JSX: это хук, и условный элемент со спредом сломал бы порядок хуков —
+   линтера с rules-of-hooks в репозитории нет. */
+function useReveal() {
+  const reduced = usePrefersReducedMotion();
+  return {
+    initial: reduced ? false : { opacity: 0, y: 46 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, amount: 0.15 },
+    transition: { duration: reduced ? 0 : 1, ease: EASE_OUT },
+  };
+}
 
 /* [путь, название, стиль, пропорция кадра ш/в]
    Пропорция снята с исходников — плитки в ленте строятся по ней, чтобы
@@ -203,7 +314,8 @@ function Hero({ onBook }) {
         Rated Tattoo · Moscow · с 2015
       </div>
 
-      <div className="rt-reveal rt-in" style={{ position: "relative", zIndex: 1, flex: "1 1 auto", width: "100%", maxWidth: MAXW, margin: "0 auto", padding: "150px 32px 60px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      {/* carve-out: первый экран (LCP) виден сразу, без входной анимации */}
+      <div style={{ position: "relative", zIndex: 1, flex: "1 1 auto", width: "100%", maxWidth: MAXW, margin: "0 auto", padding: "150px 32px 60px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div style={{ marginBottom: "26px" }}><Kicker index="ТОП-10" label="Тату-мастеров Москвы 2023" /></div>
         <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(46px, 7vw, 104px)", lineHeight: 0.9, letterSpacing: "-0.01em", margin: 0 }}>
           Элитные<br />татуировки<span style={{ color: "var(--accent)" }}>.</span>
@@ -238,6 +350,7 @@ function Hero({ onBook }) {
 
 /* ------------------------------------------------------------------ About */
 function About() {
+  const reveal = useReveal();
   const reasons = [
     ["Мировой уровень", "Участник международных тату-конвенций и лауреат премий. Постоянно совершенствую навыки."],
     ["Безопасность", "Только одноразовые материалы и стерилизация в автоклавах класса B."],
@@ -248,7 +361,7 @@ function About() {
       {/* atmospheric oversize wordmark */}
       <div aria-hidden="true" style={{ position: "absolute", right: "-2.5%", top: "6%", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(140px, 23vw, 360px)", lineHeight: 0.8, color: "var(--bone)", opacity: 0.028, textTransform: "uppercase", letterSpacing: "-0.03em", pointerEvents: "none", userSelect: "none" }}>Тэд</div>
 
-      <div className="rt-reveal rt-about-grid" style={{ position: "relative", maxWidth: MAXW, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "0.94fr 1.06fr", gap: "72px", alignItems: "center", width: "100%" }}>
+      <motion.div {...reveal} className="rt-about-grid" style={{ position: "relative", maxWidth: MAXW, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "0.94fr 1.06fr", gap: "72px", alignItems: "center", width: "100%" }}>
         {/* ----- portrait ----- */}
         <div className="rt-about-media" style={{ position: "relative" }}>
           <div className="rt-edge-label" style={{ position: "absolute", left: "-30px", top: "50%", transform: "translateY(-50%) rotate(180deg)", writingMode: "vertical-rl", zIndex: 2, fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.32em", textTransform: "uppercase", color: "var(--text-faint)" }}>
@@ -292,7 +405,7 @@ function About() {
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -300,47 +413,66 @@ function About() {
 /* ------------------------------------------------------- Works (карусель) */
 /* clone — второй проход ленты, нужный только для бесшовной прокрутки.
    Он скрыт от скринридера и выключен из таб-порядка, иначе каждая работа
-   объявляется и обходится дважды. */
-function WorkTile({ w, onOpen, onFocus, clone }) {
-  const [hover, setHover] = React.useState(false);
+   объявляется и обходится дважды.
+
+   memo обязателен: в ленте 198 плиток, у каждой четыре motion-элемента, а
+   кадровый цикл дёргает setStyle — без мемоизации каждая смена стиля в центре
+   кадра прогоняла бы ~800 VisualElement'ов. Поэтому индекс приходит пропом, а
+   обработчики Works держит стабильными (useCallback) — иначе memo не сработает. */
+const WorkTile = React.memo(function WorkTile({ w, i, onOpen, onFocus, clone }) {
   return (
-    <button type="button" className="rt-work-tile"
-      onClick={onOpen} onFocus={onFocus}
-      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+    <motion.button type="button" className="rt-work-tile"
+      onClick={(e) => onOpen(i, e)} onFocus={() => onFocus(i)}
+      initial="rest" animate="rest" whileHover="hover"
       aria-hidden={clone ? "true" : undefined} tabIndex={clone ? -1 : undefined}
       aria-label={w[1] + " — " + w[2] + ". Открыть крупно"}
       style={{ position: "relative", flexShrink: 0, height: TILE_H, width: "calc(" + TILE_H + " * " + tileRatio(w[3]) + ")", margin: "0 5px", overflow: "hidden", background: "var(--ink-800)", padding: 0, border: 0, display: "block", cursor: "pointer" }}>
       {/* src проставляет цикл ленты, когда плитка подходит к экрану — см. sweep().
           Штатный loading="lazy" здесь не работает: React вставляет плитки после
-          отрисовки, и Chrome успевает счесть их близкими к экрану. */}
-      <img data-src={w[0]} alt={w[1] + " — " + w[2]} draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", userSelect: "none", pointerEvents: "none", filter: "grayscale(0.5) contrast(1.06)", transform: hover ? "scale(1.06)" : "scale(1)", transition: "transform .7s var(--ease-out), filter .4s" }} />
+          отрисовки, и Chrome успевает счесть их близкими к экрану.
+          Плитка обязана оставаться ПЕРВЫМ ребёнком кнопки — sweep() берёт её
+          через firstElementChild. */}
+      <motion.img data-src={w[0]} alt={w[1] + " — " + w[2]} draggable={false}
+        variants={{ rest: { scale: 1 }, hover: { scale: 1.06 } }}
+        transition={{ duration: 0.7, ease: EASE_OUT }}
+        style={{ width: "100%", height: "100%", objectFit: "cover", userSelect: "none", pointerEvents: "none", filter: "grayscale(0.5) contrast(1.06)" }} />
       {/* Заливка держит читаемость подписи и на светлых кадрах — плашки под текстом нет. */}
-      <div style={{ position: "absolute", inset: 0, background: "var(--scrim-hover)", opacity: hover ? 1 : 0.82, transition: "opacity .35s" }}></div>
-      <div style={{ position: "absolute", left: "16px", right: "16px", bottom: "16px", textAlign: "left", transform: hover ? "translateY(0)" : "translateY(6px)", opacity: hover ? 1 : 0.9, transition: "all .35s" }}>
+      <motion.div variants={{ rest: { opacity: 0.82 }, hover: { opacity: 1 } }}
+        transition={{ duration: 0.35, ease: EASE_CSS }}
+        style={{ position: "absolute", inset: 0, background: "var(--scrim-hover)" }}></motion.div>
+      <motion.div variants={{ rest: { opacity: 0.9, y: 6 }, hover: { opacity: 1, y: 0 } }}
+        transition={{ duration: 0.35, ease: EASE_CSS }}
+        style={{ position: "absolute", left: "16px", right: "16px", bottom: "16px", textAlign: "left" }}>
         <div style={{ fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "6px" }}>{w[2]}</div>
         <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.01em", fontSize: "18px", fontWeight: 500, margin: 0 }}>{w[1]}</h3>
-      </div>
-    </button>
+      </motion.div>
+    </motion.button>
   );
-}
+});
 
 /* Просмотр работы крупно: Esc — закрыть, ←/→ — соседние работы. */
 function WorkLightbox({ index, works, onClose, onStep }) {
   const closeRef = React.useRef(null);
   const closeBtnRef = React.useRef(null);        /* кнопка «Закрыть» в видео-листе */
+  const anim = useModalMotion();
   const [videoOpen, setVideoOpen] = React.useState(false);
   const videoOpenRef = React.useRef(false);
   videoOpenRef.current = videoOpen;              /* всегда актуален на момент keydown */
   const escSuppressUntilRef = React.useRef(0);   /* окно подавления Esc после закрытия листа */
   const open = index >= 0;
+  const openRef = React.useRef(open);
+  openRef.current = open;                        /* всегда актуален на момент клика: гейт у «Смотреть вживую» */
   const w = open ? works[index] : null;
   /* 5-й элемент строки WORKS — id связанного ролика; сцену берём из CLIPS. */
   const clip = w && w[4] ? CLIPS.find((c) => c[0] === w[4]) : null;
 
+  /* Лок скролла ставим при открытии, а СНИМАЕМ в onExitComplete: сними его на
+     смене open — и страница поехала бы под ещё видимой панелью все ~0.24s
+     выхода. Отдельный эффект-страховка возвращает скролл при размонтировании. */
   React.useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (open) setScrollLock("lightbox", true);
   }, [open]);
+  React.useEffect(() => () => setScrollLock("lightbox", false), []);
 
   /* Смена работы или закрытие лайтбокса — гасим видео-лист. */
   React.useEffect(() => { setVideoOpen(false); }, [index]);
@@ -358,7 +490,16 @@ function WorkLightbox({ index, works, onClose, onStep }) {
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e) => {
-      if (videoOpenRef.current || Date.now() < escSuppressUntilRef.current) return;
+      /* Запись открывается ПОВЕРХ лайтбокса (фокус тот не запирает, см.
+         scrollLockOwners) — пока она открыта, клавиши её, см. bookingOnTop. */
+      if (videoOpenRef.current || bookingOnTop || Date.now() < escSuppressUntilRef.current) return;
+      /* Второй рубеж, поверх bookingOnTop: событие из редактируемого поля
+         принадлежит полю. Не мёртвый код — он держит окно ~0.24s выхода
+         записи, когда флаг уже снят, а поля формы ещё в DOM и в фокусе: без
+         него ←/→ в них получали бы preventDefault и листали ленту вместо
+         движения каретки. */
+      const t = e.target;
+      if (t && (t.isContentEditable || t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT")) return;
       if (e.key === "Escape") onClose();
       else if (e.key === "ArrowRight") { e.preventDefault(); onStep(1); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); onStep(-1); }
@@ -367,49 +508,68 @@ function WorkLightbox({ index, works, onClose, onStep }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose, onStep]);
 
-  if (!open) return null;
   const nav = { width: "50px", height: "50px", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "rgba(10,10,12,.55)", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "15px", flexShrink: 0 };
   const arNum = clip ? clip[5] / clip[6] : 1;
 
+  /* Компонент больше НЕ возвращает null при закрытом лайтбоксе: чтобы отыграть
+     выход до размонтирования, условным должен быть ребёнок AnimatePresence. */
   return (
     <React.Fragment>
-      <div role="dialog" aria-modal="true" aria-label={"Работа: " + w[1]} onClick={onClose}
-        style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.92)", backdropFilter: "blur(6px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px", padding: "20px" }}>
-        <button ref={closeRef} type="button" aria-label="Закрыть просмотр" onClick={onClose}
-          style={{ position: "absolute", top: "20px", right: "20px", width: "50px", height: "50px", background: "transparent", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "16px" }}>
-          <i className="fas fa-xmark" aria-hidden="true"></i>
-        </button>
+      <AnimatePresence onExitComplete={() => setScrollLock("lightbox", false)}>
+        {open ? (
+          <motion.div key="lightbox" role="dialog" aria-modal="true" aria-label={"Работа: " + w[1]} onClick={onClose} {...anim.overlay}
+            style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.92)", backdropFilter: "blur(6px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px", padding: "20px" }}>
+            <button ref={closeRef} type="button" aria-label="Закрыть просмотр" onClick={onClose}
+              style={{ position: "absolute", top: "20px", right: "20px", width: "50px", height: "50px", background: "transparent", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "16px" }}>
+              <i className="fas fa-xmark" aria-hidden="true"></i>
+            </button>
 
-        <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 3vw, 28px)", maxWidth: "100%" }}>
-          <button type="button" aria-label="Предыдущая работа" onClick={() => onStep(-1)} style={nav} className="rt-lb-nav">
-            <i className="fas fa-arrow-left" aria-hidden="true"></i>
-          </button>
-          <img src={w[0]} alt={w[1] + " — " + w[2]}
-            style={{ maxHeight: "72vh", maxWidth: "min(1100px, 78vw)", objectFit: "contain", display: "block", border: "1px solid var(--border-hair)" }} />
-          <button type="button" aria-label="Следующая работа" onClick={() => onStep(1)} style={nav} className="rt-lb-nav">
-            <i className="fas fa-arrow-right" aria-hidden="true"></i>
-          </button>
-        </div>
+            {/* Панель — это два существующих ряда, а не новая обёртка: лишний
+                flex-контейнер пришлось бы повторять центровкой, gap и maxWidth,
+                а раскладка лайтбокса на мобильном — самое хрупкое место. */}
+            <motion.div {...anim.panel} onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 3vw, 28px)", maxWidth: "100%" }}>
+              <button type="button" aria-label="Предыдущая работа" onClick={() => onStep(-1)} style={nav} className="rt-lb-nav">
+                <i className="fas fa-arrow-left" aria-hidden="true"></i>
+              </button>
+              <img src={w[0]} alt={w[1] + " — " + w[2]}
+                style={{ maxHeight: "72vh", maxWidth: "min(1100px, 78vw)", objectFit: "contain", display: "block", border: "1px solid var(--border-hair)" }} />
+              <button type="button" aria-label="Следующая работа" onClick={() => onStep(1)} style={nav} className="rt-lb-nav">
+                <i className="fas fa-arrow-right" aria-hidden="true"></i>
+              </button>
+            </motion.div>
 
-        <div onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
-          <div style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "8px" }}>{w[2]}</div>
-          <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(20px, 2.4vw, 28px)", fontWeight: 500, margin: 0, letterSpacing: "0.01em" }}>{w[1]}</h3>
-          {clip ? (
-            <motion.button type="button" onClick={() => setVideoOpen(true)} className="rt-lb-live"
-              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-              style={{ marginTop: "16px", display: "inline-flex", alignItems: "center", gap: "9px", padding: "10px 20px", background: "transparent", color: "var(--bone)", border: "1px solid var(--accent)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>
-              <i className="fas fa-play" aria-hidden="true" style={{ fontSize: "10px" }}></i>
-              Смотреть вживую
-            </motion.button>
-          ) : null}
-          <div style={{ fontFamily: "var(--font-body)", fontSize: "12px", letterSpacing: "0.14em", color: "var(--text-muted)", marginTop: "12px" }}>
-            {index + 1} / {works.length}
-          </div>
-        </div>
-      </div>
+            <motion.div {...anim.panel} onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "8px" }}>{w[2]}</div>
+              <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(20px, 2.4vw, 28px)", fontWeight: 500, margin: 0, letterSpacing: "0.01em" }}>{w[1]}</h3>
+              {/* Гейт по openRef у кнопки ниже — третий в паре к `pointerEvents:"none"`
+                  (см. step и submit): мышь тот глушит, но выходящее поддерево живёт в
+                  DOM ~0.24s, и Enter на сфокусированной кнопке всё это время даёт click.
+                  Без гейта videoOpen залипал в true (эффект сброса по [index] уже
+                  отработал) — и следующее открытие любой работы монтировало лист Vaul:
+                  кадр выехавшей панели, увод фокуса и загрузка стороннего iframe. Читаем
+                  ref, а не проп: поддерево заморожено и `open` в замыкании навсегда true. */}
+              {clip ? (
+                <motion.button type="button" onClick={() => { if (openRef.current) setVideoOpen(true); }} className="rt-lb-live" {...anim.live}
+                  style={{ marginTop: "16px", display: "inline-flex", alignItems: "center", gap: "9px", padding: "10px 20px", background: "transparent", color: "var(--bone)", border: "1px solid var(--accent)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>
+                  <i className="fas fa-play" aria-hidden="true" style={{ fontSize: "10px" }}></i>
+                  Смотреть вживую
+                </motion.button>
+              ) : null}
+              <div style={{ fontFamily: "var(--font-body)", fontSize: "12px", letterSpacing: "0.14em", color: "var(--text-muted)", marginTop: "12px" }}>
+                {index + 1} / {works.length}
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       {/* Видео-лист (Vaul): выезжает снизу с нативным плеером связанного ролика.
-          Открывается только у работ с парой; Radix даёт фокус-ловушку и Esc. */}
+          Открывается только у работ с парой; Radix даёт фокус-ловушку и Esc.
+          Живёт СИБЛИНГОМ, вне AnimatePresence: у листа своя анимация, а AP
+          ждёт один условный motion-ребёнок. Гейт по `w` — при закрытом
+          лайтбоксе работы нет, а `w[1]` в заголовке читается при создании
+          элемента (лист при этом закрыт: videoOpen гасится на смене index). */}
+      {w ? (
       <Drawer.Root open={videoOpen} direction="bottom" autoFocus
         onOpenChange={(o) => { if (!o) escSuppressUntilRef.current = Date.now() + 400; setVideoOpen(o); }}>
         {/* autoFocus + onOpenAutoFocus (у Content): начальный фокус садим на
@@ -442,6 +602,7 @@ function WorkLightbox({ index, works, onClose, onStep }) {
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
+      ) : null}
     </React.Fragment>
   );
 }
@@ -460,11 +621,21 @@ function Works({ onBook }) {
   const [shot, setShot] = React.useState(-1);   /* индекс работы в просмотре */
   /* Якорь на время перестановки: какую работу вывести в центр после неё. */
   const anchor = React.useRef(null);
+  const reduced = usePrefersReducedMotion();
+  const reveal = useReveal();
 
   const S = React.useRef({
     offset: 0, setW: 1, paused: false, dragging: false,
     lastX: 0, lastT: 0, tween: 0, vel: 0, moved: 0, geo: [], mid: -1,
+    /* Заглушка до регистрации в эффекте: реальный sweep кладётся туда раньше,
+       чем стартует кадровый цикл, — гейт на месте вызова не нужен. */
+    sweep: () => {},
   });
+
+  /* Счётчик кадров для sweep — в ref, а не в замыкании эффекта: колбэк
+     useAnimationFrame пересоздаётся каждым рендером, локальная переменная
+     обнулялась бы вместе с ним и sweep бежал бы чаще, чем раз в 10 кадров. */
+  const tickRef = React.useRef(0);
 
   React.useEffect(() => {
     const track = trackRef.current;
@@ -485,7 +656,6 @@ function Works({ onBook }) {
        196 замеров на кадр стоили бы дороже самой ленты. Раз в 10 кадров хватает:
        при 34 px/s запас в экран шириной вырабатывается минуты за полторы. */
     const PRELOAD = 1200;
-    let tick = 0;
     const sweep = () => {
       const s = S.current;
       if (!s.geo.length) return;
@@ -510,60 +680,68 @@ function Works({ onBook }) {
        пустыми прямоугольниками. */
     S.current.sweep = sweep;
 
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let raf, last = performance.now();
-    const loop = (now) => {
-      const s = S.current;
-      const dt = Math.min(0.05, (now - last) / 1000); last = now;
-
-      if (s.dragging) {
-        /* offset двигает обработчик move */
-      } else if (s.spin) {
-        const sp = s.spin;
-        if (sp.phase === "up") {
-          sp.t += dt;
-          const u = Math.min(1, sp.t / SPIN_UP);
-          s.offset += (sp.v0 + (SPIN_VMAX - sp.v0) * u * u) * dt;
-          if (u >= 1) { sp.phase = "swap"; setOrder(buildOrder(sp.st)); }
-        } else if (sp.phase === "swap") {
-          /* Крутим на пике, пока React не закоммитит новый порядок. Тормозной
-             путь выставит useLayoutEffect — там есть настоящая геометрия. */
-          s.offset += SPIN_VMAX * dt;
-        } else {
-          sp.u = Math.min(1, sp.u + dt / SPIN_DOWN);
-          const e = 1 - Math.pow(1 - sp.u, 3);
-          s.offset = sp.start + sp.dist * e;
-          if (sp.u >= 1) s.spin = null;
-        }
-      } else if (Math.abs(s.tween) > 0.5) {
-        const step = s.tween * Math.min(1, dt * 6);
-        s.offset += step; s.tween -= step; s.vel = 0;
-      } else if (Math.abs(s.vel) > 12) {
-        s.offset += s.vel * dt;              /* выбег после броска */
-        s.vel *= Math.pow(0.06, dt);
-      } else {
-        s.tween = 0; s.vel = 0;
-        if (!s.paused && !motion.matches) s.offset += 34 * dt;
-      }
-
-      s.offset = ((s.offset % s.setW) + s.setW) % s.setW;
-      track.style.transform = "translate3d(" + (-s.offset) + "px,0,0)";
-
-      /* Стиль работы, попавшей в центр кадра, ведёт индекс под лентой. */
-      if (s.geo.length) {
-        const focus = (s.offset + wrap.clientWidth / 2) % s.setW;
-        let i = s.geo.length - 1;
-        for (let k = 0; k < s.geo.length; k++) {
-          if (focus >= s.geo[k].left && focus < s.geo[k].left + s.geo[k].w) { i = k; break; }
-        }
-        if (i !== s.mid) { s.mid = i; setStyle(orderRef.current[i][2]); }
-      }
-      if (tick++ % 10 === 0) sweep();
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+    return () => { ro.disconnect(); };
   }, []);
+
+  /* Цикл ленты — на кадровом шедулере Motion (общий с остальными анимациями,
+     свой requestAnimationFrame больше не заводим). Колбэк намеренно НЕ обёрнут
+     в useCallback и не спрятан в useEffect([]): useAnimationFrame переподписывает
+     его на каждый рендер, и только поэтому `reduced` читается живым — иначе
+     переключение prefers-reduced-motion на открытой странице ленту бы не
+     остановило. Физика перенесена дословно; отличие одно: delta приходит от
+     Motion уже подрезанной сверху 40 мс (наш Math.min(0.05, …) остаётся как был,
+     но на просевших кадрах верхняя граница теперь 40, а не 50 мс). */
+  useAnimationFrame((time, delta) => {
+    const s = S.current;
+    const track = trackRef.current;
+    const wrap = wrapRef.current;
+    if (!track || !wrap) return;
+    const dt = Math.min(0.05, delta / 1000);
+
+    if (s.dragging) {
+      /* offset двигает обработчик move */
+    } else if (s.spin) {
+      const sp = s.spin;
+      if (sp.phase === "up") {
+        sp.t += dt;
+        const u = Math.min(1, sp.t / SPIN_UP);
+        s.offset += (sp.v0 + (SPIN_VMAX - sp.v0) * u * u) * dt;
+        if (u >= 1) { sp.phase = "swap"; setOrder(buildOrder(sp.st)); }
+      } else if (sp.phase === "swap") {
+        /* Крутим на пике, пока React не закоммитит новый порядок. Тормозной
+           путь выставит useLayoutEffect — там есть настоящая геометрия. */
+        s.offset += SPIN_VMAX * dt;
+      } else {
+        sp.u = Math.min(1, sp.u + dt / SPIN_DOWN);
+        const e = 1 - Math.pow(1 - sp.u, 3);
+        s.offset = sp.start + sp.dist * e;
+        if (sp.u >= 1) s.spin = null;
+      }
+    } else if (Math.abs(s.tween) > 0.5) {
+      const step = s.tween * Math.min(1, dt * 6);
+      s.offset += step; s.tween -= step; s.vel = 0;
+    } else if (Math.abs(s.vel) > 12) {
+      s.offset += s.vel * dt;              /* выбег после броска */
+      s.vel *= Math.pow(0.06, dt);
+    } else {
+      s.tween = 0; s.vel = 0;
+      if (!s.paused && !reduced) s.offset += 34 * dt;
+    }
+
+    s.offset = ((s.offset % s.setW) + s.setW) % s.setW;
+    track.style.transform = "translate3d(" + (-s.offset) + "px,0,0)";
+
+    /* Стиль работы, попавшей в центр кадра, ведёт индекс под лентой. */
+    if (s.geo.length) {
+      const focus = (s.offset + wrap.clientWidth / 2) % s.setW;
+      let i = s.geo.length - 1;
+      for (let k = 0; k < s.geo.length; k++) {
+        if (focus >= s.geo[k].left && focus < s.geo[k].left + s.geo[k].w) { i = k; break; }
+      }
+      if (i !== s.mid) { s.mid = i; setStyle(orderRef.current[i][2]); }
+    }
+    if (tickRef.current++ % 10 === 0) s.sweep();
+  });
 
   /* Горизонтальный трекпад листает ленту; вертикаль оставляем скроллу страницы. */
   React.useEffect(() => {
@@ -591,22 +769,32 @@ function Works({ onBook }) {
   /* Подводит работу i к центру кадра кратчайшим путём по кольцу. */
   /* Показ работы, получившей фокус с клавиатуры. Целимся к левому краю, а не
      к центру: так offset остаётся в [0, setW), и видимой оказывается именно та
-     плитка, на которой фокус, а не её двойник из второго прохода. */
-  const glideIntoView = (i) => {
+     плитка, на которой фокус, а не её двойник из второго прохода.
+     Оба обработчика плитки — useCallback без зависимостей (всё нужное лежит в
+     ref'ах): их идентичность и держит memo на WorkTile. */
+  const focusTile = React.useCallback((i) => {
     const s = S.current;
-    const g = s.geo[i];
+    const g = s.geo[i % orderRef.current.length];
     const wrap = wrapRef.current;
     if (!g || !wrap) return;
     const x = g.left - s.offset;
     if (x >= 0 && x + g.w <= wrap.clientWidth) return;   /* уже на виду */
     s.tween = Math.max(0, g.left - 24) - s.offset;
     s.vel = 0;
-  };
+  }, []);
 
   const nudge = (dir) => { const s = S.current; s.tween += dir * (wrapRef.current ? wrapRef.current.clientWidth : 600) * 0.6; s.vel = 0; };
-  const step = (d) => setShot((i) => (i + d + order.length) % order.length);
+  /* i < 0 — лайтбокс уже закрыт. Пара к `pointerEvents:"none"`: он глушит мышь,
+     но выходящее поддерево висит в DOM ~0.24s, и Enter на сфокусированной
+     стрелке всё ещё даёт click, а (-1 + 1 + N) % N === 0 открывал лайтбокс
+     заново на первой работе. Гейт в апдейтере, а не в обработчике: поддерево
+     заморожено и обработчик держит замыкание последнего открытого рендера —
+     свежий shot виден только апдейтеру. */
+  const step = (d) => setShot((i) => (i < 0 ? i : (i + d + order.length) % order.length));
   /* detail === 0 — нажатие с клавиатуры: там протяжки не было и порог не применим. */
-  const open = (i, e) => { if ((e && e.detail === 0) || S.current.moved < DRAG_SLOP) setShot(i % order.length); };
+  const openTile = React.useCallback((i, e) => {
+    if ((e && e.detail === 0) || S.current.moved < DRAG_SLOP) setShot(i % orderRef.current.length);
+  }, []);
 
   /* Клик по стилю: работы этого стиля собираются подряд, и первая из них встаёт
      в середину кадра. Ничего не скрывается — набор тот же, меняется очередь.
@@ -615,7 +803,7 @@ function Works({ onBook }) {
      столько, чтобы он начинался правее середины кадра. Иначе offset уходит в
      конец набора: визуально верно (лента бесшовная), но в центре оказывается
      плитка-двойник из второго прохода — а он скрыт от скринридера, и фокус с
-     клавиатуры улетает к оригиналу через всю ленту. См. glideIntoView. */
+     клавиатуры улетает к оригиналу через всю ленту. См. focusTile. */
   const buildOrder = (st) => {
     const s = S.current, wrap = wrapRef.current, cur = orderRef.current;
     const tagged = cur.filter((w) => w[2] === st);
@@ -634,7 +822,7 @@ function Works({ onBook }) {
     const s = S.current;
     if (!wrapRef.current || !order.some((w) => w[2] === st)) return;
     /* При выключенной анимации крутить нечего — переставляем сразу. */
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (reduced) {
       setOrder(buildOrder(st));
       return;
     }
@@ -674,7 +862,7 @@ function Works({ onBook }) {
       track.style.transform = "translate3d(" + (-s.offset) + "px,0,0)";
     }
     s.mid = -1;
-    if (s.sweep) s.sweep();
+    s.sweep();
   }, [order]);
 
   const down = (e) => {
@@ -711,7 +899,7 @@ function Works({ onBook }) {
 
   return (
     <section id="works" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "110px 0", overflow: "hidden" }}>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto 40px", padding: "0 32px", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px" }}>
+      <motion.div {...reveal} style={{ maxWidth: MAXW, margin: "0 auto 40px", padding: "0 32px", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px" }}>
         <div>
           <Kicker index="02" label="Работы" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4.5vw, 56px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Избранное</h2>
@@ -722,7 +910,7 @@ function Works({ onBook }) {
           <div style={{ width: "1px", height: "28px", background: "var(--border-hair)", margin: "0 6px" }}></div>
           <Button variant="ghost" onClick={onBook} iconRight="fas fa-arrow-right">Записаться на сеанс</Button>
         </div>
-      </div>
+      </motion.div>
 
       <div ref={wrapRef} role="group" aria-label="Лента работ"
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
@@ -734,15 +922,14 @@ function Works({ onBook }) {
               переносить готовые плитки, а не переписывать их содержимое на месте —
               иначе уже загруженные картинки сбрасываются и лента моргает. */}
           {items.map((w, i) => (
-            <WorkTile key={w[0] + (i >= order.length ? "~2" : "~1")} w={w} clone={i >= order.length}
-              onOpen={(e) => open(i, e)}
-              onFocus={() => glideIntoView(i % order.length)} />
+            <WorkTile key={w[0] + (i >= order.length ? "~2" : "~1")} w={w} i={i} clone={i >= order.length}
+              onOpen={openTile} onFocus={focusTile} />
           ))}
         </div>
       </div>
 
       {/* Стили: подсвечен стиль работы в центре, клик — собрать этот стиль подряд. */}
-      <div className="rt-reveal rt-work-styles" style={{ maxWidth: MAXW, margin: "28px auto 0", padding: "0 32px", width: "100%", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 22px" }}>
+      <motion.div {...reveal} className="rt-work-styles" style={{ maxWidth: MAXW, margin: "28px auto 0", padding: "0 32px", width: "100%", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 22px" }}>
         {WORK_STYLES.map((s) => {
           const on = s === style;
           return (
@@ -758,7 +945,7 @@ function Works({ onBook }) {
             </button>
           );
         })}
-      </div>
+      </motion.div>
 
       <WorkLightbox index={shot} works={order} onClose={() => setShot(-1)} onStep={step} />
     </section>
@@ -837,6 +1024,7 @@ function Process() {
   const listRef = React.useRef(null);
   const durRef = React.useRef(0);
   const activeRef = React.useRef(0);
+  const reveal = useReveal();
 
   const cur = CLIPS[active];
   React.useEffect(() => { activeRef.current = active; }, [active]);
@@ -928,12 +1116,12 @@ function Process() {
 
   return (
     <section id="process" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "96px 0" }}>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto 34px", padding: "0 32px", width: "100%" }}>
+      <motion.div {...reveal} style={{ maxWidth: MAXW, margin: "0 auto 34px", padding: "0 32px", width: "100%" }}>
         <Kicker index="03" label="Вживую" />
         <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Ближе, чем фото</h2>
-      </div>
+      </motion.div>
 
-      <div className="rt-reveal" style={{ maxWidth: "1040px", margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <motion.div {...reveal} style={{ maxWidth: "1040px", margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div className="rt-clip-grid" style={{ display: "grid", gridTemplateColumns: "auto 1fr", border: "1px solid var(--border-hair)", background: "var(--bg-base)" }}>
 
           {/* Сцена */}
@@ -943,7 +1131,10 @@ function Process() {
             {/* Размытая подложка — тот же кадр, чтобы поля не были пустыми */}
             <div style={{ position: "absolute", inset: 0, backgroundImage: "url(" + cur[3] + ")", backgroundSize: "cover", backgroundPosition: "center", filter: "blur(26px) brightness(0.45) saturate(0.7)", transform: "scale(1.15)" }}></div>
 
-            <div style={{ position: "absolute", inset: 0, margin: "auto", opacity: fade ? 0 : 1, transition: "opacity .26s ease", ...clipBox(cur[5], cur[6]) }}>
+            {/* Перекрёстный фейд при смене ролика: step() гасит кадр, ждёт те же
+                260 мс и только потом подменяет источник. */}
+            <motion.div initial={false} animate={{ opacity: fade ? 0 : 1 }} transition={{ duration: 0.26, ease: EASE_CSS }}
+              style={{ position: "absolute", inset: 0, margin: "auto", ...clipBox(cur[5], cur[6]) }}>
               {live ? (
                 <iframe ref={frameRef} title={cur[1]} src={clipSrc(cur[0])} frameBorder="0" scrolling="no"
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
@@ -951,7 +1142,7 @@ function Process() {
               ) : (
                 <img src={cur[3]} alt={cur[1]} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               )}
-            </div>
+            </motion.div>
 
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,10,12,.55), rgba(10,10,12,0) 45%)", pointerEvents: "none" }}></div>
 
@@ -1014,7 +1205,7 @@ function Process() {
           </div>
 
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -1028,10 +1219,10 @@ const SERVICES = [
 ];
 
 function Services({ onBook }) {
-  const [hover, setHover] = React.useState(-1);
+  const reveal = useReveal();
   return (
     <section id="services" className="rt-snap" style={{ background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <motion.div {...reveal} style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "56px", flexWrap: "wrap", gap: "20px" }}>
           <div>
             <Kicker index="04" label="Услуги" />
@@ -1041,17 +1232,26 @@ function Services({ onBook }) {
         </div>
         <div style={{ borderTop: "1px solid var(--border-hair)" }}>
           {SERVICES.map(([title, body], i) => (
-            <div key={title}
-              onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(-1)}
-              style={{ display: "grid", gridTemplateColumns: "70px 1.1fr 1.4fr 40px", gap: "28px", alignItems: "center", padding: "30px 16px", borderBottom: "1px solid var(--border-hair)", background: hover === i ? "rgba(236,231,223,0.03)" : "transparent", transition: "background .25s ease" }} className="rt-svc-row">
-              <span style={{ fontFamily: "var(--font-display)", fontSize: "22px", fontWeight: 600, color: hover === i ? "var(--accent)" : "var(--text-faint)", transition: "color .25s" }}>{String(i + 1).padStart(2, "0")}</span>
+            /* Покоящийся фон — прозрачная ЗАЛИВКА того же тона, а не `transparent`:
+               Motion интерполирует rgba покомпонентно и через rgba(0,0,0,0) увёл бы
+               подсветку в чёрный. Визуально это тот же «фона нет». */
+            <motion.div key={title}
+              initial="rest" animate="rest" whileHover="hover"
+              variants={{ rest: { backgroundColor: "rgba(236,231,223,0)" }, hover: { backgroundColor: "rgba(236,231,223,0.03)" } }}
+              transition={{ duration: 0.25, ease: EASE_CSS }}
+              style={{ display: "grid", gridTemplateColumns: "70px 1.1fr 1.4fr 40px", gap: "28px", alignItems: "center", padding: "30px 16px", borderBottom: "1px solid var(--border-hair)" }} className="rt-svc-row">
+              <motion.span variants={{ rest: { color: C_FAINT }, hover: { color: C_ACCENT } }}
+                transition={{ duration: 0.25, ease: EASE_CSS }}
+                style={{ fontFamily: "var(--font-display)", fontSize: "22px", fontWeight: 600 }}>{String(i + 1).padStart(2, "0")}</motion.span>
               <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.01em", fontSize: "clamp(22px, 2.4vw, 30px)", fontWeight: 500, margin: 0 }}>{title}</h3>
               <p style={{ color: "var(--text-muted)", margin: 0, lineHeight: 1.6, fontSize: "15px" }} className="rt-svc-desc">{body}</p>
-              <span style={{ justifySelf: "end", color: hover === i ? "var(--accent)" : "var(--text-faint)", fontSize: "18px", transform: hover === i ? "translateX(4px)" : "translateX(0)", transition: "transform .25s, color .25s" }}><i className="fas fa-arrow-right"></i></span>
-            </div>
+              <motion.span variants={{ rest: { color: C_FAINT, x: 0 }, hover: { color: C_ACCENT, x: 4 } }}
+                transition={{ duration: 0.25, ease: EASE_CSS }}
+                style={{ justifySelf: "end", fontSize: "18px" }}><i className="fas fa-arrow-right"></i></motion.span>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -1067,9 +1267,10 @@ const BENEFITS = [
 ];
 
 function Benefits() {
+  const reveal = useReveal();
   return (
     <section id="benefits" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <motion.div {...reveal} style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ marginBottom: "48px" }}>
           <Kicker index="05" label="Преимущества" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0", maxWidth: "16ch" }}>Почему мне доверяют</h2>
@@ -1083,7 +1284,7 @@ function Benefits() {
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -1110,9 +1311,10 @@ function ReviewStars() {
 }
 
 function Testimonials() {
+  const reveal = useReveal();
   return (
     <section id="reviews" className="rt-snap" style={{ background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0", borderTop: "1px solid var(--border-hair)" }}>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <motion.div {...reveal} style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px", marginBottom: "44px" }}>
           <div>
             <Kicker index="06" label="Отзывы" />
@@ -1156,7 +1358,7 @@ function Testimonials() {
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -1169,28 +1371,30 @@ const FAQ = [
 ];
 
 function Faq() {
+  const reveal = useReveal();
   return (
     <section id="faq" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
-      <div className="rt-reveal rt-faq-grid" style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 32px", width: "100%", display: "grid", gridTemplateColumns: "0.7fr 1.3fr", gap: "64px", alignItems: "start" }}>
+      <motion.div {...reveal} className="rt-faq-grid" style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 32px", width: "100%", display: "grid", gridTemplateColumns: "0.7fr 1.3fr", gap: "64px", alignItems: "start" }}>
         <div>
           <Kicker index="07" label="FAQ" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(30px, 3.4vw, 46px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Частые вопросы</h2>
         </div>
         <Accordion items={FAQ} />
-      </div>
+      </motion.div>
     </section>
   );
 }
 
 /* --------------------------------------------------------------- CTA */
 function Cta({ onBook }) {
+  const reveal = useReveal();
   return (
     <section id="cta" className="rt-snap" style={{ position: "relative", overflow: "hidden", minHeight: "100vh", display: "flex", alignItems: "center", padding: "120px 0" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <img src="./assets/img/work-mandala.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 35%", filter: "grayscale(0.7) contrast(1.05) brightness(0.5)" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(10,10,12,.86), rgba(10,10,12,.92))" }}></div>
       </div>
-      <div className="rt-reveal" style={{ position: "relative", zIndex: 1, maxWidth: MAXW, margin: "0 auto", padding: "0 32px", textAlign: "center", width: "100%" }}>
+      <motion.div {...reveal} style={{ position: "relative", zIndex: 1, maxWidth: MAXW, margin: "0 auto", padding: "0 32px", textAlign: "center", width: "100%" }}>
         <div style={{ display: "inline-block" }}><Kicker index="—" label="Запись открыта" /></div>
         <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(40px, 7vw, 96px)", lineHeight: 0.95, letterSpacing: "-0.01em", margin: "26px 0 28px" }}>
           Создадим вашу<br />татуировку<span style={{ color: "var(--accent)" }}>.</span>
@@ -1202,7 +1406,7 @@ function Cta({ onBook }) {
           <Button variant="primary" size="lg" onClick={onBook} iconRight="fas fa-arrow-right">Записаться сейчас</Button>
           <Button as="a" href="tel:+79689752099" variant="glass" size="lg" iconLeft="fas fa-phone">+7 (968) 975-20-99</Button>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -1268,13 +1472,25 @@ function BookingModal({ open, onClose }) {
   const [sending, setSending] = React.useState(false);
   const [error, setError] = React.useState("");
   const [form, setForm] = React.useState({ name: "", phone: "", idea: "" });
+  const openRef = React.useRef(open);
+  openRef.current = open;                        /* всегда актуален на момент отправки: гейт в submit */
+  const anim = useModalMotion();
 
   React.useEffect(() => {
     if (open) { setDone(false); setError(""); setSending(false); setForm({ name: "", phone: "", idea: "" }); }
   }, [open]);
+  /* Как в лайтбоксе: лок ставим на открытии, снимаем в onExitComplete — иначе
+     страница поехала бы под ещё видимой панелью. Второй эффект — страховка. */
   React.useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (open) setScrollLock("booking", true);
+  }, [open]);
+  React.useEffect(() => () => setScrollLock("booking", false), []);
+  /* Владение клавишами document-уровня: ставим на открытии, снимаем СРАЗУ на
+     закрытии и при размонтировании — в отличие от лока скролла, который висит
+     до конца выхода (почему именно так — см. bookingOnTop). */
+  React.useEffect(() => {
+    setBookingOnTop(open);
+    return () => setBookingOnTop(false);
   }, [open]);
   React.useEffect(() => {
     if (!open) return;
@@ -1287,7 +1503,14 @@ function BookingModal({ open, onClose }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (sending) return;
+    /* Гейт по openRef — парный к `pointerEvents:"none"` в useModalMotion: тот
+       глушит только мышь, а выходящее поддерево живёт в DOM все ~0.24s, и
+       Enter/Space на уже сфокусированной «Отправить заявку» всё это время даёт
+       click. Без гейта отменённая по Esc заявка уходила в Formspree — и молча,
+       модалки к тому моменту уже нет. Читаем ref, а не проп `open`: выходящее
+       поддерево заморожено (AnimatePresence перерисовывает элемент последнего
+       открытого рендера), и `open` в замыкании обработчика навсегда true. */
+    if (!openRef.current || sending) return;
     setError("");
     if (!form.name.trim() || !form.phone.trim()) {
       setError("Укажите имя и телефон.");
@@ -1319,40 +1542,44 @@ function BookingModal({ open, onClose }) {
     }
   };
 
-  if (!open) return null;
+  /* Как и лайтбокс, компонент не возвращает null: условный ребёнок AnimatePresence. */
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.82)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Запись на консультацию" style={{ width: "100%", maxWidth: "460px", background: "var(--bg-surface)", border: "1px solid var(--border-hair)", padding: "40px", position: "relative" }}>
-        <span style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "3px", background: "var(--accent)" }}></span>
-        {done ? (
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "44px", color: "var(--accent)", marginBottom: "16px" }}><i className="fas fa-circle-check"></i></div>
-            <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", margin: "0 0 10px", fontSize: "26px", fontWeight: 600 }}>Заявка отправлена</h3>
-            <p style={{ color: "var(--text-muted)", margin: "0 0 28px" }}>Тимур свяжется с вами в течение часа.</p>
-            <Button variant="primary" block onClick={onClose}>Готово</Button>
-          </div>
-        ) : (
-          <form onSubmit={submit}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "26px" }}>
-              <div>
-                <Kicker index="—" label="Запись" />
-                <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", margin: "14px 0 0", fontSize: "28px", fontWeight: 600, lineHeight: 1 }}>Бесплатная<br />консультация</h3>
+    <AnimatePresence onExitComplete={() => setScrollLock("booking", false)}>
+      {open ? (
+        <motion.div key="booking" onClick={onClose} {...anim.overlay} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.82)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+          <motion.div onClick={(e) => e.stopPropagation()} {...anim.panel} role="dialog" aria-modal="true" aria-label="Запись на консультацию" style={{ width: "100%", maxWidth: "460px", background: "var(--bg-surface)", border: "1px solid var(--border-hair)", padding: "40px", position: "relative" }}>
+            <span style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "3px", background: "var(--accent)" }}></span>
+            {done ? (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "44px", color: "var(--accent)", marginBottom: "16px" }}><i className="fas fa-circle-check"></i></div>
+                <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", margin: "0 0 10px", fontSize: "26px", fontWeight: 600 }}>Заявка отправлена</h3>
+                <p style={{ color: "var(--text-muted)", margin: "0 0 28px" }}>Тимур свяжется с вами в течение часа.</p>
+                <Button variant="primary" block onClick={onClose}>Готово</Button>
               </div>
-              <button type="button" onClick={onClose} aria-label="Закрыть" style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: "20px", cursor: "pointer" }}><i className="fas fa-xmark"></i></button>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <Input label="Имя" icon="fas fa-user" name="name" value={form.name} onChange={set("name")} disabled={sending} required placeholder="Как вас зовут?" />
-              <Input label="Телефон" icon="fas fa-phone" type="tel" name="phone" value={form.phone} onChange={set("phone")} disabled={sending} required placeholder="+7 (___) ___-__-__" />
-              <Input label="Опишите идею" as="textarea" name="idea" value={form.idea} onChange={set("idea")} disabled={sending} placeholder="Стиль, размер, место на теле…" />
-              {error ? (
-                <div role="alert" style={{ color: "var(--accent-soft)", fontSize: "13px", lineHeight: 1.5 }}>{error}</div>
-              ) : null}
-              <Button variant="primary" block type="submit" disabled={sending} iconRight={sending ? undefined : "fas fa-arrow-right"}>{sending ? "Отправка…" : "Отправить заявку"}</Button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>
+            ) : (
+              <form onSubmit={submit}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "26px" }}>
+                  <div>
+                    <Kicker index="—" label="Запись" />
+                    <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", margin: "14px 0 0", fontSize: "28px", fontWeight: 600, lineHeight: 1 }}>Бесплатная<br />консультация</h3>
+                  </div>
+                  <button type="button" onClick={onClose} aria-label="Закрыть" style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: "20px", cursor: "pointer" }}><i className="fas fa-xmark"></i></button>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <Input label="Имя" icon="fas fa-user" name="name" value={form.name} onChange={set("name")} disabled={sending} required placeholder="Как вас зовут?" />
+                  <Input label="Телефон" icon="fas fa-phone" type="tel" name="phone" value={form.phone} onChange={set("phone")} disabled={sending} required placeholder="+7 (___) ___-__-__" />
+                  <Input label="Опишите идею" as="textarea" name="idea" value={form.idea} onChange={set("idea")} disabled={sending} placeholder="Стиль, размер, место на теле…" />
+                  {error ? (
+                    <div role="alert" style={{ color: "var(--accent-soft)", fontSize: "13px", lineHeight: 1.5 }}>{error}</div>
+                  ) : null}
+                  <Button variant="primary" block type="submit" disabled={sending} iconRight={sending ? undefined : "fas fa-arrow-right"}>{sending ? "Отправка…" : "Отправить заявку"}</Button>
+                </div>
+              </form>
+            )}
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }
 
@@ -1372,10 +1599,17 @@ function DotNav() {
       {items.map(([id, label]) => {
         const on = active === id;
         return (
-          <a key={id} href={"#" + id} className="rt-dot" title={label} style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "flex-end" }}>
-            <span className="rt-dot-label" style={{ fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: on ? "var(--bone)" : "var(--text-muted)", opacity: 0, transform: "translateX(6px)", transition: "opacity .25s, transform .25s, color .25s", whiteSpace: "nowrap" }}>{label}</span>
+          <motion.a key={id} href={"#" + id} className="rt-dot" title={label}
+            initial="rest" animate="rest" whileHover="hover"
+            style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "flex-end" }}>
+            {/* Цвет покоя зависит от активной секции — при смене active Motion
+                доводит его за те же .25s, что раньше делал CSS-transition. */}
+            <motion.span className="rt-dot-label"
+              variants={{ rest: { opacity: 0, x: 6, color: on ? C_BONE : C_MUTED }, hover: { opacity: 1, x: 0, color: C_BONE } }}
+              transition={{ duration: 0.25, ease: EASE_CSS }}
+              style={{ fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</motion.span>
             <span style={{ width: on ? "11px" : "7px", height: on ? "11px" : "7px", borderRadius: "50%", background: on ? "var(--accent)" : "transparent", border: "1px solid", borderColor: on ? "var(--accent)" : "var(--text-faint)", transition: "all .25s var(--ease-out)" }}></span>
-          </a>
+          </motion.a>
         );
       })}
     </nav>

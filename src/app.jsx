@@ -16,26 +16,12 @@ import {
 } from "../sections.jsx";
 
 /* Композиция секций и общий стейт брони. Перенесено из инлайнового
-   text/babel-скрипта в index.html без изменений логики. */
+   text/babel-скрипта в index.html без изменений логики.
+   Входные раскрытия секций живут в `useReveal()` (sections.jsx) на Motion —
+   свой IntersectionObserver здесь больше не нужен. */
 export function App() {
   const [booking, setBooking] = React.useState(false);
   const book = () => setBooking(true);
-
-  React.useEffect(() => {
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add("rt-in");
-            io.unobserve(e.target);
-          }
-        });
-      },
-      { threshold: 0.15 }
-    );
-    document.querySelectorAll(".rt-reveal").forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
 
   return (
     <React.Fragment>
