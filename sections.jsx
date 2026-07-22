@@ -16,6 +16,18 @@ const MAXW = "1240px";
    ховера карточки работы и модалок — держим одним значением. */
 const EASE_OUT = [0.22, 1, 0.36, 1];
 
+/* = CSS-ключевое слово `ease` (cubic-bezier(0.25,0.1,0.25,1)). У Motion
+   дефолтная кривая другая, поэтому там, где мы заменяем прежний
+   `transition: … .25s` без явной кривой, ease задаём руками — иначе не 1:1. */
+const EASE_CSS = [0.25, 0.1, 0.25, 1];
+
+/* Цвета ховеров, переведённых на Motion: покадровая интерполяция не понимает
+   var(), поэтому токены резолвим в конкретные значения (public/tokens/colors.css). */
+const C_ACCENT = "#9b1d30";     /* --accent  = --ox-500  */
+const C_FAINT = "#5f5d57";      /* --text-faint = --gray-500 */
+const C_MUTED = "#88857d";      /* --text-muted = --gray-400 */
+const C_BONE = "#ece7df";       /* --bone */
+
 /* Живой prefers-reduced-motion. Не `useReducedMotion()` из motion/react:
    в Motion 12 он читает значение один раз (`useState` без сеттера, в
    исходнике на этом месте TODO), а прежний CSS-media-query реагировал на
@@ -338,25 +350,33 @@ function About() {
    Он скрыт от скринридера и выключен из таб-порядка, иначе каждая работа
    объявляется и обходится дважды. */
 function WorkTile({ w, onOpen, onFocus, clone }) {
-  const [hover, setHover] = React.useState(false);
   return (
-    <button type="button" className="rt-work-tile"
+    <motion.button type="button" className="rt-work-tile"
       onClick={onOpen} onFocus={onFocus}
-      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      initial="rest" animate="rest" whileHover="hover"
       aria-hidden={clone ? "true" : undefined} tabIndex={clone ? -1 : undefined}
       aria-label={w[1] + " — " + w[2] + ". Открыть крупно"}
       style={{ position: "relative", flexShrink: 0, height: TILE_H, width: "calc(" + TILE_H + " * " + tileRatio(w[3]) + ")", margin: "0 5px", overflow: "hidden", background: "var(--ink-800)", padding: 0, border: 0, display: "block", cursor: "pointer" }}>
       {/* src проставляет цикл ленты, когда плитка подходит к экрану — см. sweep().
           Штатный loading="lazy" здесь не работает: React вставляет плитки после
-          отрисовки, и Chrome успевает счесть их близкими к экрану. */}
-      <img data-src={w[0]} alt={w[1] + " — " + w[2]} draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", userSelect: "none", pointerEvents: "none", filter: "grayscale(0.5) contrast(1.06)", transform: hover ? "scale(1.06)" : "scale(1)", transition: "transform .7s var(--ease-out), filter .4s" }} />
+          отрисовки, и Chrome успевает счесть их близкими к экрану.
+          Плитка обязана оставаться ПЕРВЫМ ребёнком кнопки — sweep() берёт её
+          через firstElementChild. */}
+      <motion.img data-src={w[0]} alt={w[1] + " — " + w[2]} draggable={false}
+        variants={{ rest: { scale: 1 }, hover: { scale: 1.06 } }}
+        transition={{ duration: 0.7, ease: EASE_OUT }}
+        style={{ width: "100%", height: "100%", objectFit: "cover", userSelect: "none", pointerEvents: "none", filter: "grayscale(0.5) contrast(1.06)" }} />
       {/* Заливка держит читаемость подписи и на светлых кадрах — плашки под текстом нет. */}
-      <div style={{ position: "absolute", inset: 0, background: "var(--scrim-hover)", opacity: hover ? 1 : 0.82, transition: "opacity .35s" }}></div>
-      <div style={{ position: "absolute", left: "16px", right: "16px", bottom: "16px", textAlign: "left", transform: hover ? "translateY(0)" : "translateY(6px)", opacity: hover ? 1 : 0.9, transition: "all .35s" }}>
+      <motion.div variants={{ rest: { opacity: 0.82 }, hover: { opacity: 1 } }}
+        transition={{ duration: 0.35, ease: EASE_CSS }}
+        style={{ position: "absolute", inset: 0, background: "var(--scrim-hover)" }}></motion.div>
+      <motion.div variants={{ rest: { opacity: 0.9, y: 6 }, hover: { opacity: 1, y: 0 } }}
+        transition={{ duration: 0.35, ease: EASE_CSS }}
+        style={{ position: "absolute", left: "16px", right: "16px", bottom: "16px", textAlign: "left" }}>
         <div style={{ fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "6px" }}>{w[2]}</div>
         <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.01em", fontSize: "18px", fontWeight: 500, margin: 0 }}>{w[1]}</h3>
-      </div>
-    </button>
+      </motion.div>
+    </motion.button>
   );
 }
 
@@ -1064,7 +1084,6 @@ const SERVICES = [
 ];
 
 function Services({ onBook }) {
-  const [hover, setHover] = React.useState(-1);
   return (
     <section id="services" className="rt-snap" style={{ background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
       <motion.div {...useReveal()} style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
@@ -1077,14 +1096,23 @@ function Services({ onBook }) {
         </div>
         <div style={{ borderTop: "1px solid var(--border-hair)" }}>
           {SERVICES.map(([title, body], i) => (
-            <div key={title}
-              onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(-1)}
-              style={{ display: "grid", gridTemplateColumns: "70px 1.1fr 1.4fr 40px", gap: "28px", alignItems: "center", padding: "30px 16px", borderBottom: "1px solid var(--border-hair)", background: hover === i ? "rgba(236,231,223,0.03)" : "transparent", transition: "background .25s ease" }} className="rt-svc-row">
-              <span style={{ fontFamily: "var(--font-display)", fontSize: "22px", fontWeight: 600, color: hover === i ? "var(--accent)" : "var(--text-faint)", transition: "color .25s" }}>{String(i + 1).padStart(2, "0")}</span>
+            /* Покоящийся фон — прозрачная ЗАЛИВКА того же тона, а не `transparent`:
+               Motion интерполирует rgba покомпонентно и через rgba(0,0,0,0) увёл бы
+               подсветку в чёрный. Визуально это тот же «фона нет». */
+            <motion.div key={title}
+              initial="rest" animate="rest" whileHover="hover"
+              variants={{ rest: { backgroundColor: "rgba(236,231,223,0)" }, hover: { backgroundColor: "rgba(236,231,223,0.03)" } }}
+              transition={{ duration: 0.25, ease: EASE_CSS }}
+              style={{ display: "grid", gridTemplateColumns: "70px 1.1fr 1.4fr 40px", gap: "28px", alignItems: "center", padding: "30px 16px", borderBottom: "1px solid var(--border-hair)" }} className="rt-svc-row">
+              <motion.span variants={{ rest: { color: C_FAINT }, hover: { color: C_ACCENT } }}
+                transition={{ duration: 0.25, ease: EASE_CSS }}
+                style={{ fontFamily: "var(--font-display)", fontSize: "22px", fontWeight: 600 }}>{String(i + 1).padStart(2, "0")}</motion.span>
               <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", letterSpacing: "0.01em", fontSize: "clamp(22px, 2.4vw, 30px)", fontWeight: 500, margin: 0 }}>{title}</h3>
               <p style={{ color: "var(--text-muted)", margin: 0, lineHeight: 1.6, fontSize: "15px" }} className="rt-svc-desc">{body}</p>
-              <span style={{ justifySelf: "end", color: hover === i ? "var(--accent)" : "var(--text-faint)", fontSize: "18px", transform: hover === i ? "translateX(4px)" : "translateX(0)", transition: "transform .25s, color .25s" }}><i className="fas fa-arrow-right"></i></span>
-            </div>
+              <motion.span variants={{ rest: { color: C_FAINT, x: 0 }, hover: { color: C_ACCENT, x: 4 } }}
+                transition={{ duration: 0.25, ease: EASE_CSS }}
+                style={{ justifySelf: "end", fontSize: "18px" }}><i className="fas fa-arrow-right"></i></motion.span>
+            </motion.div>
           ))}
         </div>
       </motion.div>
@@ -1408,10 +1436,17 @@ function DotNav() {
       {items.map(([id, label]) => {
         const on = active === id;
         return (
-          <a key={id} href={"#" + id} className="rt-dot" title={label} style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "flex-end" }}>
-            <span className="rt-dot-label" style={{ fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: on ? "var(--bone)" : "var(--text-muted)", opacity: 0, transform: "translateX(6px)", transition: "opacity .25s, transform .25s, color .25s", whiteSpace: "nowrap" }}>{label}</span>
+          <motion.a key={id} href={"#" + id} className="rt-dot" title={label}
+            initial="rest" animate="rest" whileHover="hover"
+            style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "flex-end" }}>
+            {/* Цвет покоя зависит от активной секции — при смене active Motion
+                доводит его за те же .25s, что раньше делал CSS-transition. */}
+            <motion.span className="rt-dot-label"
+              variants={{ rest: { opacity: 0, x: 6, color: on ? C_BONE : C_MUTED }, hover: { opacity: 1, x: 0, color: C_BONE } }}
+              transition={{ duration: 0.25, ease: EASE_CSS }}
+              style={{ fontFamily: "var(--font-body)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</motion.span>
             <span style={{ width: on ? "11px" : "7px", height: on ? "11px" : "7px", borderRadius: "50%", background: on ? "var(--accent)" : "transparent", border: "1px solid", borderColor: on ? "var(--accent)" : "var(--text-faint)", transition: "all .25s var(--ease-out)" }}></span>
-          </a>
+          </motion.a>
         );
       })}
     </nav>
