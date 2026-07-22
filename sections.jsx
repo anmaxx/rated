@@ -749,7 +749,13 @@ function Works({ onBook }) {
   }, []);
 
   const nudge = (dir) => { const s = S.current; s.tween += dir * (wrapRef.current ? wrapRef.current.clientWidth : 600) * 0.6; s.vel = 0; };
-  const step = (d) => setShot((i) => (i + d + order.length) % order.length);
+  /* i < 0 — лайтбокс уже закрыт. Пара к `pointerEvents:"none"`: он глушит мышь,
+     но выходящее поддерево висит в DOM ~0.24s, и Enter на сфокусированной
+     стрелке всё ещё даёт click, а (-1 + 1 + N) % N === 0 открывал лайтбокс
+     заново на первой работе. Гейт в апдейтере, а не в обработчике: поддерево
+     заморожено и обработчик держит замыкание последнего открытого рендера —
+     свежий shot виден только апдейтеру. */
+  const step = (d) => setShot((i) => (i < 0 ? i : (i + d + order.length) % order.length));
   /* detail === 0 — нажатие с клавиатуры: там протяжки не было и порог не применим. */
   const openTile = React.useCallback((i, e) => {
     if ((e && e.detail === 0) || S.current.moved < DRAG_SLOP) setShot(i % orderRef.current.length);
@@ -1431,6 +1437,8 @@ function BookingModal({ open, onClose }) {
   const [sending, setSending] = React.useState(false);
   const [error, setError] = React.useState("");
   const [form, setForm] = React.useState({ name: "", phone: "", idea: "" });
+  const openRef = React.useRef(open);
+  openRef.current = open;                        /* всегда актуален на момент отправки: гейт в submit */
   const anim = useModalMotion();
 
   React.useEffect(() => {
@@ -1453,7 +1461,14 @@ function BookingModal({ open, onClose }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (sending) return;
+    /* Гейт по openRef — парный к `pointerEvents:"none"` в useModalMotion: тот
+       глушит только мышь, а выходящее поддерево живёт в DOM все ~0.24s, и
+       Enter/Space на уже сфокусированной «Отправить заявку» всё это время даёт
+       click. Без гейта отменённая по Esc заявка уходила в Formspree — и молча,
+       модалки к тому моменту уже нет. Читаем ref, а не проп `open`: выходящее
+       поддерево заморожено (AnimatePresence перерисовывает элемент последнего
+       открытого рендера), и `open` в замыкании обработчика навсегда true. */
+    if (!openRef.current || sending) return;
     setError("");
     if (!form.name.trim() || !form.phone.trim()) {
       setError("Укажите имя и телефон.");
