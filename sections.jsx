@@ -52,13 +52,16 @@ function useModalMotion() {
   const reduced = usePrefersReducedMotion();
   return {
     overlay: {
-      initial: { opacity: 0 },
+      /* initial:false при RM — иначе первый кадр рисуется прозрачным (нулевая
+         длительность гасит анимацию, но не стартовое состояние), и вместо
+         прежнего мгновенного появления получается проблеск в ~8 мс. */
+      initial: reduced ? false : { opacity: 0 },
       animate: { opacity: 1 },
       exit: { opacity: 0 },
       transition: { duration: reduced ? 0 : 0.2, ease: EASE_CSS },
     },
     panel: {
-      initial: { opacity: 0, scale: 0.96, y: 8 },
+      initial: reduced ? false : { opacity: 0, scale: 0.96, y: 8 },
       animate: { opacity: 1, scale: 1, y: 0 },
       exit: { opacity: 0, scale: 0.98, y: 6 },
       transition: { duration: reduced ? 0 : 0.24, ease: EASE_OUT },
