@@ -4,7 +4,7 @@
 
 import React from "react";
 import { Drawer } from "vaul";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 
 const NS = window.RatedTattooDesignSystem_04b525;
 const { Button, StarRating, Input, Accordion } = NS;
@@ -16,17 +16,34 @@ const MAXW = "1240px";
    ховера карточки работы и модалок — держим одним значением. */
 const EASE_OUT = [0.22, 1, 0.36, 1];
 
+/* Живой prefers-reduced-motion. Не `useReducedMotion()` из motion/react:
+   в Motion 12 он читает значение один раз (`useState` без сеттера, в
+   исходнике на этом месте TODO), а прежний CSS-media-query реагировал на
+   переключение сразу — своя подписка возвращает это поведение. */
+const RM_QUERY = "(prefers-reduced-motion: reduce)";
+let rmMedia = null;
+const rmList = () => (rmMedia ||= window.matchMedia(RM_QUERY));
+const subscribeRM = (cb) => {
+  const m = rmList();
+  m.addEventListener("change", cb);
+  return () => m.removeEventListener("change", cb);
+};
+
+function usePrefersReducedMotion() {
+  return React.useSyncExternalStore(subscribeRM, () => rmList().matches, () => false);
+}
+
 /* Входное раскрытие секции: пропсы для motion.<tag> (без обёртки — layout
    не меняется). amount 0.15 = прежний IO threshold, once — как прежний
-   unobserve. При prefers-reduced-motion пропсов нет: элемент статичен. */
+   unobserve. При prefers-reduced-motion старта нет и длительность 0:
+   элемент просто оказывается в конечном состоянии. */
 function useReveal({ y = 46 } = {}) {
-  const reduced = useReducedMotion();
-  if (reduced) return {};
+  const reduced = usePrefersReducedMotion();
   return {
-    initial: { opacity: 0, y },
+    initial: reduced ? false : { opacity: 0, y },
     whileInView: { opacity: 1, y: 0 },
     viewport: { once: true, amount: 0.15 },
-    transition: { duration: 1, ease: EASE_OUT },
+    transition: { duration: reduced ? 0 : 1, ease: EASE_OUT },
   };
 }
 

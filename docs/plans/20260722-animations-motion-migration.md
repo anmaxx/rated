@@ -30,11 +30,11 @@
 - `[x]` сразу по завершении; ➕ — новые задачи; ⚠️ — блокеры; синхронизировать план с фактом.
 
 ## Solution Overview
-- **Reveal** → хук `useReveal()` (`whileInView`+`useReducedMotion`), Hero — carve-out (без входа). Удаляем IO из `App()` и CSS `.rt-reveal`.
+- **Reveal** → хук `useReveal()` (`whileInView`+свой `usePrefersReducedMotion`), Hero — carve-out (без входа). Удаляем IO из `App()` и CSS `.rt-reveal`.
 - **Ховеры** → `whileHover` (подмножество; var()→конкретика; DotNav — variants; часть остаётся на CSS).
 - **Фейд «03»** → `motion` opacity.
 - **Модалки** → `AnimatePresence` (реструктуризация: без `return null`), RM=мгновенно.
-- **Лента** → `useAnimationFrame` (физика дословно), гард-рейлы (`tick`→ref, `sweep` в scope, живой RM), RM через `useReducedMotion`.
+- **Лента** → `useAnimationFrame` (физика дословно), гард-рейлы (`tick`→ref, `sweep` в scope, живой RM), RM через свой `usePrefersReducedMotion`.
 
 ## Technical Details
 - `EASE_OUT = [0.22, 1, 0.36, 1]`. `useReveal` возвращает `{}` при `reduced` (статично) либо `{initial, whileInView, viewport:{once,amount:0.15}, transition:{duration:1, ease:EASE_OUT}}`.
@@ -68,14 +68,16 @@
 
 - [x] снять базлайн шума консоли на текущем ratedtattoo.ru (эталон для пофазной сверки «консоль по нашему коду чистая»; отделить Vaul/Radix/Яндекс) — **базлайн = пустая консоль**: загрузка, прокрутка всех секций, лайтбокс и Яндекс-плеер не дали ни одного сообщения (шум Vaul/Radix/Яндекс на главном таргете не проявился)
 - [x] завести ветку `motion-phase1-reveal` (до правок — master = прод)
-- [x] вверху `sections.jsx`: `EASE_OUT=[0.22,1,0.36,1]` и `useReveal()` (через `useReducedMotion`+`whileInView`, `viewport:{once:true,amount:0.15}`, `duration:1`). Отдельный файл НЕ заводим — `EASE_OUT` нужен ещё модалкам (Task 5) и фейду (Task 4)
+- [x] вверху `sections.jsx`: `EASE_OUT=[0.22,1,0.36,1]` и `useReveal()` (через `usePrefersReducedMotion`+`whileInView`, `viewport:{once:true,amount:0.15}`, `duration:1`). Отдельный файл НЕ заводим — `EASE_OUT` нужен ещё модалкам (Task 5) и фейду (Task 4). ➕ **по итогу авто-ревью** там же заведён `usePrefersReducedMotion()` (`useSyncExternalStore` + `matchMedia`) — `useReducedMotion()` из Motion не реактивен
 - [x] заменить 10 не-Hero reveal-элементов на `<motion.div {...useReveal()} …>`; **убрать ТОЛЬКО классы `rt-reveal`/`rt-in`, прочие классы сохранить** — они несут медиа-адаптив (`rt-about-grid` :251, `rt-work-styles` :745, `rt-faq-grid` :1174 → `index.html:113,132`) + сохранить инлайн-`style`
 - [x] Hero (`sections.jsx:206`) — carve-out: снять `rt-reveal rt-in`, оставить обычный `<div>` (без motion-обёртки; виден сразу, без въезда)
 - [x] удалить reveal-`IntersectionObserver` и логику `rt-in` из `src/app.jsx`
 - [x] в `index.html` удалить правила `.rt-reveal`/`.rt-reveal.rt-in`; **в RM-`@media` (`:120-124`) удалить ТОЛЬКО строку `.rt-reveal` (122), сохранить scroll-snap (121) и REC/эквалайзер (123)**; грепнуть, что `rt-in`/`.rt-reveal` больше нигде не читаются (в репо чисто; остались только мёртвые вхождения внутри артефакта `_ds_bundle.js`, чья копия секций не рендерится)
 - [x] браузерная сверка (§10 reveal): 10 элементов появляются opacity+translateY `1000±50мс`, Hero мгновенно, `once`, RM статично, **адаптив сеток цел**, консоль чистая
 
-**Замеры Task 1 (vite preview, 1440×900):** длительность `1007.5 мс`; кривая совпала с `cubic-bezier(0.22,1,0.36,1)` (отклонение ≤0.05 — в пределах ±8 мс неопределённости старта); старт `opacity 0 / translateY(46px)` = дословно прежний CSS; порог: при видимости 7.9% и 13% элемент скрыт, при 25.7% — раскрыт (`amount 0.15`); `once` — возврат к элементу не переигрывает; 10 скрытых при загрузке → все 10 в `opacity 1 / transform none` после прохода; Hero `opacity 1, transform none` сразу; RM (подменённый `matchMedia`) — статично, без инлайновых `opacity/transform`; при 900px `.rt-about-grid`/`.rt-faq-grid` в одну колонку, `gap 40px`; консоль пуста (= базлайн).
+**Пересверка после фикса RM (vite preview, 1440×900, прод-сборка):** тайминг снят **из WAAPI**, а не сэмплированием — Motion гонит `opacity` через Web Animations API и инлайновый `style.opacity` при этом остаётся `0` до конца, так что сэмплирование инлайна даёт мусор. `element.getAnimations()` на reveal-элементе: `duration: 1000`, `easing: cubic-bezier(0.22, 1, 0.36, 1)` — **точное совпадение, не «в пределах допуска»**. `transform` (его Motion ведёт на main-thread) — с 46px до <0.05px за 816 мс от первого сдвига, что для этой кривой ровно соответствует номинальной 1000 мс (хвост асимптотический). 10 скрытых при загрузке → 0 незавершённых после прохода; возврат наверх не переигрывает (`once`); Hero `opacity 1 / transform none` сразу. **RM при загрузке:** 0 элементов с `translateY(46px)`, Motion-анимаций не бежит ни одной (оставшиеся 4 — CSS `rt-pulse`/`rt-eq`, они по дизайну на CSS). **Живое переключение RM:** 10 подписчиков на `matchMedia`, флип на открытой странице отрабатывает, после полного прохода невидимых блоков нет (единственный `opacity 0.028` — декоративный `aria-hidden` вордмарк «Тэд», так задумано). Консоль пуста. Бандл после фикса: `app 257.58 kB / gzip 78.06` (master — `257.52 / 77.94`).
+
+**Замеры Task 1 (первый прогон, до фикса RM):** длительность `1007.5 мс`; кривая совпала с `cubic-bezier(0.22,1,0.36,1)` (отклонение ≤0.05 — в пределах ±8 мс неопределённости старта); старт `opacity 0 / translateY(46px)` = дословно прежний CSS; порог: при видимости 7.9% и 13% элемент скрыт, при 25.7% — раскрыт (`amount 0.15`); `once` — возврат к элементу не переигрывает; 10 скрытых при загрузке → все 10 в `opacity 1 / transform none` после прохода; Hero `opacity 1, transform none` сразу; RM (подменённый `matchMedia`) — статично, без инлайновых `opacity/transform`; при 900px `.rt-about-grid`/`.rt-faq-grid` в одну колонку, `gap 40px`; консоль пуста (= базлайн).
 
 ### Task 2: Фаза 1 — PR + Merge-gate
 **Files:**
@@ -90,7 +92,9 @@
 - **п.2** `vite preview` + chrome-devtools: десктоп 1440×900 и мобильная **эмуляция** 390×844 (`mobile,touch`) — 10 элементов скрыты при загрузке, все 10 → `opacity 1 / transform none` после прохода; Hero виден сразу; сетки `rt-about-grid`/`rt-faq-grid` в одну колонку (`gap 40px`) на 500px и 390px; RM (подменённый `matchMedia`) — `translateY(46px)` нет ни на одном элементе, невидимых блоков нет. **Реальный iOS Safari / Android Chrome — за владельцем** (чек-лист в PR).
 - **п.3** консоль пуста на всех прогонах (загрузка, проход всех секций, RM-прогон) = базлайн прода.
 - **п.4** бюджет JS: master `447.62 kB` (gzip `135.58`) → phase1 `447.51 kB` (gzip `135.64`); дельта `−0.11 kB` raw / `+0.06 kB` gzip — Motion уже был в бандле на master (кнопка «Смотреть вживую»), фаза почти бесплатна. Базлайн снят сборкой master в отдельном `git worktree`.
-- **п.5** авто-ревью Codex по `master...HEAD` отработано.
+- **п.5** авто-ревью Codex по `master...HEAD` отработано — **две находки, обе разобраны:**
+  - **[P2, подтверждена и исправлена]** `useReducedMotion()` из Motion 12.42.2 НЕ живой: `useState(prefersReducedMotion.current)` без сеттера + `TODO` в исходнике (`framer-motion/dist/es/utils/reduced-motion/use-reduced-motion.mjs:37`), хотя JSDoc обещает реактивность. Прежний CSS-media-query реагировал на переключение мгновенно → это было отклонение от «1:1». Заведён свой `usePrefersReducedMotion()` на `useSyncExternalStore` + `matchMedia`-подписке; `useReveal` при `reduced` отдаёт `initial:false` + `duration:0`. **Тот же дефект был заложен в Task 7/8** (там живой RM ленты — явное требование) — план и §3.2/§5.1/§6 дизайн-доки поправлены.
+  - **[P3, отложена в Task 11]** `CLAUDE.md:38,46` всё ещё предписывают класс `rt-reveal` и IO в `App()` — механизмов больше нет, следующая секция по этой инструкции не получит raскрытие. Не чиню здесь: в рабочем дереве лежат чужие незакоммиченные правки `CLAUDE.md`, вносить их в PR Фазы 1 нельзя. Вхождения в `_ds_bundle.js` Codex подтвердил мёртвыми.
 - **п.6–8** (подтверждение preview владельцем, squash-мерж, `gh run watch` + прод-сверка) — внешние действия владельца, вынесены чек-листом в тело PR.
 
 ### Task 3: Ховеры → Motion — 3 variant-propagation цели (§4.3)
@@ -134,7 +138,7 @@
 - Modify: `sections.jsx`
 
 - [ ] завести ветку `motion-phase3-carousel` — **от master со смердженной И прод-сверенной Фазой 2** (до правок)
-- [ ] вызвать `const reduced = useReducedMotion()` на верхнем уровне `Works`
+- [ ] вызвать `const reduced = usePrefersReducedMotion()` на верхнем уровне `Works` — **свой хук из `sections.jsx` (заведён в Task 1), НЕ `useReducedMotion()` из `motion/react`**: последний читает значение один раз и живой RM ленты бы не заработал (см. §3.2 дизайн-доки)
 - [ ] удалить `const motion = window.matchMedia(...)` (`:513`); заменить `!motion.matches` (`:546`) → `!reduced`
 - [ ] заменить `matchMedia(...).matches` в `sortByStyle` (`:637`) → `reduced`
 - [ ] `npm run build` зелёный (убедиться, что импорт `motion` больше ничем не затенён)
@@ -167,7 +171,7 @@
 
 ### Task 11: [Финал] Документация и завершение
 - [ ] обновить `docs/animation-motion-migration.md` при отклонениях реализации от дизайна
-- [ ] обновить `CLAUDE.md`: новые паттерны (напр. `useReveal`) + **сверить секцию деплоя** (сейчас описывает Babel-в-браузере/`_ds_bundle.js`/`.nojekyll` — устарело под Vite; откат-инструкции должны быть верны)
+- [ ] обновить `CLAUDE.md`: новые паттерны (`useReveal`, `usePrefersReducedMotion`) + ⚠️ **снять устаревшую инструкцию `CLAUDE.md:38,46`** («add `className="rt-reveal"`; IntersectionObserver в `App()`») — механизмов нет с Фазы 1, находка P3 авто-ревью; в рабочем дереве лежат чужие незакоммиченные правки этого файла, разобрать с владельцем + **сверить секцию деплоя** (сейчас описывает Babel-в-браузере/`_ds_bundle.js`/`.nojekyll` — устарело под Vite; откат-инструкции должны быть верны)
 - [ ] синхронизировать §8.6/§10/§4.4 дизайн-доки с финальными правками (уже частично сделано)
 - [ ] обновить Serena-память `mem:session_state_2026_07_20` (через инструменты Serena, не руками)
 - [ ] переместить этот план в `docs/plans/completed/`

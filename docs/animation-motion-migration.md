@@ -19,7 +19,7 @@
 3. Фейд ролика в «03».
 4. **Модалки** `WorkLightbox` и `BookingModal` — добавляем вход/выход (`AnimatePresence`). **Это новая анимация**, которой сейчас нет.
 5. **Лента работ:** автоскролл + слот-машина + инерция/твины (самый рисковый блок).
-6. Единая стратегия `prefers-reduced-motion` через `useReducedMotion`.
+6. Единая стратегия `prefers-reduced-motion` через свой `usePrefersReducedMotion` (§3.2).
 
 **Исключения (остаются НЕ на Motion) — осознанно:**
 - **Vaul** (видео-лист) — родная анимация листа (решение владельца).
@@ -56,7 +56,18 @@
 ## 3. Принципы
 
 1. **Существующее — сохраняем 1:1** (числа переносим дословно, замеряем). **Модалки — исключение:** это осознанное ДОБАВЛЕНИЕ анимации; их критерий — «мягкий вход/выход + reduced-motion = мгновенно, как сейчас».
-2. **Reduced-motion:** анимационный RM — в React (`useReducedMotion`); scroll-snap-RM остаётся в CSS. Не «единый React-слой».
+2. **Reduced-motion:** анимационный RM — в React (свой `usePrefersReducedMotion`, см. ниже); scroll-snap-RM остаётся в CSS. Не «единый React-слой».
+   ⚠️ **Не `useReducedMotion()` из `motion/react`.** В Motion 12.42.2 он читает значение ОДИН раз — `useState(prefersReducedMotion.current)` без сеттера, с `TODO` прямо в исходнике (`framer-motion/dist/es/utils/reduced-motion/use-reduced-motion.mjs:37`), хотя JSDoc над ним обещает «actively respond to changes». Прежний CSS-media-query реагировал на переключение мгновенно, поэтому 1:1 требует своей подписки (найдено авто-ревью на Merge-gate Фазы 1):
+   ```jsx
+   const RM_QUERY = "(prefers-reduced-motion: reduce)";
+   let rmMedia = null;
+   const rmList = () => (rmMedia ||= window.matchMedia(RM_QUERY));
+   const subscribeRM = (cb) => { const m = rmList(); m.addEventListener("change", cb); return () => m.removeEventListener("change", cb); };
+   function usePrefersReducedMotion() {
+     return React.useSyncExternalStore(subscribeRM, () => rmList().matches, () => false);
+   }
+   ```
+   Это же снимает риск для ленты (§5.4/§5.6), где живой RM — явное требование.
 3. **Перф:** бесконечные композиторные лупы (REC/эквалайзер) остаются на CSS — JS-драйвер держал бы main-thread постоянно ради того же результата.
 4. **Драг/wheel** — остаются нативными (техническое исключение, §1).
 
@@ -71,13 +82,12 @@
 ```jsx
 const EASE_OUT = [0.22, 1, 0.36, 1];   // = var(--ease-out), тот же, что на motion.button
 function useReveal({ y = 46 } = {}) {
-  const reduced = useReducedMotion();
-  if (reduced) return {};                          // статично
+  const reduced = usePrefersReducedMotion();       // своя живая подписка, НЕ useReducedMotion() — см. §3.2
   return {
-    initial: { opacity: 0, y },
+    initial: reduced ? false : { opacity: 0, y },  // при RM старта нет → нет и въезда
     whileInView: { opacity: 1, y: 0 },
     viewport: { once: true, amount: 0.15 },        // amount прокидывается как IO threshold → ТОЧНО = нынешний 0.15, margin не нужен
-    transition: { duration: 1, ease: EASE_OUT },
+    transition: { duration: reduced ? 0 : 1, ease: EASE_OUT },
   };
 }
 // было:  <div className="rt-reveal" style={…}>
@@ -158,8 +168,8 @@ function useReveal({ y = 46 } = {}) {
 ### 5.1. Драйвер: `requestAnimationFrame` → `useAnimationFrame`
 
 ```jsx
-import { useAnimationFrame, useReducedMotion } from "motion/react";
-const reduced = useReducedMotion();
+import { useAnimationFrame } from "motion/react";
+const reduced = usePrefersReducedMotion();   // своя подписка (§3.2) — useReducedMotion() не живой
 useAnimationFrame((time, delta) => {
   const dt = Math.min(0.05, delta / 1000);   // delta в мс → заменяет (now-last)/1000
   /* … тело АВТОМАТА из sections.jsx:519–561 … */
@@ -200,7 +210,7 @@ Pointer-обработчики (`DRAG_SLOP=8`, `s.moved`, `open()` по `detail=
 
 ## 6. Reduced-motion — стратегия
 
-`useReducedMotion()` в каждом анимированном компоненте. Убираем: RM-ветку reveal из `index.html` (`.rt-reveal` в `@media`), `matchMedia` в `sections.jsx:513,637`. **Остаётся на CSS:** RM для REC/эквалайзера (они на CSS) и для scroll-snap (`index.html:121`). Формулировка: «анимационный RM — в React, скролл-RM — в CSS». Проверка: грепнуть удаляемые селекторы.
+`usePrefersReducedMotion()` (свой, §3.2 — `useReducedMotion()` из Motion читает значение один раз) в каждом анимированном компоненте. Убираем: RM-ветку reveal из `index.html` (`.rt-reveal` в `@media`), `matchMedia` в `sections.jsx:513,637`. **Остаётся на CSS:** RM для REC/эквалайзера (они на CSS) и для scroll-snap (`index.html:121`). Формулировка: «анимационный RM — в React, скролл-RM — в CSS». Проверка: грепнуть удаляемые селекторы.
 
 ---
 
