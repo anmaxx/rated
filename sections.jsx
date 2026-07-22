@@ -558,6 +558,7 @@ function Works({ onBook }) {
   const [shot, setShot] = React.useState(-1);   /* индекс работы в просмотре */
   /* Якорь на время перестановки: какую работу вывести в центр после неё. */
   const anchor = React.useRef(null);
+  const reduced = usePrefersReducedMotion();
 
   const S = React.useRef({
     offset: 0, setW: 1, paused: false, dragging: false,
@@ -608,7 +609,6 @@ function Works({ onBook }) {
        пустыми прямоугольниками. */
     S.current.sweep = sweep;
 
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let raf, last = performance.now();
     const loop = (now) => {
       const s = S.current;
@@ -641,7 +641,11 @@ function Works({ onBook }) {
         s.vel *= Math.pow(0.06, dt);
       } else {
         s.tween = 0; s.vel = 0;
-        if (!s.paused && !motion.matches) s.offset += 34 * dt;
+        /* `reduced` захвачен на монтировании: эффект с [] не пересоздаётся, так
+           что переключение RM на открытой странице автоскролл пока не остановит.
+           Живое чтение вернётся вместе с переводом цикла на useAnimationFrame —
+           там колбэк пересоздаётся каждым рендером хука. */
+        if (!s.paused && !reduced) s.offset += 34 * dt;
       }
 
       s.offset = ((s.offset % s.setW) + s.setW) % s.setW;
@@ -732,7 +736,7 @@ function Works({ onBook }) {
     const s = S.current;
     if (!wrapRef.current || !order.some((w) => w[2] === st)) return;
     /* При выключенной анимации крутить нечего — переставляем сразу. */
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (reduced) {
       setOrder(buildOrder(st));
       return;
     }
