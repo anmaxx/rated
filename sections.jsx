@@ -128,14 +128,53 @@ function useModalMotion({ event = false } = {}) {
 /* y уменьшен с 46 до 24 и добавлен масштаб: большое смещение читается как
    «прилетело», малое смещение с масштабом — как «проявилось на месте». Это и
    есть разница между дефолтным входом и весомым. */
-function useReveal() {
+function useReveal(delay = 0) {
   const reduced = usePrefersReducedMotion();
   return {
     initial: reduced ? false : { opacity: 0, y: 24, scale: 0.98 },
     whileInView: { opacity: 1, y: 0, scale: 1 },
     viewport: { once: true, amount: 0.15 },
-    transition: { duration: reduced ? 0 : 1, ease: EASE_HEAVY },
+    transition: { duration: reduced ? 0 : 1, delay: reduced ? 0 : delay, ease: EASE_HEAVY },
   };
+}
+
+/* Ступенчатый вход: обёртка ведёт, дети входят по очереди. Motion протягивает
+   имена вариантов вниз сам — тот же приём, что у трёх ховеров.
+   Дети ОБЯЗАНЫ быть `motion.*` со спредом `child`: обычный `div` вариант не
+   получит, просто останется в конечном состоянии и не анимируется вовсе —
+   молча, без ошибки. Длительность лежит в варианте ребёнка, а не в transition
+   обёртки: та отвечает только за задержку между детьми. */
+function useRevealGroup(stagger = 0.1) {
+  const reduced = usePrefersReducedMotion();
+  return {
+    group: {
+      initial: reduced ? false : "hidden",
+      whileInView: "shown",
+      viewport: { once: true, amount: 0.15 },
+      transition: { staggerChildren: reduced ? 0 : stagger },
+      variants: { hidden: {}, shown: {} },
+    },
+    child: {
+      variants: {
+        hidden: reduced ? {} : { opacity: 0, y: 24, scale: 0.98 },
+        shown: { opacity: 1, y: 0, scale: 1, transition: { duration: reduced ? 0 : 1, ease: EASE_HEAVY } },
+      },
+    },
+  };
+}
+
+/* Обвязка первого экрана. Заголовок и фоновое видео в ней НЕ участвуют: h1 —
+   LCP-элемент, и анимация прозрачности на нём сдвинула бы метрику на всю свою
+   длительность. Всё остальное входит ступенькой сразу после первой отрисовки —
+   поэтому `animate`, а не `whileInView`: элементы и так в кадре, ждать нечего.
+   Хук возвращает функцию: порядковый номер задаёт задержку. */
+function useHeroEntry() {
+  const reduced = usePrefersReducedMotion();
+  return (i) => ({
+    initial: reduced ? false : { opacity: 0, y: 14 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: reduced ? 0 : 0.7, delay: reduced ? 0 : 0.12 * i, ease: EASE_HEAVY },
+  });
 }
 
 /* [путь, название, стиль, пропорция кадра ш/в]
@@ -333,6 +372,7 @@ function Header({ onBook }) {
 
 /* ------------------------------------------------------------------- Hero */
 function Hero({ onBook }) {
+  const entry = useHeroEntry();
   return (
     <section id="hero" className="rt-snap" style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
@@ -343,20 +383,25 @@ function Hero({ onBook }) {
         <div style={{ position: "absolute", inset: 0, background: "var(--scrim-hero)" }}></div>
       </div>
 
-      <div className="rt-edge-label" style={{ position: "absolute", left: "32px", top: "50%", transform: "rotate(180deg)", writingMode: "vertical-rl", zIndex: 2, fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.3em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+      {/* Боковая метка входит последней: она периферийная, и ведущей роли
+          в первом кадре у неё нет. `transform` тут несёт раскладку (поворот),
+          поэтому анимируем только opacity — иначе Motion перезапишет rotate. */}
+      <motion.div className="rt-edge-label"
+        initial={entry(3).initial ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={entry(3).transition}
+        style={{ position: "absolute", left: "32px", top: "50%", transform: "rotate(180deg)", writingMode: "vertical-rl", zIndex: 2, fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.3em", textTransform: "uppercase", color: "var(--text-muted)" }}>
         Rated Tattoo · Moscow · с 2015
-      </div>
+      </motion.div>
 
       {/* carve-out: первый экран (LCP) виден сразу, без входной анимации */}
       <div style={{ position: "relative", zIndex: 1, flex: "1 1 auto", width: "100%", maxWidth: MAXW, margin: "0 auto", padding: "150px 32px 60px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <div style={{ marginBottom: "26px" }}><Kicker index="ТОП-10" label="Тату-мастеров Москвы 2023" /></div>
+        <motion.div {...entry(0)} style={{ marginBottom: "26px" }}><Kicker index="ТОП-10" label="Тату-мастеров Москвы 2023" /></motion.div>
         <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(46px, 7vw, 104px)", lineHeight: 0.9, letterSpacing: "-0.01em", margin: 0 }}>
           Элитные<br />татуировки<span style={{ color: "var(--accent)" }}>.</span>
         </h1>
-        <div style={{ fontFamily: "var(--font-body)", fontSize: "14px", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "20px" }}>
+        <motion.div {...entry(1)} style={{ fontFamily: "var(--font-body)", fontSize: "14px", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "20px" }}>
           — от мастера Тимура Тэда
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "36px", alignItems: "flex-end", justifyContent: "space-between", marginTop: "36px" }}>
+        </motion.div>
+        <motion.div {...entry(2)} style={{ display: "flex", flexWrap: "wrap", gap: "36px", alignItems: "flex-end", justifyContent: "space-between", marginTop: "36px" }}>
           <p style={{ fontSize: "var(--fs-lead)", color: "var(--gray-200)", maxWidth: "42ch", lineHeight: 1.55, margin: 0 }}>
             Авторские татуировки в центре Москвы. Реализм, графика, орнаменты — каждая работа создаётся лично под клиента.
           </p>
@@ -364,7 +409,7 @@ function Hero({ onBook }) {
             <Button variant="primary" size="lg" onClick={onBook} iconRight="fas fa-arrow-right">Записаться</Button>
             <Button as="a" href="#works" variant="glass" size="lg">Работы</Button>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <div style={{ position: "relative", zIndex: 1, flex: "0 0 auto", borderTop: "1px solid var(--border-hair)", background: "rgba(10,10,12,0.4)", backdropFilter: "blur(8px)" }}>
@@ -383,7 +428,7 @@ function Hero({ onBook }) {
 
 /* ------------------------------------------------------------------ About */
 function About() {
-  const reveal = useReveal();
+  const { group, child } = useRevealGroup();
   const reasons = [
     ["Мировой уровень", "Участник международных тату-конвенций и лауреат премий. Постоянно совершенствую навыки."],
     ["Безопасность", "Только одноразовые материалы и стерилизация в автоклавах класса B."],
@@ -394,9 +439,10 @@ function About() {
       {/* atmospheric oversize wordmark */}
       <div aria-hidden="true" style={{ position: "absolute", right: "-2.5%", top: "6%", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(140px, 23vw, 360px)", lineHeight: 0.8, color: "var(--bone)", opacity: 0.028, textTransform: "uppercase", letterSpacing: "-0.03em", pointerEvents: "none", userSelect: "none" }}>Тэд</div>
 
-      <motion.div {...reveal} className="rt-about-grid" style={{ position: "relative", maxWidth: MAXW, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "0.94fr 1.06fr", gap: "72px", alignItems: "center", width: "100%" }}>
+      <motion.div {...group} className="rt-about-grid" style={{ position: "relative", maxWidth: MAXW, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "0.94fr 1.06fr", gap: "72px", alignItems: "center", width: "100%" }}>
         {/* ----- portrait ----- */}
-        <div className="rt-about-media" style={{ position: "relative" }}>
+        {/* Портрет ведёт: у секции о мастере он и есть главное, текст следом. */}
+        <motion.div {...child} className="rt-about-media" style={{ position: "relative" }}>
           <div className="rt-edge-label" style={{ position: "absolute", left: "-30px", top: "50%", transform: "translateY(-50%) rotate(180deg)", writingMode: "vertical-rl", zIndex: 2, fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.32em", textTransform: "uppercase", color: "var(--text-faint)" }}>
             Tattoo master · с 2015
           </div>
@@ -409,10 +455,10 @@ function About() {
                 уже вырезан в самом webp, его маски не трогают. */}
             <img src="./assets/img/about-master-work.webp" alt="Тимур Тэд за работой — Rated Tattoo" style={{ width: "100%", height: "auto", display: "block", filter: "grayscale(0.55) contrast(1.05) brightness(0.85)", WebkitMaskImage: "linear-gradient(to bottom, #000 78%, transparent 98%), linear-gradient(to right, transparent 1%, #000 13%)", maskImage: "linear-gradient(to bottom, #000 78%, transparent 98%), linear-gradient(to right, transparent 1%, #000 13%)", WebkitMaskComposite: "source-in", maskComposite: "intersect" }} />
           </div>
-        </div>
+        </motion.div>
 
         {/* ----- profile copy ----- */}
-        <div>
+        <motion.div {...child}>
           <Kicker index="01" label="О мастере" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(36px, 4.5vw, 60px)", lineHeight: 0.96, letterSpacing: "-0.01em", margin: "24px 0 0" }}>
             Эталон<br />качества<span style={{ color: "var(--accent)" }}>.</span>
@@ -437,7 +483,7 @@ function About() {
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </motion.div>
     </section>
   );
@@ -660,6 +706,7 @@ function Works({ onBook }) {
   const anchor = React.useRef(null);
   const reduced = usePrefersReducedMotion();
   const reveal = useReveal();
+  const { group, child } = useRevealGroup();
 
   const S = React.useRef({
     offset: 0, setW: 1, paused: false, dragging: false, swap: null, swapPending: null,
@@ -959,17 +1006,19 @@ function Works({ onBook }) {
 
   return (
     <section id="works" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "110px 0", overflow: "hidden" }}>
-      <motion.div {...reveal} style={{ maxWidth: MAXW, margin: "0 auto 40px", padding: "0 32px", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px" }}>
-        <div>
+      <motion.div {...group} style={{ maxWidth: MAXW, margin: "0 auto 40px", padding: "0 32px", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px" }}>
+        {/* Заголовок ведёт, органы управления идут следом. Сама лента входа не
+            получает: она и так в движении, вход поверх дрейфа читался бы шумом. */}
+        <motion.div {...child}>
           <Kicker index="02" label="Работы" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4.5vw, 56px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Избранное</h2>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        </motion.div>
+        <motion.div {...child} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <button aria-label="Предыдущие работы" onClick={() => nudge(-1)} onMouseEnter={ctrlOn} onMouseLeave={ctrlOff} style={ctrl}><i className="fas fa-arrow-left" aria-hidden="true"></i></button>
           <button aria-label="Следующие работы" onClick={() => nudge(1)} onMouseEnter={ctrlOn} onMouseLeave={ctrlOff} style={ctrl}><i className="fas fa-arrow-right" aria-hidden="true"></i></button>
           <div style={{ width: "1px", height: "28px", background: "var(--border-hair)", margin: "0 6px" }}></div>
           <Button variant="ghost" onClick={onBook} iconRight="fas fa-arrow-right">Записаться на сеанс</Button>
-        </div>
+        </motion.div>
       </motion.div>
 
       <div ref={wrapRef} role="group" aria-label="Лента работ"
@@ -1085,6 +1134,9 @@ function Process() {
   const durRef = React.useRef(0);
   const activeRef = React.useRef(0);
   const reveal = useReveal();
+  /* Плеер идёт следом за заголовком — тот же приём, что staggerChildren, но
+     блоки здесь сиблинги, а не потомки, поэтому задержка задаётся явно. */
+  const revealStage = useReveal(0.12);
 
   const cur = CLIPS[active];
   React.useEffect(() => { activeRef.current = active; }, [active]);
@@ -1181,7 +1233,7 @@ function Process() {
         <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Ближе, чем фото</h2>
       </motion.div>
 
-      <motion.div {...reveal} style={{ maxWidth: "1040px", margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <motion.div {...revealStage} style={{ maxWidth: "1040px", margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div className="rt-clip-grid" style={{ display: "grid", gridTemplateColumns: "auto 1fr", border: "1px solid var(--border-hair)", background: "var(--bg-base)" }}>
 
           {/* Сцена */}
@@ -1279,10 +1331,9 @@ const SERVICES = [
 ];
 
 function Services({ onBook }) {
-  const reveal = useReveal();
   return (
     <section id="services" className="rt-snap" style={{ background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
-      <motion.div {...reveal} style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "56px", flexWrap: "wrap", gap: "20px" }}>
           <div>
             <Kicker index="04" label="Услуги" />
@@ -1311,7 +1362,7 @@ function Services({ onBook }) {
             </motion.div>
           ))}
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }
@@ -1327,10 +1378,9 @@ const BENEFITS = [
 ];
 
 function Benefits() {
-  const reveal = useReveal();
   return (
     <section id="benefits" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
-      <motion.div {...reveal} style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ marginBottom: "48px" }}>
           <Kicker index="05" label="Преимущества" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0", maxWidth: "16ch" }}>Почему мне доверяют</h2>
@@ -1344,7 +1394,7 @@ function Benefits() {
             </div>
           ))}
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }
@@ -1371,10 +1421,9 @@ function ReviewStars() {
 }
 
 function Testimonials() {
-  const reveal = useReveal();
   return (
     <section id="reviews" className="rt-snap" style={{ background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0", borderTop: "1px solid var(--border-hair)" }}>
-      <motion.div {...reveal} style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px", marginBottom: "44px" }}>
           <div>
             <Kicker index="06" label="Отзывы" />
@@ -1418,7 +1467,7 @@ function Testimonials() {
             </div>
           ))}
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }
@@ -1431,41 +1480,40 @@ const FAQ = [
 ];
 
 function Faq() {
-  const reveal = useReveal();
   return (
     <section id="faq" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
-      <motion.div {...reveal} className="rt-faq-grid" style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 32px", width: "100%", display: "grid", gridTemplateColumns: "0.7fr 1.3fr", gap: "64px", alignItems: "start" }}>
+      <div className="rt-faq-grid" style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 32px", width: "100%", display: "grid", gridTemplateColumns: "0.7fr 1.3fr", gap: "64px", alignItems: "start" }}>
         <div>
           <Kicker index="07" label="FAQ" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(30px, 3.4vw, 46px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Частые вопросы</h2>
         </div>
         <Accordion items={FAQ} />
-      </motion.div>
+      </div>
     </section>
   );
 }
 
 /* --------------------------------------------------------------- CTA */
 function Cta({ onBook }) {
-  const reveal = useReveal();
+  const { group, child } = useRevealGroup();
   return (
     <section id="cta" className="rt-snap" style={{ position: "relative", overflow: "hidden", minHeight: "100vh", display: "flex", alignItems: "center", padding: "120px 0" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <img src="./assets/img/work-mandala.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 35%", filter: "grayscale(0.7) contrast(1.05) brightness(0.5)" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(10,10,12,.86), rgba(10,10,12,.92))" }}></div>
       </div>
-      <motion.div {...reveal} style={{ position: "relative", zIndex: 1, maxWidth: MAXW, margin: "0 auto", padding: "0 32px", textAlign: "center", width: "100%" }}>
-        <div style={{ display: "inline-block" }}><Kicker index="—" label="Запись открыта" /></div>
-        <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(40px, 7vw, 96px)", lineHeight: 0.95, letterSpacing: "-0.01em", margin: "26px 0 28px" }}>
+      <motion.div {...group} style={{ position: "relative", zIndex: 1, maxWidth: MAXW, margin: "0 auto", padding: "0 32px", textAlign: "center", width: "100%" }}>
+        <motion.div {...child} style={{ display: "inline-block" }}><Kicker index="—" label="Запись открыта" /></motion.div>
+        <motion.h2 {...child} style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(40px, 7vw, 96px)", lineHeight: 0.95, letterSpacing: "-0.01em", margin: "26px 0 28px" }}>
           Создадим вашу<br />татуировку<span style={{ color: "var(--accent)" }}>.</span>
-        </h2>
-        <p style={{ fontSize: "var(--fs-lead)", color: "var(--gray-200)", maxWidth: "46ch", margin: "0 auto 40px", lineHeight: 1.55 }}>
+        </motion.h2>
+        <motion.p {...child} style={{ fontSize: "var(--fs-lead)", color: "var(--gray-200)", maxWidth: "46ch", margin: "0 auto 40px", lineHeight: 1.55 }}>
           Запишитесь на бесплатную консультацию — обсудим идею, стиль и точную стоимость.
-        </p>
-        <div style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
+        </motion.p>
+        <motion.div {...child} style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
           <Button variant="primary" size="lg" onClick={onBook} iconRight="fas fa-arrow-right">Записаться сейчас</Button>
           <Button as="a" href="tel:+79689752099" variant="glass" size="lg" iconLeft="fas fa-phone">+7 (968) 975-20-99</Button>
-        </div>
+        </motion.div>
       </motion.div>
     </section>
   );
