@@ -999,7 +999,10 @@ function Process() {
             {/* Размытая подложка — тот же кадр, чтобы поля не были пустыми */}
             <div style={{ position: "absolute", inset: 0, backgroundImage: "url(" + cur[3] + ")", backgroundSize: "cover", backgroundPosition: "center", filter: "blur(26px) brightness(0.45) saturate(0.7)", transform: "scale(1.15)" }}></div>
 
-            <div style={{ position: "absolute", inset: 0, margin: "auto", opacity: fade ? 0 : 1, transition: "opacity .26s ease", ...clipBox(cur[5], cur[6]) }}>
+            {/* Перекрёстный фейд при смене ролика: step() гасит кадр, ждёт те же
+                260 мс и только потом подменяет источник. */}
+            <motion.div initial={false} animate={{ opacity: fade ? 0 : 1 }} transition={{ duration: 0.26, ease: EASE_CSS }}
+              style={{ position: "absolute", inset: 0, margin: "auto", ...clipBox(cur[5], cur[6]) }}>
               {live ? (
                 <iframe ref={frameRef} title={cur[1]} src={clipSrc(cur[0])} frameBorder="0" scrolling="no"
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
@@ -1007,7 +1010,7 @@ function Process() {
               ) : (
                 <img src={cur[3]} alt={cur[1]} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               )}
-            </div>
+            </motion.div>
 
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,10,12,.55), rgba(10,10,12,0) 45%)", pointerEvents: "none" }}></div>
 
