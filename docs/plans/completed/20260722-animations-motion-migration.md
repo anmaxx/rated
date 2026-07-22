@@ -37,8 +37,8 @@
 - **Лента** → `useAnimationFrame` (физика дословно), гард-рейлы (`tick`→ref, `sweep` в scope, живой RM), RM через свой `usePrefersReducedMotion`.
 
 ## Technical Details
-- `EASE_OUT = [0.22, 1, 0.36, 1]`. `useReveal` возвращает `{}` при `reduced` (статично) либо `{initial, whileInView, viewport:{once,amount:0.15}, transition:{duration:1, ease:EASE_OUT}}`.
-- Модалки: `<AnimatePresence>{open && <motion.div overlay …><motion.div panel …/></motion.div>}</AnimatePresence>`; `transition.duration = reduced ? 0 : …`.
+- `EASE_OUT = [0.22, 1, 0.36, 1]`. `useReveal` возвращает `{initial, whileInView, viewport:{once,amount:0.15}, transition:{duration:1, ease:EASE_OUT}}`; при `reduced` — тот же набор, но `initial: false` и `duration: 0` (исправлено по факту: пустой `{}` не годится, а нулевая длительность гасит анимацию, но НЕ стартовый кадр — см. Task 1/6 и §11 дизайн-доки).
+- Модалки: `<AnimatePresence>{open && <motion.div overlay …><motion.div panel …/></motion.div>}</AnimatePresence>`; `transition.duration = reduced ? 0 : …` и `initial: reduced ? false : {…}`.
 - Лента: `useAnimationFrame((time,delta)=>{ const dt=Math.min(0.05,delta/1000); …тело автомата… })`; `tick`→`useRef`; `sweep`/`track`/`wrap` в scope компонента/через refs; НЕ оборачивать колбэк в `useCallback([])` и НЕ прятать в `useEffect([])` (заморозит живой RM).
 - Детали, границы и полный инвентарь ховеров — в `docs/animation-motion-migration.md` (§4–§8).
 
