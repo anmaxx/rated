@@ -54,6 +54,23 @@ const setScrollLock = (id, on) => {
   document.body.style.overflow = scrollLockOwners.size ? "hidden" : "";
 };
 
+/* Клавиши document-уровня принадлежат ВЕРХНЕЙ модалке. Запись рисуется выше
+   лайтбокса всегда (тот же zIndex 100, но позже в дереве App), поэтому пока
+   она открыта — Esc и ←/→ её: без этого один Esc схлопывал обе модалки, а
+   ←/→ на кнопке формы листали ленту под ней.
+   Флаг модульный, а не проп: читается прямо в обработчике лайтбокса, так что
+   открытие записи не тянет лишний рендер тяжёлого Works (198 плиток).
+   Гейт по `e.target` был бы дырявым: клик по фону формы уводит фокус на body,
+   и событие тогда не принадлежит ни одному её элементу — а закрыть надо всё
+   равно запись. Порядок безопасен в обе стороны: слушатели document идут в
+   порядке навешивания, а флаг гасит useEffect уже ПОСЛЕ диспатча события,
+   поэтому тот же Esc не достаётся второй модалке ни при каком порядке
+   открытия. Снимаем флаг на закрытии, а НЕ в onExitComplete (в отличие от
+   лока скролла): следующий Esc в ~0.24s окне выхода должен закрывать
+   лайтбокс, как и до фикса. */
+let bookingOnTop = false;
+const setBookingOnTop = (on) => { bookingOnTop = on; };
+
 /* Вход/выход модалок — ДОБАВЛЕННАЯ анимация: раньше обе модалки монтировались
    мгновенно (`if(!open) return null`). При prefers-reduced-motion длительности
    нули, то есть прежнее мгновенное появление и есть RM-поведение. */
@@ -473,11 +490,14 @@ function WorkLightbox({ index, works, onClose, onStep }) {
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e) => {
-      if (videoOpenRef.current || Date.now() < escSuppressUntilRef.current) return;
       /* Запись открывается ПОВЕРХ лайтбокса (фокус тот не запирает, см.
-         scrollLockOwners). Пока слушатель ловил всё подряд, ←/→ в полях формы
-         не двигали каретку (preventDefault) и вместо этого листали ленту под
-         модалкой, а Esc схлопывал обе. Событие из поля ввода принадлежит полю. */
+         scrollLockOwners) — пока она открыта, клавиши её, см. bookingOnTop. */
+      if (videoOpenRef.current || bookingOnTop || Date.now() < escSuppressUntilRef.current) return;
+      /* Второй рубеж, поверх bookingOnTop: событие из редактируемого поля
+         принадлежит полю. Не мёртвый код — он держит окно ~0.24s выхода
+         записи, когда флаг уже снят, а поля формы ещё в DOM и в фокусе: без
+         него ←/→ в них получали бы preventDefault и листали ленту вместо
+         движения каретки. */
       const t = e.target;
       if (t && (t.isContentEditable || t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT")) return;
       if (e.key === "Escape") onClose();
@@ -1465,6 +1485,13 @@ function BookingModal({ open, onClose }) {
     if (open) setScrollLock("booking", true);
   }, [open]);
   React.useEffect(() => () => setScrollLock("booking", false), []);
+  /* Владение клавишами document-уровня: ставим на открытии, снимаем СРАЗУ на
+     закрытии и при размонтировании — в отличие от лока скролла, который висит
+     до конца выхода (почему именно так — см. bookingOnTop). */
+  React.useEffect(() => {
+    setBookingOnTop(open);
+    return () => setBookingOnTop(false);
+  }, [open]);
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
