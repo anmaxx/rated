@@ -4,7 +4,7 @@
 
 import React from "react";
 import { Drawer } from "vaul";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 
 const NS = window.RatedTattooDesignSystem_04b525;
 const { Button, StarRating, Input, Accordion } = NS;
@@ -43,6 +43,27 @@ const subscribeRM = (cb) => {
 
 function usePrefersReducedMotion() {
   return React.useSyncExternalStore(subscribeRM, () => rmList().matches, () => false);
+}
+
+/* Вход/выход модалок — ДОБАВЛЕННАЯ анимация: раньше обе модалки монтировались
+   мгновенно (`if(!open) return null`). При prefers-reduced-motion длительности
+   нули, то есть прежнее мгновенное появление и есть RM-поведение. */
+function useModalMotion() {
+  const reduced = usePrefersReducedMotion();
+  return {
+    overlay: {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 },
+      transition: { duration: reduced ? 0 : 0.2, ease: EASE_CSS },
+    },
+    panel: {
+      initial: { opacity: 0, scale: 0.96, y: 8 },
+      animate: { opacity: 1, scale: 1, y: 0 },
+      exit: { opacity: 0, scale: 0.98, y: 6 },
+      transition: { duration: reduced ? 0 : 0.24, ease: EASE_OUT },
+    },
+  };
 }
 
 /* Входное раскрытие секции: пропсы для motion.<tag> (без обёртки — layout
@@ -384,6 +405,7 @@ function WorkTile({ w, onOpen, onFocus, clone }) {
 function WorkLightbox({ index, works, onClose, onStep }) {
   const closeRef = React.useRef(null);
   const closeBtnRef = React.useRef(null);        /* кнопка «Закрыть» в видео-листе */
+  const anim = useModalMotion();
   const [videoOpen, setVideoOpen] = React.useState(false);
   const videoOpenRef = React.useRef(false);
   videoOpenRef.current = videoOpen;              /* всегда актуален на момент keydown */
@@ -393,10 +415,13 @@ function WorkLightbox({ index, works, onClose, onStep }) {
   /* 5-й элемент строки WORKS — id связанного ролика; сцену берём из CLIPS. */
   const clip = w && w[4] ? CLIPS.find((c) => c[0] === w[4]) : null;
 
+  /* Лок скролла ставим при открытии, а СНИМАЕМ в onExitComplete: сними его на
+     смене open — и страница поехала бы под ещё видимой панелью все ~0.24s
+     выхода. Отдельный эффект-страховка возвращает скролл при размонтировании. */
   React.useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (open) document.body.style.overflow = "hidden";
   }, [open]);
+  React.useEffect(() => () => { document.body.style.overflow = ""; }, []);
 
   /* Смена работы или закрытие лайтбокса — гасим видео-лист. */
   React.useEffect(() => { setVideoOpen(false); }, [index]);
@@ -423,49 +448,62 @@ function WorkLightbox({ index, works, onClose, onStep }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose, onStep]);
 
-  if (!open) return null;
   const nav = { width: "50px", height: "50px", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "rgba(10,10,12,.55)", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "15px", flexShrink: 0 };
   const arNum = clip ? clip[5] / clip[6] : 1;
 
+  /* Компонент больше НЕ возвращает null при закрытом лайтбоксе: чтобы отыграть
+     выход до размонтирования, условным должен быть ребёнок AnimatePresence. */
   return (
     <React.Fragment>
-      <div role="dialog" aria-modal="true" aria-label={"Работа: " + w[1]} onClick={onClose}
-        style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.92)", backdropFilter: "blur(6px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px", padding: "20px" }}>
-        <button ref={closeRef} type="button" aria-label="Закрыть просмотр" onClick={onClose}
-          style={{ position: "absolute", top: "20px", right: "20px", width: "50px", height: "50px", background: "transparent", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "16px" }}>
-          <i className="fas fa-xmark" aria-hidden="true"></i>
-        </button>
+      <AnimatePresence onExitComplete={() => { document.body.style.overflow = ""; }}>
+        {open ? (
+          <motion.div key="lightbox" role="dialog" aria-modal="true" aria-label={"Работа: " + w[1]} onClick={onClose} {...anim.overlay}
+            style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.92)", backdropFilter: "blur(6px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px", padding: "20px" }}>
+            <button ref={closeRef} type="button" aria-label="Закрыть просмотр" onClick={onClose}
+              style={{ position: "absolute", top: "20px", right: "20px", width: "50px", height: "50px", background: "transparent", color: "var(--bone)", border: "1px solid var(--border-hair)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "16px" }}>
+              <i className="fas fa-xmark" aria-hidden="true"></i>
+            </button>
 
-        <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 3vw, 28px)", maxWidth: "100%" }}>
-          <button type="button" aria-label="Предыдущая работа" onClick={() => onStep(-1)} style={nav} className="rt-lb-nav">
-            <i className="fas fa-arrow-left" aria-hidden="true"></i>
-          </button>
-          <img src={w[0]} alt={w[1] + " — " + w[2]}
-            style={{ maxHeight: "72vh", maxWidth: "min(1100px, 78vw)", objectFit: "contain", display: "block", border: "1px solid var(--border-hair)" }} />
-          <button type="button" aria-label="Следующая работа" onClick={() => onStep(1)} style={nav} className="rt-lb-nav">
-            <i className="fas fa-arrow-right" aria-hidden="true"></i>
-          </button>
-        </div>
+            {/* Панель — это два существующих ряда, а не новая обёртка: лишний
+                flex-контейнер пришлось бы повторять центровкой, gap и maxWidth,
+                а раскладка лайтбокса на мобильном — самое хрупкое место. */}
+            <motion.div {...anim.panel} onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 3vw, 28px)", maxWidth: "100%" }}>
+              <button type="button" aria-label="Предыдущая работа" onClick={() => onStep(-1)} style={nav} className="rt-lb-nav">
+                <i className="fas fa-arrow-left" aria-hidden="true"></i>
+              </button>
+              <img src={w[0]} alt={w[1] + " — " + w[2]}
+                style={{ maxHeight: "72vh", maxWidth: "min(1100px, 78vw)", objectFit: "contain", display: "block", border: "1px solid var(--border-hair)" }} />
+              <button type="button" aria-label="Следующая работа" onClick={() => onStep(1)} style={nav} className="rt-lb-nav">
+                <i className="fas fa-arrow-right" aria-hidden="true"></i>
+              </button>
+            </motion.div>
 
-        <div onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
-          <div style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "8px" }}>{w[2]}</div>
-          <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(20px, 2.4vw, 28px)", fontWeight: 500, margin: 0, letterSpacing: "0.01em" }}>{w[1]}</h3>
-          {clip ? (
-            <motion.button type="button" onClick={() => setVideoOpen(true)} className="rt-lb-live"
-              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-              style={{ marginTop: "16px", display: "inline-flex", alignItems: "center", gap: "9px", padding: "10px 20px", background: "transparent", color: "var(--bone)", border: "1px solid var(--accent)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>
-              <i className="fas fa-play" aria-hidden="true" style={{ fontSize: "10px" }}></i>
-              Смотреть вживую
-            </motion.button>
-          ) : null}
-          <div style={{ fontFamily: "var(--font-body)", fontSize: "12px", letterSpacing: "0.14em", color: "var(--text-muted)", marginTop: "12px" }}>
-            {index + 1} / {works.length}
-          </div>
-        </div>
-      </div>
+            <motion.div {...anim.panel} onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "8px" }}>{w[2]}</div>
+              <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(20px, 2.4vw, 28px)", fontWeight: 500, margin: 0, letterSpacing: "0.01em" }}>{w[1]}</h3>
+              {clip ? (
+                <motion.button type="button" onClick={() => setVideoOpen(true)} className="rt-lb-live"
+                  initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ marginTop: "16px", display: "inline-flex", alignItems: "center", gap: "9px", padding: "10px 20px", background: "transparent", color: "var(--bone)", border: "1px solid var(--accent)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>
+                  <i className="fas fa-play" aria-hidden="true" style={{ fontSize: "10px" }}></i>
+                  Смотреть вживую
+                </motion.button>
+              ) : null}
+              <div style={{ fontFamily: "var(--font-body)", fontSize: "12px", letterSpacing: "0.14em", color: "var(--text-muted)", marginTop: "12px" }}>
+                {index + 1} / {works.length}
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       {/* Видео-лист (Vaul): выезжает снизу с нативным плеером связанного ролика.
-          Открывается только у работ с парой; Radix даёт фокус-ловушку и Esc. */}
+          Открывается только у работ с парой; Radix даёт фокус-ловушку и Esc.
+          Живёт СИБЛИНГОМ, вне AnimatePresence: у листа своя анимация, а AP
+          ждёт один условный motion-ребёнок. Гейт по `w` — при закрытом
+          лайтбоксе работы нет, а `w[1]` в заголовке читается при создании
+          элемента (лист при этом закрыт: videoOpen гасится на смене index). */}
+      {w ? (
       <Drawer.Root open={videoOpen} direction="bottom" autoFocus
         onOpenChange={(o) => { if (!o) escSuppressUntilRef.current = Date.now() + 400; setVideoOpen(o); }}>
         {/* autoFocus + onOpenAutoFocus (у Content): начальный фокус садим на
@@ -498,6 +536,7 @@ function WorkLightbox({ index, works, onClose, onStep }) {
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
+      ) : null}
     </React.Fragment>
   );
 }
@@ -1335,14 +1374,17 @@ function BookingModal({ open, onClose }) {
   const [sending, setSending] = React.useState(false);
   const [error, setError] = React.useState("");
   const [form, setForm] = React.useState({ name: "", phone: "", idea: "" });
+  const anim = useModalMotion();
 
   React.useEffect(() => {
     if (open) { setDone(false); setError(""); setSending(false); setForm({ name: "", phone: "", idea: "" }); }
   }, [open]);
+  /* Как в лайтбоксе: лок ставим на открытии, снимаем в onExitComplete — иначе
+     страница поехала бы под ещё видимой панелью. Второй эффект — страховка. */
   React.useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (open) document.body.style.overflow = "hidden";
   }, [open]);
+  React.useEffect(() => () => { document.body.style.overflow = ""; }, []);
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
@@ -1386,40 +1428,44 @@ function BookingModal({ open, onClose }) {
     }
   };
 
-  if (!open) return null;
+  /* Как и лайтбокс, компонент не возвращает null: условный ребёнок AnimatePresence. */
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.82)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Запись на консультацию" style={{ width: "100%", maxWidth: "460px", background: "var(--bg-surface)", border: "1px solid var(--border-hair)", padding: "40px", position: "relative" }}>
-        <span style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "3px", background: "var(--accent)" }}></span>
-        {done ? (
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "44px", color: "var(--accent)", marginBottom: "16px" }}><i className="fas fa-circle-check"></i></div>
-            <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", margin: "0 0 10px", fontSize: "26px", fontWeight: 600 }}>Заявка отправлена</h3>
-            <p style={{ color: "var(--text-muted)", margin: "0 0 28px" }}>Тимур свяжется с вами в течение часа.</p>
-            <Button variant="primary" block onClick={onClose}>Готово</Button>
-          </div>
-        ) : (
-          <form onSubmit={submit}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "26px" }}>
-              <div>
-                <Kicker index="—" label="Запись" />
-                <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", margin: "14px 0 0", fontSize: "28px", fontWeight: 600, lineHeight: 1 }}>Бесплатная<br />консультация</h3>
+    <AnimatePresence onExitComplete={() => { document.body.style.overflow = ""; }}>
+      {open ? (
+        <motion.div key="booking" onClick={onClose} {...anim.overlay} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(5,5,6,.82)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+          <motion.div onClick={(e) => e.stopPropagation()} {...anim.panel} role="dialog" aria-modal="true" aria-label="Запись на консультацию" style={{ width: "100%", maxWidth: "460px", background: "var(--bg-surface)", border: "1px solid var(--border-hair)", padding: "40px", position: "relative" }}>
+            <span style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "3px", background: "var(--accent)" }}></span>
+            {done ? (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "44px", color: "var(--accent)", marginBottom: "16px" }}><i className="fas fa-circle-check"></i></div>
+                <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", margin: "0 0 10px", fontSize: "26px", fontWeight: 600 }}>Заявка отправлена</h3>
+                <p style={{ color: "var(--text-muted)", margin: "0 0 28px" }}>Тимур свяжется с вами в течение часа.</p>
+                <Button variant="primary" block onClick={onClose}>Готово</Button>
               </div>
-              <button type="button" onClick={onClose} aria-label="Закрыть" style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: "20px", cursor: "pointer" }}><i className="fas fa-xmark"></i></button>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <Input label="Имя" icon="fas fa-user" name="name" value={form.name} onChange={set("name")} disabled={sending} required placeholder="Как вас зовут?" />
-              <Input label="Телефон" icon="fas fa-phone" type="tel" name="phone" value={form.phone} onChange={set("phone")} disabled={sending} required placeholder="+7 (___) ___-__-__" />
-              <Input label="Опишите идею" as="textarea" name="idea" value={form.idea} onChange={set("idea")} disabled={sending} placeholder="Стиль, размер, место на теле…" />
-              {error ? (
-                <div role="alert" style={{ color: "var(--accent-soft)", fontSize: "13px", lineHeight: 1.5 }}>{error}</div>
-              ) : null}
-              <Button variant="primary" block type="submit" disabled={sending} iconRight={sending ? undefined : "fas fa-arrow-right"}>{sending ? "Отправка…" : "Отправить заявку"}</Button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>
+            ) : (
+              <form onSubmit={submit}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "26px" }}>
+                  <div>
+                    <Kicker index="—" label="Запись" />
+                    <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", margin: "14px 0 0", fontSize: "28px", fontWeight: 600, lineHeight: 1 }}>Бесплатная<br />консультация</h3>
+                  </div>
+                  <button type="button" onClick={onClose} aria-label="Закрыть" style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: "20px", cursor: "pointer" }}><i className="fas fa-xmark"></i></button>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <Input label="Имя" icon="fas fa-user" name="name" value={form.name} onChange={set("name")} disabled={sending} required placeholder="Как вас зовут?" />
+                  <Input label="Телефон" icon="fas fa-phone" type="tel" name="phone" value={form.phone} onChange={set("phone")} disabled={sending} required placeholder="+7 (___) ___-__-__" />
+                  <Input label="Опишите идею" as="textarea" name="idea" value={form.idea} onChange={set("idea")} disabled={sending} placeholder="Стиль, размер, место на теле…" />
+                  {error ? (
+                    <div role="alert" style={{ color: "var(--accent-soft)", fontSize: "13px", lineHeight: 1.5 }}>{error}</div>
+                  ) : null}
+                  <Button variant="primary" block type="submit" disabled={sending} iconRight={sending ? undefined : "fas fa-arrow-right"}>{sending ? "Отправка…" : "Отправить заявку"}</Button>
+                </div>
+              </form>
+            )}
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }
 
