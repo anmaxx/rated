@@ -66,14 +66,16 @@
 **Files:**
 - Modify: `sections.jsx`, `src/app.jsx`, `index.html`
 
-- [ ] снять базлайн шума консоли на текущем ratedtattoo.ru (эталон для пофазной сверки «консоль по нашему коду чистая»; отделить Vaul/Radix/Яндекс)
-- [ ] завести ветку `motion-phase1-reveal` (до правок — master = прод)
-- [ ] вверху `sections.jsx`: `EASE_OUT=[0.22,1,0.36,1]` и `useReveal()` (через `useReducedMotion`+`whileInView`, `viewport:{once:true,amount:0.15}`, `duration:1`). Отдельный файл НЕ заводим — `EASE_OUT` нужен ещё модалкам (Task 5) и фейду (Task 4)
-- [ ] заменить 10 не-Hero reveal-элементов на `<motion.div {...useReveal()} …>`; **убрать ТОЛЬКО классы `rt-reveal`/`rt-in`, прочие классы сохранить** — они несут медиа-адаптив (`rt-about-grid` :251, `rt-work-styles` :745, `rt-faq-grid` :1174 → `index.html:113,132`) + сохранить инлайн-`style`
-- [ ] Hero (`sections.jsx:206`) — carve-out: снять `rt-reveal rt-in`, оставить обычный `<div>` (без motion-обёртки; виден сразу, без въезда)
-- [ ] удалить reveal-`IntersectionObserver` и логику `rt-in` из `src/app.jsx`
-- [ ] в `index.html` удалить правила `.rt-reveal`/`.rt-reveal.rt-in`; **в RM-`@media` (`:120-124`) удалить ТОЛЬКО строку `.rt-reveal` (122), сохранить scroll-snap (121) и REC/эквалайзер (123)**; грепнуть, что `rt-in`/`.rt-reveal` больше нигде не читаются
-- [ ] браузерная сверка (§10 reveal): 10 элементов появляются opacity+translateY `1000±50мс`, Hero мгновенно, `once`, RM статично, **адаптив сеток цел**, консоль чистая
+- [x] снять базлайн шума консоли на текущем ratedtattoo.ru (эталон для пофазной сверки «консоль по нашему коду чистая»; отделить Vaul/Radix/Яндекс) — **базлайн = пустая консоль**: загрузка, прокрутка всех секций, лайтбокс и Яндекс-плеер не дали ни одного сообщения (шум Vaul/Radix/Яндекс на главном таргете не проявился)
+- [x] завести ветку `motion-phase1-reveal` (до правок — master = прод)
+- [x] вверху `sections.jsx`: `EASE_OUT=[0.22,1,0.36,1]` и `useReveal()` (через `useReducedMotion`+`whileInView`, `viewport:{once:true,amount:0.15}`, `duration:1`). Отдельный файл НЕ заводим — `EASE_OUT` нужен ещё модалкам (Task 5) и фейду (Task 4)
+- [x] заменить 10 не-Hero reveal-элементов на `<motion.div {...useReveal()} …>`; **убрать ТОЛЬКО классы `rt-reveal`/`rt-in`, прочие классы сохранить** — они несут медиа-адаптив (`rt-about-grid` :251, `rt-work-styles` :745, `rt-faq-grid` :1174 → `index.html:113,132`) + сохранить инлайн-`style`
+- [x] Hero (`sections.jsx:206`) — carve-out: снять `rt-reveal rt-in`, оставить обычный `<div>` (без motion-обёртки; виден сразу, без въезда)
+- [x] удалить reveal-`IntersectionObserver` и логику `rt-in` из `src/app.jsx`
+- [x] в `index.html` удалить правила `.rt-reveal`/`.rt-reveal.rt-in`; **в RM-`@media` (`:120-124`) удалить ТОЛЬКО строку `.rt-reveal` (122), сохранить scroll-snap (121) и REC/эквалайзер (123)**; грепнуть, что `rt-in`/`.rt-reveal` больше нигде не читаются (в репо чисто; остались только мёртвые вхождения внутри артефакта `_ds_bundle.js`, чья копия секций не рендерится)
+- [x] браузерная сверка (§10 reveal): 10 элементов появляются opacity+translateY `1000±50мс`, Hero мгновенно, `once`, RM статично, **адаптив сеток цел**, консоль чистая
+
+**Замеры Task 1 (vite preview, 1440×900):** длительность `1007.5 мс`; кривая совпала с `cubic-bezier(0.22,1,0.36,1)` (отклонение ≤0.05 — в пределах ±8 мс неопределённости старта); старт `opacity 0 / translateY(46px)` = дословно прежний CSS; порог: при видимости 7.9% и 13% элемент скрыт, при 25.7% — раскрыт (`amount 0.15`); `once` — возврат к элементу не переигрывает; 10 скрытых при загрузке → все 10 в `opacity 1 / transform none` после прохода; Hero `opacity 1, transform none` сразу; RM (подменённый `matchMedia`) — статично, без инлайновых `opacity/transform`; при 900px `.rt-about-grid`/`.rt-faq-grid` в одну колонку, `gap 40px`; консоль пуста (= базлайн).
 
 ### Task 2: Фаза 1 — PR + Merge-gate
 **Files:**

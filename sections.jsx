@@ -4,13 +4,31 @@
 
 import React from "react";
 import { Drawer } from "vaul";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 
 const NS = window.RatedTattooDesignSystem_04b525;
 const { Button, StarRating, Input, Accordion } = NS;
 
 const LOGO = "./assets/logos/rated-logo-white.png";
 const MAXW = "1240px";
+
+/* = var(--ease-out) из tokens/spacing.css. Общий для входных раскрытий,
+   ховера карточки работы и модалок — держим одним значением. */
+const EASE_OUT = [0.22, 1, 0.36, 1];
+
+/* Входное раскрытие секции: пропсы для motion.<tag> (без обёртки — layout
+   не меняется). amount 0.15 = прежний IO threshold, once — как прежний
+   unobserve. При prefers-reduced-motion пропсов нет: элемент статичен. */
+function useReveal({ y = 46 } = {}) {
+  const reduced = useReducedMotion();
+  if (reduced) return {};
+  return {
+    initial: { opacity: 0, y },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, amount: 0.15 },
+    transition: { duration: 1, ease: EASE_OUT },
+  };
+}
 
 /* [путь, название, стиль, пропорция кадра ш/в]
    Пропорция снята с исходников — плитки в ленте строятся по ней, чтобы
@@ -203,7 +221,8 @@ function Hero({ onBook }) {
         Rated Tattoo · Moscow · с 2015
       </div>
 
-      <div className="rt-reveal rt-in" style={{ position: "relative", zIndex: 1, flex: "1 1 auto", width: "100%", maxWidth: MAXW, margin: "0 auto", padding: "150px 32px 60px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      {/* carve-out: первый экран (LCP) виден сразу, без входной анимации */}
+      <div style={{ position: "relative", zIndex: 1, flex: "1 1 auto", width: "100%", maxWidth: MAXW, margin: "0 auto", padding: "150px 32px 60px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div style={{ marginBottom: "26px" }}><Kicker index="ТОП-10" label="Тату-мастеров Москвы 2023" /></div>
         <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(46px, 7vw, 104px)", lineHeight: 0.9, letterSpacing: "-0.01em", margin: 0 }}>
           Элитные<br />татуировки<span style={{ color: "var(--accent)" }}>.</span>
@@ -248,7 +267,7 @@ function About() {
       {/* atmospheric oversize wordmark */}
       <div aria-hidden="true" style={{ position: "absolute", right: "-2.5%", top: "6%", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "clamp(140px, 23vw, 360px)", lineHeight: 0.8, color: "var(--bone)", opacity: 0.028, textTransform: "uppercase", letterSpacing: "-0.03em", pointerEvents: "none", userSelect: "none" }}>Тэд</div>
 
-      <div className="rt-reveal rt-about-grid" style={{ position: "relative", maxWidth: MAXW, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "0.94fr 1.06fr", gap: "72px", alignItems: "center", width: "100%" }}>
+      <motion.div {...useReveal()} className="rt-about-grid" style={{ position: "relative", maxWidth: MAXW, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "0.94fr 1.06fr", gap: "72px", alignItems: "center", width: "100%" }}>
         {/* ----- portrait ----- */}
         <div className="rt-about-media" style={{ position: "relative" }}>
           <div className="rt-edge-label" style={{ position: "absolute", left: "-30px", top: "50%", transform: "translateY(-50%) rotate(180deg)", writingMode: "vertical-rl", zIndex: 2, fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.32em", textTransform: "uppercase", color: "var(--text-faint)" }}>
@@ -292,7 +311,7 @@ function About() {
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -711,7 +730,7 @@ function Works({ onBook }) {
 
   return (
     <section id="works" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "110px 0", overflow: "hidden" }}>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto 40px", padding: "0 32px", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px" }}>
+      <motion.div {...useReveal()} style={{ maxWidth: MAXW, margin: "0 auto 40px", padding: "0 32px", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px" }}>
         <div>
           <Kicker index="02" label="Работы" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4.5vw, 56px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Избранное</h2>
@@ -722,7 +741,7 @@ function Works({ onBook }) {
           <div style={{ width: "1px", height: "28px", background: "var(--border-hair)", margin: "0 6px" }}></div>
           <Button variant="ghost" onClick={onBook} iconRight="fas fa-arrow-right">Записаться на сеанс</Button>
         </div>
-      </div>
+      </motion.div>
 
       <div ref={wrapRef} role="group" aria-label="Лента работ"
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
@@ -742,7 +761,7 @@ function Works({ onBook }) {
       </div>
 
       {/* Стили: подсвечен стиль работы в центре, клик — собрать этот стиль подряд. */}
-      <div className="rt-reveal rt-work-styles" style={{ maxWidth: MAXW, margin: "28px auto 0", padding: "0 32px", width: "100%", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 22px" }}>
+      <motion.div {...useReveal()} className="rt-work-styles" style={{ maxWidth: MAXW, margin: "28px auto 0", padding: "0 32px", width: "100%", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 22px" }}>
         {WORK_STYLES.map((s) => {
           const on = s === style;
           return (
@@ -758,7 +777,7 @@ function Works({ onBook }) {
             </button>
           );
         })}
-      </div>
+      </motion.div>
 
       <WorkLightbox index={shot} works={order} onClose={() => setShot(-1)} onStep={step} />
     </section>
@@ -928,12 +947,12 @@ function Process() {
 
   return (
     <section id="process" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "96px 0" }}>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto 34px", padding: "0 32px", width: "100%" }}>
+      <motion.div {...useReveal()} style={{ maxWidth: MAXW, margin: "0 auto 34px", padding: "0 32px", width: "100%" }}>
         <Kicker index="03" label="Вживую" />
         <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Ближе, чем фото</h2>
-      </div>
+      </motion.div>
 
-      <div className="rt-reveal" style={{ maxWidth: "1040px", margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <motion.div {...useReveal()} style={{ maxWidth: "1040px", margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div className="rt-clip-grid" style={{ display: "grid", gridTemplateColumns: "auto 1fr", border: "1px solid var(--border-hair)", background: "var(--bg-base)" }}>
 
           {/* Сцена */}
@@ -1014,7 +1033,7 @@ function Process() {
           </div>
 
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -1031,7 +1050,7 @@ function Services({ onBook }) {
   const [hover, setHover] = React.useState(-1);
   return (
     <section id="services" className="rt-snap" style={{ background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <motion.div {...useReveal()} style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "56px", flexWrap: "wrap", gap: "20px" }}>
           <div>
             <Kicker index="04" label="Услуги" />
@@ -1051,7 +1070,7 @@ function Services({ onBook }) {
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -1069,7 +1088,7 @@ const BENEFITS = [
 function Benefits() {
   return (
     <section id="benefits" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <motion.div {...useReveal()} style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ marginBottom: "48px" }}>
           <Kicker index="05" label="Преимущества" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0", maxWidth: "16ch" }}>Почему мне доверяют</h2>
@@ -1083,7 +1102,7 @@ function Benefits() {
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -1112,7 +1131,7 @@ function ReviewStars() {
 function Testimonials() {
   return (
     <section id="reviews" className="rt-snap" style={{ background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0", borderTop: "1px solid var(--border-hair)" }}>
-      <div className="rt-reveal" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
+      <motion.div {...useReveal()} style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "20px", marginBottom: "44px" }}>
           <div>
             <Kicker index="06" label="Отзывы" />
@@ -1156,7 +1175,7 @@ function Testimonials() {
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -1171,13 +1190,13 @@ const FAQ = [
 function Faq() {
   return (
     <section id="faq" className="rt-snap" style={{ background: "var(--bg-surface)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "110px 0" }}>
-      <div className="rt-reveal rt-faq-grid" style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 32px", width: "100%", display: "grid", gridTemplateColumns: "0.7fr 1.3fr", gap: "64px", alignItems: "start" }}>
+      <motion.div {...useReveal()} className="rt-faq-grid" style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 32px", width: "100%", display: "grid", gridTemplateColumns: "0.7fr 1.3fr", gap: "64px", alignItems: "start" }}>
         <div>
           <Kicker index="07" label="FAQ" />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(30px, 3.4vw, 46px)", lineHeight: 1, letterSpacing: "-0.01em", margin: "20px 0 0" }}>Частые вопросы</h2>
         </div>
         <Accordion items={FAQ} />
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -1190,7 +1209,7 @@ function Cta({ onBook }) {
         <img src="./assets/img/work-mandala.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 35%", filter: "grayscale(0.7) contrast(1.05) brightness(0.5)" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(10,10,12,.86), rgba(10,10,12,.92))" }}></div>
       </div>
-      <div className="rt-reveal" style={{ position: "relative", zIndex: 1, maxWidth: MAXW, margin: "0 auto", padding: "0 32px", textAlign: "center", width: "100%" }}>
+      <motion.div {...useReveal()} style={{ position: "relative", zIndex: 1, maxWidth: MAXW, margin: "0 auto", padding: "0 32px", textAlign: "center", width: "100%" }}>
         <div style={{ display: "inline-block" }}><Kicker index="—" label="Запись открыта" /></div>
         <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(40px, 7vw, 96px)", lineHeight: 0.95, letterSpacing: "-0.01em", margin: "26px 0 28px" }}>
           Создадим вашу<br />татуировку<span style={{ color: "var(--accent)" }}>.</span>
@@ -1202,7 +1221,7 @@ function Cta({ onBook }) {
           <Button variant="primary" size="lg" onClick={onBook} iconRight="fas fa-arrow-right">Записаться сейчас</Button>
           <Button as="a" href="tel:+79689752099" variant="glass" size="lg" iconLeft="fas fa-phone">+7 (968) 975-20-99</Button>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
