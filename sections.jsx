@@ -12,9 +12,15 @@ const { Button, StarRating, Input, Accordion } = NS;
 const LOGO = "./assets/logos/rated-logo-white.png";
 const MAXW = "1240px";
 
-/* = var(--ease-out) из tokens/spacing.css. Общий для входных раскрытий,
-   ховера карточки работы и модалок — держим одним значением. */
+/* = var(--ease-out) из tokens/spacing.css. Регистр ОТКЛИКА: ховеры и
+   служебные переходы, где резкость уместна. */
 const EASE_OUT = [0.22, 1, 0.36, 1];
+
+/* = var(--ease-heavy). Регистр СОБЫТИЯ: вход секций и лайтбокс работы.
+   EASE_OUT сюда не годится — она отдаёт 43% пути за первые 18 мс (замерено
+   на входе модалки), поэтому читается как подстановка, а не как движение,
+   при любой длительности. Эта распределена ровнее, движение видно. */
+const EASE_HEAVY = [0.33, 1, 0.68, 1];
 
 /* = CSS-ключевое слово `ease` (cubic-bezier(0.25,0.1,0.25,1)). У Motion
    дефолтная кривая другая, поэтому там, где мы заменяем прежний
@@ -74,7 +80,11 @@ const setBookingOnTop = (on) => { bookingOnTop = on; };
 /* Вход/выход модалок — ДОБАВЛЕННАЯ анимация: раньше обе модалки монтировались
    мгновенно (`if(!open) return null`). При prefers-reduced-motion длительности
    нули, то есть прежнее мгновенное появление и есть RM-поведение. */
-function useModalMotion() {
+/* `event: true` — регистр СОБЫТИЯ (лайтбокс работы: экспонат выходит на
+   крупный план). По умолчанию регистр ОТКЛИКА — служебное окно записи.
+   Разводить их нужно: одинаковая анимация у обоих уравнивала показ работы
+   с формой заявки, а под выбранную интонацию это разные по весу события. */
+function useModalMotion({ event = false } = {}) {
   const reduced = usePrefersReducedMotion();
   return {
     overlay: {
@@ -88,13 +98,15 @@ function useModalMotion() {
          заново). Значение неанимируемое — Motion выставляет его сразу. */
       animate: { opacity: 1, pointerEvents: "auto" },
       exit: { opacity: 0, pointerEvents: "none" },
-      transition: { duration: reduced ? 0 : 0.2, ease: EASE_CSS },
+      transition: { duration: reduced ? 0 : (event ? 0.35 : 0.2), ease: EASE_CSS },
     },
+    /* Амплитуда поднята с scale 0.96 / y 8: прежняя была за гранью различимости
+       (замер входа: 43% пути за 18 мс на EASE_OUT — глаз видел подстановку). */
     panel: {
-      initial: reduced ? false : { opacity: 0, scale: 0.96, y: 8 },
+      initial: reduced ? false : { opacity: 0, scale: event ? 0.94 : 0.96, y: event ? 14 : 10 },
       animate: { opacity: 1, scale: 1, y: 0 },
       exit: { opacity: 0, scale: 0.98, y: 6 },
-      transition: { duration: reduced ? 0 : 0.24, ease: EASE_OUT },
+      transition: { duration: reduced ? 0 : (event ? 0.5 : 0.3), ease: EASE_HEAVY },
     },
     /* Кнопка «Смотреть вживую» — единственная анимация лайтбокса, доставшаяся
        от прежнего кода мимо RM-гейта; заводим её сюда, чтобы гейт был один. */
@@ -113,13 +125,16 @@ function useModalMotion() {
    Вызывать ТОЛЬКО в начале компонента (`const reveal = useReveal()`), а не
    внутри JSX: это хук, и условный элемент со спредом сломал бы порядок хуков —
    линтера с rules-of-hooks в репозитории нет. */
+/* y уменьшен с 46 до 24 и добавлен масштаб: большое смещение читается как
+   «прилетело», малое смещение с масштабом — как «проявилось на месте». Это и
+   есть разница между дефолтным входом и весомым. */
 function useReveal() {
   const reduced = usePrefersReducedMotion();
   return {
-    initial: reduced ? false : { opacity: 0, y: 46 },
-    whileInView: { opacity: 1, y: 0 },
+    initial: reduced ? false : { opacity: 0, y: 24, scale: 0.98 },
+    whileInView: { opacity: 1, y: 0, scale: 1 },
     viewport: { once: true, amount: 0.15 },
-    transition: { duration: reduced ? 0 : 1, ease: EASE_OUT },
+    transition: { duration: reduced ? 0 : 1, ease: EASE_HEAVY },
   };
 }
 
@@ -238,15 +253,33 @@ const tileRatio = (r) => Math.min(1.35, Math.max(0.52, r));
 /* Порог, за которым нажатие считается протяжкой, а не кликом по работе. */
 const DRAG_SLOP = 8;
 
-/* Слот-машина: клик по стилю разгоняет ленту, перестановка происходит на пике
-   скорости — плитки в этот момент смазаны, и подмена содержимого не читается,
-   — затем лента тормозит и встаёт первой работой стиля точно по центру.
-   SPIN_DIST выведен из производной easeOutCubic в нуле (3·dist/dur): при таком
-   пути торможение начинается ровно с SPIN_VMAX, без рывка на стыке фаз. */
-const SPIN_UP = 0.24;      /* с — разгон */
-const SPIN_DOWN = 1.1;     /* с — торможение */
-const SPIN_VMAX = 5000;    /* px/s — пик, ~14 плиток в секунду */
-const SPIN_DIST = SPIN_VMAX * SPIN_DOWN / 3;
+/* Смена стиля: набор уезжает ВНИЗ за кадр, порядок меняется в пустом кадре,
+   новый набор опускается сверху на своё место.
+
+   Почему вниз, а не вбок: лента бесшовная и бесконечная, увести её за кадр по
+   горизонтали нельзя — сдвиг влево просто показывает следующие плитки. По
+   вертикали кадр пустеет за один рост плитки.
+
+   Что это заменило. Раньше был разгон до пика, подмена на скорости и
+   торможение к цели — «слот-машина». У неё два врождённых дефекта, оба
+   держались на высокой скорости: перед торможением лента телепортировалась на
+   длину тормозного пути (скачок ~1300 px, невидимый только в смазе), а коммит
+   198 плиток (~50 мс) приходился на самое быстрое движение и читался
+   подвисанием. Здесь обоих нет: коммит идёт в пустом кадре, а позиция
+   выставляется сразу конечной, пока лента невидима. Прятать нечего, поэтому
+   и маскирующий смаз больше не нужен. */
+const SWAP_OUT = 0.3;      /* с — уход вниз, с разгоном */
+const SWAP_IN = 0.45;      /* с — приход сверху, с торможением */
+
+/* Скорость холостого хода ленты. Была 34 px/s — темп бегущей строки, который
+   задавал ритм всему сайту и спорил с редким весомым движением. 11 px/s
+   читается как дыхание: движение есть, взгляд оно не тянет. */
+const DRIFT_VMAX = 11;     /* px/s */
+
+/* Затухание инерции после протяжки: vel *= INERTIA_K^dt. Меньше — дольше
+   выбег. 0.06 давало ~53 кадра, 0.035 даёт ~90: ленту толкнули, и она едет,
+   а не встаёт — у неё появляется масса. */
+const INERTIA_K = 0.035;
 
 /* ---------------------------------------------------------------- helpers */
 function Kicker({ index, label, color }) {
@@ -417,12 +450,16 @@ function About() {
 
    memo обязателен: в ленте 198 плиток, у каждой четыре motion-элемента, а
    кадровый цикл дёргает setStyle — без мемоизации каждая смена стиля в центре
-   кадра прогоняла бы ~800 VisualElement'ов. Поэтому индекс приходит пропом, а
-   обработчики Works держит стабильными (useCallback) — иначе memo не сработает. */
-const WorkTile = React.memo(function WorkTile({ w, i, onOpen, onFocus, clone }) {
+   кадра прогоняла бы ~800 VisualElement'ов. Обработчики Works держит
+   стабильными (useCallback), иначе memo не сработает.
+   Пропа с индексом здесь НЕТ намеренно: при перестановке индекс менялся почти
+   у всех плиток, memo падал на всех 198 и кадр подмены длился 77 мс. Работа
+   передаётся сама — все пропы становятся стабильными по ссылке, и перестановка
+   сводится к переносу узлов без единого ререндера. */
+const WorkTile = React.memo(function WorkTile({ w, onOpen, onFocus, clone }) {
   return (
     <motion.button type="button" className="rt-work-tile"
-      onClick={(e) => onOpen(i, e)} onFocus={() => onFocus(i)}
+      onClick={(e) => onOpen(w, e)} onFocus={() => onFocus(w)}
       initial="rest" animate="rest" whileHover="hover"
       aria-hidden={clone ? "true" : undefined} tabIndex={clone ? -1 : undefined}
       aria-label={w[1] + " — " + w[2] + ". Открыть крупно"}
@@ -454,7 +491,7 @@ const WorkTile = React.memo(function WorkTile({ w, i, onOpen, onFocus, clone }) 
 function WorkLightbox({ index, works, onClose, onStep }) {
   const closeRef = React.useRef(null);
   const closeBtnRef = React.useRef(null);        /* кнопка «Закрыть» в видео-листе */
-  const anim = useModalMotion();
+  const anim = useModalMotion({ event: true });  /* показ работы — событие, не служебное окно */
   const [videoOpen, setVideoOpen] = React.useState(false);
   const videoOpenRef = React.useRef(false);
   videoOpenRef.current = videoOpen;              /* всегда актуален на момент keydown */
@@ -625,7 +662,7 @@ function Works({ onBook }) {
   const reveal = useReveal();
 
   const S = React.useRef({
-    offset: 0, setW: 1, paused: false, dragging: false,
+    offset: 0, setW: 1, paused: false, dragging: false, swap: null, swapPending: null,
     lastX: 0, lastT: 0, tween: 0, vel: 0, moved: 0, geo: [], mid: -1,
     /* Заглушка до регистрации в эффекте: реальный sweep кладётся туда раньше,
        чем стартует кадровый цикл, — гейт на месте вызова не нужен. */
@@ -700,36 +737,48 @@ function Works({ onBook }) {
 
     if (s.dragging) {
       /* offset двигает обработчик move */
-    } else if (s.spin) {
-      const sp = s.spin;
-      if (sp.phase === "up") {
-        sp.t += dt;
-        const u = Math.min(1, sp.t / SPIN_UP);
-        s.offset += (sp.v0 + (SPIN_VMAX - sp.v0) * u * u) * dt;
-        if (u >= 1) { sp.phase = "swap"; setOrder(buildOrder(sp.st)); }
-      } else if (sp.phase === "swap") {
-        /* Крутим на пике, пока React не закоммитит новый порядок. Тормозной
-           путь выставит useLayoutEffect — там есть настоящая геометрия. */
-        s.offset += SPIN_VMAX * dt;
+    } else if (s.swap) {
+      /* Горизонталь на время смены стиля замирает: ведёт вертикаль. */
+      const sw = s.swap;
+      sw.t += dt;
+      if (sw.phase === "out") {
+        /* Уход вниз с разгоном (t²): начинается мягко, за кадр уходит быстро. */
+        const u = Math.min(1, sw.t / SWAP_OUT);
+        sw.y = sw.h * u * u;
+        if (u >= 1) { sw.phase = "hold"; setOrder(buildOrder(sw.st)); }
+      } else if (sw.phase === "hold") {
+        /* Кадр пуст, лента ждёт коммита. Сюда и приходится подвисание на
+           ~50 мс — прерывать ему нечего, показывать тоже. Позицию выставит
+           useLayoutEffect: там есть геометрия нового порядка. */
+        sw.y = sw.h;
       } else {
-        sp.u = Math.min(1, sp.u + dt / SPIN_DOWN);
-        const e = 1 - Math.pow(1 - sp.u, 3);
-        s.offset = sp.start + sp.dist * e;
-        if (sp.u >= 1) s.spin = null;
+        /* Приход сверху с торможением. */
+        const u = Math.min(1, sw.t / SWAP_IN);
+        const e = 1 - Math.pow(1 - u, 3);
+        sw.y = -sw.h * (1 - e);
+        if (u >= 1) {
+          /* Клик, пришедший пока лента возвращалась, отрабатываем теперь. */
+          s.swap = s.swapPending ? startSwap(s.swapPending) : null;
+          s.swapPending = null;
+        }
       }
     } else if (Math.abs(s.tween) > 0.5) {
       const step = s.tween * Math.min(1, dt * 6);
       s.offset += step; s.tween -= step; s.vel = 0;
     } else if (Math.abs(s.vel) > 12) {
       s.offset += s.vel * dt;              /* выбег после броска */
-      s.vel *= Math.pow(0.06, dt);
+      s.vel *= Math.pow(INERTIA_K, dt);
     } else {
       s.tween = 0; s.vel = 0;
-      if (!s.paused && !reduced) s.offset += 34 * dt;
+      if (!s.paused && !reduced) s.offset += DRIFT_VMAX * dt;
     }
 
     s.offset = ((s.offset % s.setW) + s.setW) % s.setW;
-    track.style.transform = "translate3d(" + (-s.offset) + "px,0,0)";
+    /* Вертикаль ненулевая только на смене стиля. Пишем её в тот же transform:
+       отдельная обёртка со своим слоем стоила бы дороже, а обрезает всё равно
+       overflow:hidden у обёртки ленты. */
+    const y = s.swap ? Math.round(s.swap.y) : 0;
+    track.style.transform = "translate3d(" + (-s.offset) + "px," + y + "px,0)";
 
     /* Стиль работы, попавшей в центр кадра, ведёт индекс под лентой. */
     if (s.geo.length) {
@@ -771,10 +820,15 @@ function Works({ onBook }) {
      к центру: так offset остаётся в [0, setW), и видимой оказывается именно та
      плитка, на которой фокус, а не её двойник из второго прохода.
      Оба обработчика плитки — useCallback без зависимостей (всё нужное лежит в
-     ref'ах): их идентичность и держит memo на WorkTile. */
-  const focusTile = React.useCallback((i) => {
+     ref'ах): их идентичность и держит memo на WorkTile.
+     Принимают саму работу, а не индекс: индекс менялся у почти всех плиток при
+     перестановке и в одиночку ронял memo — 198 плиток по 4 motion-элемента
+     перерисовывались заново, и кадр подмены длился 77 мс. Кортежи работ в
+     `order` те же по ссылке, поэтому indexOf находит позицию за один проход,
+     и он тут разовый — на клик, а не на кадр. */
+  const focusTile = React.useCallback((w) => {
     const s = S.current;
-    const g = s.geo[i % orderRef.current.length];
+    const g = s.geo[orderRef.current.indexOf(w)];
     const wrap = wrapRef.current;
     if (!g || !wrap) return;
     const x = g.left - s.offset;
@@ -792,8 +846,8 @@ function Works({ onBook }) {
      свежий shot виден только апдейтеру. */
   const step = (d) => setShot((i) => (i < 0 ? i : (i + d + order.length) % order.length));
   /* detail === 0 — нажатие с клавиатуры: там протяжки не было и порог не применим. */
-  const openTile = React.useCallback((i, e) => {
-    if ((e && e.detail === 0) || S.current.moved < DRAG_SLOP) setShot(i % orderRef.current.length);
+  const openTile = React.useCallback((w, e) => {
+    if ((e && e.detail === 0) || S.current.moved < DRAG_SLOP) setShot(orderRef.current.indexOf(w));
   }, []);
 
   /* Клик по стилю: работы этого стиля собираются подряд, и первая из них встаёт
@@ -818,16 +872,27 @@ function Works({ onBook }) {
     return others.slice(0, lead).concat(tagged, others.slice(lead));
   };
 
+  /* Высота ухода — рост кадра плюс запас: лента должна выйти за обрезку
+     целиком, иначе снизу останется полоска плиток. */
+  const startSwap = (st) => ({ phase: "out", t: 0, y: 0, h: wrapRef.current.clientHeight + 24, st });
+
   const sortByStyle = (st) => {
     const s = S.current;
     if (!wrapRef.current || !order.some((w) => w[2] === st)) return;
-    /* При выключенной анимации крутить нечего — переставляем сразу. */
+    /* При выключенной анимации возить нечего — переставляем сразу. */
     if (reduced) {
       setOrder(buildOrder(st));
       return;
     }
-    /* Повторный клик во время вращения не сбрасывает скорость к нулю. */
-    s.spin = { phase: "up", t: 0, v0: s.spin ? SPIN_VMAX : 34, st };
+    /* Повторный клик по ходу смены не начинает её заново — перезапуск дал бы
+       рывок из-за кадра. Пока набор ещё уходит, просто меняем цель; если он
+       уже внизу или возвращается, кладём в очередь и подхватываем на выходе. */
+    if (s.swap) {
+      if (s.swap.phase === "out") s.swap.st = st;
+      else s.swapPending = st;
+      return;
+    }
+    s.swap = startSwap(st);
     s.tween = 0; s.vel = 0;
   };
 
@@ -847,19 +912,14 @@ function Works({ onBook }) {
       /* Куда лента должна встать: якорная плитка центром в центр кадра.
          Плитки разной ширины, поэтому целимся центром, а не краем. */
       const final = s.geo[j].left + s.geo[j].w / 2 - wrap.clientWidth / 2;
-      if (s.spin && s.spin.phase === "swap") {
-        /* Отматываем назад на длину торможения и тормозим вперёд к final.
-           Скачок назад невидим: лента сейчас идёт 5000 px/s и смазана. */
-        s.spin.start = final - SPIN_DIST;
-        s.spin.dist = SPIN_DIST;
-        s.spin.u = 0;
-        s.spin.phase = "down";
-        s.offset = ((s.spin.start % s.setW) + s.setW) % s.setW;
-      } else {
-        s.offset = ((final % s.setW) + s.setW) % s.setW;
-        s.tween = 0; s.vel = 0;
-      }
-      track.style.transform = "translate3d(" + (-s.offset) + "px,0,0)";
+      /* Позицию выставляем сразу конечной — и в анимированном случае тоже:
+         кадр сейчас пуст, лента внизу, ставить её можно куда угодно без
+         единого видимого скачка. Ровно то, ради чего затеян уход за кадр. */
+      s.offset = ((final % s.setW) + s.setW) % s.setW;
+      s.tween = 0; s.vel = 0;
+      if (s.swap && s.swap.phase === "hold") { s.swap.phase = "in"; s.swap.t = 0; }
+      const y = s.swap ? Math.round(s.swap.y) : 0;
+      track.style.transform = "translate3d(" + (-s.offset) + "px," + y + "px,0)";
     }
     s.mid = -1;
     s.sweep();
@@ -922,7 +982,7 @@ function Works({ onBook }) {
               переносить готовые плитки, а не переписывать их содержимое на месте —
               иначе уже загруженные картинки сбрасываются и лента моргает. */}
           {items.map((w, i) => (
-            <WorkTile key={w[0] + (i >= order.length ? "~2" : "~1")} w={w} i={i} clone={i >= order.length}
+            <WorkTile key={w[0] + (i >= order.length ? "~2" : "~1")} w={w} clone={i >= order.length}
               onOpen={openTile} onFocus={focusTile} />
           ))}
         </div>
