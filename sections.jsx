@@ -4,7 +4,7 @@
 
 import React from "react";
 import { Drawer } from "vaul";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useAnimationFrame } from "motion/react";
 
 const NS = window.RatedTattooDesignSystem_04b525;
 const { Button, StarRating, Input, Accordion } = NS;
@@ -565,6 +565,11 @@ function Works({ onBook }) {
     lastX: 0, lastT: 0, tween: 0, vel: 0, moved: 0, geo: [], mid: -1,
   });
 
+  /* Счётчик кадров для sweep — в ref, а не в замыкании эффекта: колбэк
+     useAnimationFrame пересоздаётся каждым рендером, локальная переменная
+     обнулялась бы вместе с ним и sweep бежал бы чаще, чем раз в 10 кадров. */
+  const tickRef = React.useRef(0);
+
   React.useEffect(() => {
     const track = trackRef.current;
     const wrap = wrapRef.current;
@@ -584,7 +589,6 @@ function Works({ onBook }) {
        196 замеров на кадр стоили бы дороже самой ленты. Раз в 10 кадров хватает:
        при 34 px/s запас в экран шириной вырабатывается минуты за полторы. */
     const PRELOAD = 1200;
-    let tick = 0;
     const sweep = () => {
       const s = S.current;
       if (!s.geo.length) return;
@@ -609,63 +613,68 @@ function Works({ onBook }) {
        пустыми прямоугольниками. */
     S.current.sweep = sweep;
 
-    let raf, last = performance.now();
-    const loop = (now) => {
-      const s = S.current;
-      const dt = Math.min(0.05, (now - last) / 1000); last = now;
-
-      if (s.dragging) {
-        /* offset двигает обработчик move */
-      } else if (s.spin) {
-        const sp = s.spin;
-        if (sp.phase === "up") {
-          sp.t += dt;
-          const u = Math.min(1, sp.t / SPIN_UP);
-          s.offset += (sp.v0 + (SPIN_VMAX - sp.v0) * u * u) * dt;
-          if (u >= 1) { sp.phase = "swap"; setOrder(buildOrder(sp.st)); }
-        } else if (sp.phase === "swap") {
-          /* Крутим на пике, пока React не закоммитит новый порядок. Тормозной
-             путь выставит useLayoutEffect — там есть настоящая геометрия. */
-          s.offset += SPIN_VMAX * dt;
-        } else {
-          sp.u = Math.min(1, sp.u + dt / SPIN_DOWN);
-          const e = 1 - Math.pow(1 - sp.u, 3);
-          s.offset = sp.start + sp.dist * e;
-          if (sp.u >= 1) s.spin = null;
-        }
-      } else if (Math.abs(s.tween) > 0.5) {
-        const step = s.tween * Math.min(1, dt * 6);
-        s.offset += step; s.tween -= step; s.vel = 0;
-      } else if (Math.abs(s.vel) > 12) {
-        s.offset += s.vel * dt;              /* выбег после броска */
-        s.vel *= Math.pow(0.06, dt);
-      } else {
-        s.tween = 0; s.vel = 0;
-        /* `reduced` захвачен на монтировании: эффект с [] не пересоздаётся, так
-           что переключение RM на открытой странице автоскролл пока не остановит.
-           Живое чтение вернётся вместе с переводом цикла на useAnimationFrame —
-           там колбэк пересоздаётся каждым рендером хука. */
-        if (!s.paused && !reduced) s.offset += 34 * dt;
-      }
-
-      s.offset = ((s.offset % s.setW) + s.setW) % s.setW;
-      track.style.transform = "translate3d(" + (-s.offset) + "px,0,0)";
-
-      /* Стиль работы, попавшей в центр кадра, ведёт индекс под лентой. */
-      if (s.geo.length) {
-        const focus = (s.offset + wrap.clientWidth / 2) % s.setW;
-        let i = s.geo.length - 1;
-        for (let k = 0; k < s.geo.length; k++) {
-          if (focus >= s.geo[k].left && focus < s.geo[k].left + s.geo[k].w) { i = k; break; }
-        }
-        if (i !== s.mid) { s.mid = i; setStyle(orderRef.current[i][2]); }
-      }
-      if (tick++ % 10 === 0) sweep();
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+    return () => { ro.disconnect(); };
   }, []);
+
+  /* Цикл ленты — на кадровом шедулере Motion (общий с остальными анимациями,
+     свой requestAnimationFrame больше не заводим). Колбэк намеренно НЕ обёрнут
+     в useCallback и не спрятан в useEffect([]): useAnimationFrame переподписывает
+     его на каждый рендер, и только поэтому `reduced` читается живым — иначе
+     переключение prefers-reduced-motion на открытой странице ленту бы не
+     остановило. Физика перенесена дословно; отличие одно: delta приходит от
+     Motion уже подрезанной сверху 40 мс (наш Math.min(0.05, …) остаётся как был,
+     но на просевших кадрах верхняя граница теперь 40, а не 50 мс). */
+  useAnimationFrame((time, delta) => {
+    const s = S.current;
+    const track = trackRef.current;
+    const wrap = wrapRef.current;
+    if (!track || !wrap) return;
+    const dt = Math.min(0.05, delta / 1000);
+
+    if (s.dragging) {
+      /* offset двигает обработчик move */
+    } else if (s.spin) {
+      const sp = s.spin;
+      if (sp.phase === "up") {
+        sp.t += dt;
+        const u = Math.min(1, sp.t / SPIN_UP);
+        s.offset += (sp.v0 + (SPIN_VMAX - sp.v0) * u * u) * dt;
+        if (u >= 1) { sp.phase = "swap"; setOrder(buildOrder(sp.st)); }
+      } else if (sp.phase === "swap") {
+        /* Крутим на пике, пока React не закоммитит новый порядок. Тормозной
+           путь выставит useLayoutEffect — там есть настоящая геометрия. */
+        s.offset += SPIN_VMAX * dt;
+      } else {
+        sp.u = Math.min(1, sp.u + dt / SPIN_DOWN);
+        const e = 1 - Math.pow(1 - sp.u, 3);
+        s.offset = sp.start + sp.dist * e;
+        if (sp.u >= 1) s.spin = null;
+      }
+    } else if (Math.abs(s.tween) > 0.5) {
+      const step = s.tween * Math.min(1, dt * 6);
+      s.offset += step; s.tween -= step; s.vel = 0;
+    } else if (Math.abs(s.vel) > 12) {
+      s.offset += s.vel * dt;              /* выбег после броска */
+      s.vel *= Math.pow(0.06, dt);
+    } else {
+      s.tween = 0; s.vel = 0;
+      if (!s.paused && !reduced) s.offset += 34 * dt;
+    }
+
+    s.offset = ((s.offset % s.setW) + s.setW) % s.setW;
+    track.style.transform = "translate3d(" + (-s.offset) + "px,0,0)";
+
+    /* Стиль работы, попавшей в центр кадра, ведёт индекс под лентой. */
+    if (s.geo.length) {
+      const focus = (s.offset + wrap.clientWidth / 2) % s.setW;
+      let i = s.geo.length - 1;
+      for (let k = 0; k < s.geo.length; k++) {
+        if (focus >= s.geo[k].left && focus < s.geo[k].left + s.geo[k].w) { i = k; break; }
+      }
+      if (i !== s.mid) { s.mid = i; setStyle(orderRef.current[i][2]); }
+    }
+    if (tickRef.current++ % 10 === 0 && s.sweep) s.sweep();
+  });
 
   /* Горизонтальный трекпад листает ленту; вертикаль оставляем скроллу страницы. */
   React.useEffect(() => {
