@@ -443,6 +443,8 @@ function WorkLightbox({ index, works, onClose, onStep }) {
   videoOpenRef.current = videoOpen;              /* всегда актуален на момент keydown */
   const escSuppressUntilRef = React.useRef(0);   /* окно подавления Esc после закрытия листа */
   const open = index >= 0;
+  const openRef = React.useRef(open);
+  openRef.current = open;                        /* всегда актуален на момент клика: гейт у «Смотреть вживую» */
   const w = open ? works[index] : null;
   /* 5-й элемент строки WORKS — id связанного ролика; сцену берём из CLIPS. */
   const clip = w && w[4] ? CLIPS.find((c) => c[0] === w[4]) : null;
@@ -513,8 +515,15 @@ function WorkLightbox({ index, works, onClose, onStep }) {
             <motion.div {...anim.panel} onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
               <div style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: "8px" }}>{w[2]}</div>
               <h3 style={{ fontFamily: "var(--font-display)", color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(20px, 2.4vw, 28px)", fontWeight: 500, margin: 0, letterSpacing: "0.01em" }}>{w[1]}</h3>
+              {/* Гейт по openRef у кнопки ниже — третий в паре к `pointerEvents:"none"`
+                  (см. step и submit): мышь тот глушит, но выходящее поддерево живёт в
+                  DOM ~0.24s, и Enter на сфокусированной кнопке всё это время даёт click.
+                  Без гейта videoOpen залипал в true (эффект сброса по [index] уже
+                  отработал) — и следующее открытие любой работы монтировало лист Vaul:
+                  кадр выехавшей панели, увод фокуса и загрузка стороннего iframe. Читаем
+                  ref, а не проп: поддерево заморожено и `open` в замыкании навсегда true. */}
               {clip ? (
-                <motion.button type="button" onClick={() => setVideoOpen(true)} className="rt-lb-live" {...anim.live}
+                <motion.button type="button" onClick={() => { if (openRef.current) setVideoOpen(true); }} className="rt-lb-live" {...anim.live}
                   style={{ marginTop: "16px", display: "inline-flex", alignItems: "center", gap: "9px", padding: "10px 20px", background: "transparent", color: "var(--bone)", border: "1px solid var(--accent)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>
                   <i className="fas fa-play" aria-hidden="true" style={{ fontSize: "10px" }}></i>
                   Смотреть вживую
