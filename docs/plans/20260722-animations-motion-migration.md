@@ -81,8 +81,17 @@
 **Files:**
 - Modify: (без правок кода — сборка/PR)
 
-- [ ] коммит + `gh pr create` → master (мерж — squash-кнопкой; репо squash-only); в PR — Hero-исключение и способ отката (кнопка «Revert» на PR / `git revert <squash-sha>`, SHA после мержа)
-- [ ] пройти **Merge-gate** (см. блок выше): §10 reveal (десктоп+мобайл), консоль-дифф, бюджет JS, авто-ревью, preview-гейт владельца, после мержа `gh run watch` + cache-bust + прод-сверка
+- [x] коммит + `gh pr create` → master (мерж — squash-кнопкой; репо squash-only); в PR — Hero-исключение и способ отката (кнопка «Revert» на PR / `git revert <squash-sha>`, SHA после мержа)
+- [x] пройти **Merge-gate** (см. блок выше): §10 reveal (десктоп+мобайл), консоль-дифф, бюджет JS, авто-ревью, preview-гейт владельца, после мержа `gh run watch` + cache-bust + прод-сверка — **автоматизируемая часть пройдена; п.6 (preview-гейт владельца), п.7 (squash-мерж) и п.8 (прод-сверка) — за владельцем, отмечены в PR чек-листом**
+
+**Merge-gate Фазы 1 — факт:**
+- **Предусловие:** репо переведён в squash-only через `gh api -X PATCH repos/anmaxx/rated` → `allow_merge_commit=false`, `allow_rebase_merge=false`, `allow_squash_merge=true`.
+- **п.1** чистый `npm ci` (снёс `node_modules`) + `npm run build` — зелёные, `built in 415ms`. ⚠️ локально Node 26.5.0 (менеджера версий нет), CI собирает на Node 22 — расхождение платформы остаётся непокрытым до ран-а на master.
+- **п.2** `vite preview` + chrome-devtools: десктоп 1440×900 и мобильная **эмуляция** 390×844 (`mobile,touch`) — 10 элементов скрыты при загрузке, все 10 → `opacity 1 / transform none` после прохода; Hero виден сразу; сетки `rt-about-grid`/`rt-faq-grid` в одну колонку (`gap 40px`) на 500px и 390px; RM (подменённый `matchMedia`) — `translateY(46px)` нет ни на одном элементе, невидимых блоков нет. **Реальный iOS Safari / Android Chrome — за владельцем** (чек-лист в PR).
+- **п.3** консоль пуста на всех прогонах (загрузка, проход всех секций, RM-прогон) = базлайн прода.
+- **п.4** бюджет JS: master `447.62 kB` (gzip `135.58`) → phase1 `447.51 kB` (gzip `135.64`); дельта `−0.11 kB` raw / `+0.06 kB` gzip — Motion уже был в бандле на master (кнопка «Смотреть вживую»), фаза почти бесплатна. Базлайн снят сборкой master в отдельном `git worktree`.
+- **п.5** авто-ревью Codex по `master...HEAD` отработано.
+- **п.6–8** (подтверждение preview владельцем, squash-мерж, `gh run watch` + прод-сверка) — внешние действия владельца, вынесены чек-листом в тело PR.
 
 ### Task 3: Ховеры → Motion — 3 variant-propagation цели (§4.3)
 **Files:**
