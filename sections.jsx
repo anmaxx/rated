@@ -474,6 +474,12 @@ function WorkLightbox({ index, works, onClose, onStep }) {
     if (!open) return;
     const onKey = (e) => {
       if (videoOpenRef.current || Date.now() < escSuppressUntilRef.current) return;
+      /* Запись открывается ПОВЕРХ лайтбокса (фокус тот не запирает, см.
+         scrollLockOwners). Пока слушатель ловил всё подряд, ←/→ в полях формы
+         не двигали каретку (preventDefault) и вместо этого листали ленту под
+         модалкой, а Esc схлопывал обе. Событие из поля ввода принадлежит полю. */
+      const t = e.target;
+      if (t && (t.isContentEditable || t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT")) return;
       if (e.key === "Escape") onClose();
       else if (e.key === "ArrowRight") { e.preventDefault(); onStep(1); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); onStep(-1); }
