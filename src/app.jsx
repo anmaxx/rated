@@ -10,6 +10,7 @@ import {
   Benefits,
   Testimonials,
   Faq,
+  Contacts,
   Cta,
   Footer,
   BookingModal,
@@ -35,6 +36,7 @@ export function App() {
       <Benefits />
       <Testimonials />
       <Faq />
+      <Contacts />
       <Cta onBook={book} />
       <Footer />
       <BookingModal open={booking} onClose={() => setBooking(false)} />

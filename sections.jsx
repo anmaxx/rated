@@ -3,6 +3,7 @@
    showcase, film grain. Composes design-system primitives from the bundle. */
 
 import React from "react";
+import ReactDOM from "react-dom";
 import { Drawer } from "vaul";
 import { AnimatePresence, motion, useAnimationFrame } from "motion/react";
 
@@ -348,7 +349,7 @@ function Header({ onBook }) {
     sc.addEventListener("scroll", onScroll);
     return () => sc.removeEventListener("scroll", onScroll);
   }, []);
-  const links = [["#about", "Мастер"], ["#works", "Работы"], ["#process", "Вживую"], ["#benefits", "Преимущества"], ["#faq", "Вопросы"]];
+  const links = [["#about", "Мастер"], ["#works", "Работы"], ["#process", "Вживую"], ["#benefits", "Преимущества"], ["#faq", "Вопросы"], ["#contacts", "Контакты"]];
   return (
     <header style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
@@ -1570,6 +1571,233 @@ function Faq() {
 }
 
 /* --------------------------------------------------------------- CTA */
+/* ════════════════ 08 · Контакты — карта студии (Yandex JS API v3) ════════════════
+   Нативная тёмная тема v3, перекрашенная под палитру сайта (ink-рампа + приглушённые
+   POI, оксбладовый пин) через customization схемного слоя. Рендерится ОФИЦИАЛЬНЫМ
+   React-биндингом reactify: ymaps3.import('@yandex/ymaps3-reactify') → bindTo(React,
+   ReactDOM) → module(ymaps3) отдаёт JSX-компоненты <YMap>/<YMapMarker>/…. Скрипт ymaps3
+   и reactify тянутся ЛЕНИВО — только когда секция подъезжает к вьюпорту (IntersectionObserver,
+   rootMargin 600px), — чтобы не грузить ~сотни КБ на старте и не трогать LCP. Колесо зума
+   выключено (behaviors без scrollZoom), иначе оно ворует прокрутку scroll-snap; зум — свои
+   кнопки ± через ref карты (map.update). Ключ JS API публичен по природе (виден в браузере),
+   защищён whitelist'ом доменов в кабинете Яндекса — как id Метрики в index.html. */
+const YMAPS_APIKEY = "30028edf-521f-464c-b61a-3f2565e9c6da";
+const STUDIO_LL = [37.585134, 55.75321];            // [долгота, широта] v3 — точка задана владельцем
+const METRO_LL = [37.582721, 55.748808];            // м. Смоленская (Арбатско-Покровская) — ближайшая, 512 м
+const STUDIO_ORG = "https://yandex.ru/maps/org/1269715236/";
+const MAP_BEHAVIORS = ["drag", "pinchZoom", "dblClick"]; // без scrollZoom
+// Геометрия пешего пути м. Смоленская → студия. Снята ОДИН РАЗ из Valhalla (OSM, pedestrian, ~0.66 км) и
+// захардкожена: точки статичны, линию рисуем через YMapFeature — платный Router API Яндекса не нужен.
+const ROUTE_PATH = [
+  [37.582756,55.748661],[37.58307,55.748684],[37.583359,55.748705],[37.583349,55.748746],[37.583317,55.748772],[37.583163,55.748776],
+  [37.583077,55.74878],[37.583182,55.749469],[37.583189,55.749506],[37.583193,55.749527],[37.583196,55.749543],[37.583207,55.749595],
+  [37.58327,55.749913],[37.583318,55.750123],[37.583362,55.750332],[37.583391,55.750472],[37.583397,55.750501],[37.583402,55.750527],
+  [37.58343,55.750673],[37.583433,55.750699],[37.583439,55.750724],[37.583457,55.750806],[37.583459,55.750818],[37.583542,55.751322],
+  [37.583615,55.75132],[37.583791,55.751316],[37.583819,55.751708],[37.583821,55.751737],[37.583687,55.751742],[37.583616,55.751744],
+  [37.583651,55.752028],[37.583666,55.7522],[37.583683,55.752301],[37.583693,55.75235],[37.583732,55.752392],[37.583793,55.75242],
+  [37.583861,55.752431],[37.583999,55.752431],[37.584158,55.752432],[37.584207,55.752433],[37.584207,55.752453],[37.584206,55.752486],
+  [37.584202,55.752745],[37.584238,55.752745],[37.584378,55.752746],[37.584441,55.752746],[37.58444,55.752775],[37.584393,55.752775],
+  [37.58439,55.752877],[37.584418,55.753012],[37.584608,55.753012],[37.584954,55.753014],[37.585009,55.753221],[37.585134,55.75321],
+];
+const ROUTE_STROKE = [{ color: "#9b1d30", width: 6 }]; // одна оксбладовая линия (--ox-500); тёмный контур даёт CSS drop-shadow, а не вторая обводка (Яндекс кладёт её поверх и перекрывает цвет)
+// Авто (~1.78 км): заезд во двор неочевиден — с Нового Арбата/Новинского напрямую не свернуть,
+// легальный путь идёт в объезд по односторонним (Valhalla auto, снято один раз).
+const ROUTE_CAR_PATH = [
+  [37.582851,55.748802],[37.582871,55.748953],[37.582911,55.749209],[37.582967,55.749773],[37.583029,55.750138],[37.583074,55.750377],
+  [37.583362,55.751995],[37.583504,55.752953],[37.583841,55.754868],[37.583881,55.755],[37.583924,55.755112],[37.58396,55.755229],
+  [37.584158,55.756121],[37.584388,55.757167],[37.584391,55.757178],[37.58442,55.757318],[37.584587,55.757553],[37.584829,55.75784],
+  [37.584904,55.757929],[37.584947,55.757954],[37.584999,55.757963],[37.58508,55.757965],[37.585162,55.757962],[37.585273,55.757948],
+  [37.585632,55.757816],[37.586003,55.75768],[37.586254,55.757586],[37.586283,55.757575],[37.586891,55.757346],[37.587033,55.757293],
+  [37.587167,55.757242],[37.587241,55.757212],[37.587654,55.757045],[37.58799,55.756906],[37.587915,55.756839],[37.587704,55.756614],
+  [37.587685,55.756595],[37.587464,55.756359],[37.587411,55.756284],[37.587402,55.756261],[37.587309,55.756013],[37.587262,55.75589],
+  [37.587259,55.75588],[37.587228,55.755798],[37.587176,55.755659],[37.587161,55.755619],[37.587138,55.755558],[37.587108,55.755477],
+  [37.587058,55.755343],[37.587048,55.755314],[37.586981,55.755133],[37.586925,55.754979],[37.586867,55.754821],[37.586768,55.754557],
+  [37.586732,55.754448],[37.586716,55.754307],[37.586706,55.754231],[37.586676,55.753974],[37.58663,55.753577],[37.586622,55.753507],
+  [37.586626,55.753492],[37.586648,55.753475],[37.586595,55.753456],[37.586544,55.753438],[37.586509,55.753434],[37.586256,55.753442],
+  [37.585936,55.753453],[37.585907,55.75341],[37.585767,55.753411],[37.585519,55.753428],[37.585378,55.753415],[37.585069,55.753441],
+  [37.585055,55.753392],[37.585009,55.753221],[37.585134,55.75321],
+];
+const ROUTE_WALK = { path: ROUTE_PATH, location: { center: [37.583945, 55.750941], zoom: 15.3 } };
+const ROUTE_CAR = { path: ROUTE_CAR_PATH, location: { center: [37.585420, 55.753384], zoom: 14.6 } };
+
+/* Перекраска базовой карты под токены сайта (tokens/colors.css). Оксблад держим
+   ТОЛЬКО на пине — карта остаётся монохромно-тёмной, акцент один. */
+const MAP_CUSTOMIZATION = [
+  { tags: { any: ["water"] }, elements: "geometry", stylers: [{ color: "#07070a" }] },
+  { tags: { any: ["land", "landscape", "admin", "transit", "structure"] }, elements: "geometry", stylers: [{ color: "#0f0f12" }] },
+  { tags: { any: ["building"] }, elements: "geometry", stylers: [{ color: "#17171c" }] },
+  { tags: { any: ["road"] }, elements: "geometry", stylers: [{ color: "#282830" }] },
+  { tags: { any: ["poi"] }, elements: "geometry", stylers: [{ opacity: 0.35 }] },
+  { tags: { any: ["poi"] }, elements: "label", stylers: [{ opacity: 0.4 }] },
+  { elements: "label.text.fill", stylers: [{ color: "#8f8b82" }] },
+  { elements: "label.text.outline", stylers: [{ color: "#0a0a0c" }] },
+];
+
+let ymaps3Promise = null;
+function loadYmaps3() {
+  if (ymaps3Promise) return ymaps3Promise;
+  ymaps3Promise = new Promise((resolve, reject) => {
+    if (window.ymaps3) { window.ymaps3.ready.then(() => resolve(window.ymaps3)); return; }
+    const s = document.createElement("script");
+    s.src = "https://api-maps.yandex.ru/v3/?apikey=" + YMAPS_APIKEY + "&lang=ru_RU";
+    s.async = true;
+    s.onload = () => window.ymaps3.ready.then(() => resolve(window.ymaps3));
+    s.onerror = () => { ymaps3Promise = null; reject(new Error("ymaps3 load failed")); };
+    document.head.appendChild(s);
+  });
+  return ymaps3Promise;
+}
+
+let ymapsReactPromise = null;
+function loadYmapsReact() {
+  if (ymapsReactPromise) return ymapsReactPromise;
+  ymapsReactPromise = loadYmaps3().then((ymaps3) =>
+    ymaps3.import("@yandex/ymaps3-reactify").then(({ reactify }) => {
+      const m = reactify.bindTo(React, ReactDOM).module(ymaps3);
+      return { YMap: m.YMap, Scheme: m.YMapDefaultSchemeLayer, Features: m.YMapDefaultFeaturesLayer, Marker: m.YMapMarker, Feature: m.YMapFeature };
+    })
+  );
+  return ymapsReactPromise;
+}
+
+function StudioMap() {
+  const frameRef = React.useRef(null);
+  const mapRef = React.useRef(null);
+  const zoomRef = React.useRef(16);
+  const [C, setC] = React.useState(null); // reactify-компоненты, null пока грузится
+  const [err, setErr] = React.useState(false);
+  const [mode, setMode] = React.useState("walk"); // walk | car
+  const active = mode === "car" ? ROUTE_CAR : ROUTE_WALK;
+
+  React.useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+    let alive = true;
+    const io = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      loadYmapsReact().then((mod) => { if (alive) setC(mod); }).catch(() => { if (alive) setErr(true); });
+    }, { rootMargin: "600px" });
+    io.observe(frame);
+    return () => { alive = false; io.disconnect(); };
+  }, []);
+
+  const zoom = (d) => {
+    const m = mapRef.current;
+    if (!m) return;
+    const z = Math.max(9, Math.min(19, zoomRef.current + d));
+    zoomRef.current = z;
+    m.update({ location: { zoom: z, duration: 200 } });
+  };
+
+  return (
+    <>
+      <div className="rt-map-modes" role="group" aria-label="Тип маршрута до студии">
+        {[["walk", "Пешком"], ["car", "На машине"]].map(([m, label]) => (
+          <button key={m} type="button" className="rt-map-mode" data-on={mode === m ? "1" : undefined} aria-pressed={mode === m} onClick={() => setMode(m)}>{label}</button>
+        ))}
+      </div>
+      <div ref={frameRef} className="rt-map-frame" style={{ position: "relative", height: "clamp(360px, 60vh, 600px)", border: "1px solid var(--border-hair)", overflow: "hidden", background: "var(--ink-950)" }}>
+      {C ? (
+        <C.YMap ref={mapRef} location={active.location} theme="dark" behaviors={MAP_BEHAVIORS}>
+          <C.Scheme customization={MAP_CUSTOMIZATION} />
+          <C.Features />
+          <C.Feature geometry={{ type: "LineString", coordinates: active.path }} style={{ stroke: ROUTE_STROKE }} />
+          <C.Marker coordinates={METRO_LL}>
+            <div className="rt-metro-pin" title="Метро Смоленская">М</div>
+          </C.Marker>
+          <C.Marker coordinates={STUDIO_LL}>
+            <a href={STUDIO_ORG} target="_blank" rel="noopener noreferrer" className="rt-map-pin" title="Rated Tattoo — Новинский бульвар, 10, стр. 1" aria-label="Rated Tattoo на карте — открыть в Яндекс Картах">
+              <span className="rt-map-pin__badge"><img src={LOGO} alt="" draggable="false" className="rt-map-pin__mark" /></span>
+            </a>
+          </C.Marker>
+        </C.YMap>
+      ) : null}
+
+      {/* фирменные оверлеи поверх карты — зерно, виньетка, скобки-видоискатель (клики проходят сквозь) */}
+      <div className="rt-map-grain" aria-hidden="true"></div>
+      <div className="rt-map-vignette" aria-hidden="true"></div>
+      <span className="rt-map-bracket rt-map-bracket--tl" aria-hidden="true"></span>
+      <span className="rt-map-bracket rt-map-bracket--tr" aria-hidden="true"></span>
+      <span className="rt-map-bracket rt-map-bracket--bl" aria-hidden="true"></span>
+      <span className="rt-map-bracket rt-map-bracket--br" aria-hidden="true"></span>
+
+      {/* гео-штамп — координаты студии как фирменная метка */}
+      <div aria-hidden="true" style={{ position: "absolute", left: "12px", top: "34px", zIndex: 4, fontFamily: "var(--font-body)", fontSize: "10px", letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--text-faint)", background: "rgba(10,10,12,.5)", backdropFilter: "blur(4px)", padding: "5px 10px", pointerEvents: "none", whiteSpace: "nowrap" }}>55.7532° N · 37.5851° E</div>
+
+      {C ? (
+        <div style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", zIndex: 4, display: "flex", flexDirection: "column", gap: "6px" }}>
+          {[["+", 1], ["−", -1]].map(([t, d]) => (
+            <button key={t} className="rt-map-zoom" onClick={() => zoom(d)} aria-label={d > 0 ? "Приблизить" : "Отдалить"} style={{ width: "38px", height: "38px", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,10,12,.72)", color: "var(--bone)", border: "1px solid var(--border-hair)", backdropFilter: "blur(6px)", fontFamily: "var(--font-body)", fontSize: "20px", lineHeight: 1, cursor: "pointer" }}>{t}</button>
+          ))}
+        </div>
+      ) : null}
+
+      {!C ? (
+        <div aria-live="polite" style={{ position: "absolute", inset: 0, zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "24px", color: "var(--text-muted)", fontFamily: "var(--font-body)", fontSize: "13px", letterSpacing: "0.03em" }}>
+          {err
+            ? <span>Карта не загрузилась. <a href={STUDIO_ORG} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>Открыть в Яндекс&nbsp;Картах →</a></span>
+            : <span style={{ opacity: 0.7 }}>Загрузка карты…</span>}
+        </div>
+      ) : null}
+      </div>
+    </>
+  );
+}
+
+function Contacts() {
+  const reveal = useReveal();
+  const reduced = usePrefersReducedMotion();
+  const rows = [
+    ["Адрес", <a href={STUDIO_ORG} target="_blank" rel="noopener noreferrer" style={{ color: "var(--bone)" }}>Новинский бульвар, 10, стр.&nbsp;1</a>],
+    ["Часы", "Пн–Вс · 11:00 – 21:00"],
+    ["Телефон", <a href="tel:+79689752099" style={{ color: "var(--bone)" }}>+7 (968) 975-20-99</a>],
+  ];
+  const socials = [
+    ["fab fa-vk", "VK", "https://vk.com/ratedtattoo"],
+    ["fab fa-yandex", "Яндекс Услуги", "https://uslugi.yandex.ru/profile/RatedTattoo-sprav1269715236"],
+  ];
+  return (
+    <section id="contacts" className="rt-snap" style={{ position: "relative", background: "var(--bg-base)", minHeight: "100vh", display: "flex", alignItems: "center", padding: "100px 0", overflow: "hidden" }}>
+      <div className="rt-contacts-grid" style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "0.92fr 1.08fr", gap: "64px", alignItems: "center", width: "100%" }}>
+        <motion.div {...reveal}>
+          <Kicker index="08" label="Контакты" />
+          <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--bone)", textTransform: "uppercase", fontSize: "clamp(36px, 4.5vw, 60px)", lineHeight: 0.96, letterSpacing: "-0.01em", margin: "24px 0 0" }}>
+            Новинский<br />бульвар<span style={{ color: "var(--accent)" }}>.</span>
+          </h2>
+          <p style={{ fontSize: "var(--fs-lead)", color: "var(--text-body)", lineHeight: 1.6, margin: "22px 0 0", maxWidth: "46ch" }}>
+            Студия в центре Москвы — район Арбат, рядом с метро Смоленская. Заходите на бесплатную консультацию или сразу на сеанс.
+          </p>
+          <div style={{ margin: "32px 0 0", borderTop: "1px solid var(--border-hair)" }}>
+            {rows.map(([k, v]) => (
+              <div key={k} style={{ display: "grid", gridTemplateColumns: "116px 1fr", gap: "18px", alignItems: "baseline", padding: "16px 0", borderBottom: "1px solid var(--border-hair)" }}>
+                <span style={{ fontFamily: "var(--font-body)", fontSize: "11px", letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--text-faint)" }}>{k}</span>
+                <span style={{ fontSize: "16px", color: "var(--text-body)" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", margin: "34px 0 0" }}>
+            {socials.map(([s, t, u]) => (
+              <a key={s} href={u} title={t} aria-label={t} target="_blank" rel="noopener noreferrer" style={{ width: "48px", height: "48px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--border-hair)", color: "var(--text-body)", fontSize: "16px", transition: "all .2s" }}
+                 onMouseEnter={(ev) => { ev.currentTarget.style.color = "var(--bone)"; ev.currentTarget.style.borderColor = "var(--accent)"; ev.currentTarget.style.background = "var(--accent)"; }}
+                 onMouseLeave={(ev) => { ev.currentTarget.style.color = "var(--text-body)"; ev.currentTarget.style.borderColor = "var(--border-hair)"; ev.currentTarget.style.background = "transparent"; }}><i className={s} aria-hidden="true"></i></a>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={reduced ? false : { opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: reduced ? 0 : 1, ease: EASE_HEAVY }}
+        >
+          <StudioMap />
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 function Cta({ onBook }) {
   const { group, child } = useRevealGroup();
   return (
@@ -1769,7 +1997,7 @@ function BookingModal({ open, onClose }) {
 
 /* --------------------------------------------------------------- Dot nav */
 function DotNav() {
-  const items = [["hero", "Главная"], ["about", "Мастер"], ["works", "Работы"], ["process", "Вживую"], ["services", "Услуги"], ["benefits", "Преимущества"], ["reviews", "Отзывы"], ["faq", "Вопросы"], ["cta", "Запись"]];
+  const items = [["hero", "Главная"], ["about", "Мастер"], ["works", "Работы"], ["process", "Вживую"], ["services", "Услуги"], ["benefits", "Преимущества"], ["reviews", "Отзывы"], ["faq", "Вопросы"], ["contacts", "Контакты"], ["cta", "Запись"]];
   const [active, setActive] = React.useState("hero");
   React.useEffect(() => {
     const io = new IntersectionObserver((entries) => {
@@ -1800,4 +2028,4 @@ function DotNav() {
   );
 }
 
-export { Header, DotNav, Hero, About, Works, Process, Services, Benefits, Testimonials, Faq, Cta, Footer, BookingModal };
+export { Header, DotNav, Hero, About, Works, Process, Services, Benefits, Testimonials, Faq, Contacts, Cta, Footer, BookingModal };
