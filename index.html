@@ -112,18 +112,75 @@
   .rt-lb-live:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 3px; }
   .rt-lb-live:hover { background: var(--accent) !important; color: var(--ink-950) !important; border-color: var(--accent) !important; }
 
+  /* контакты: фирменная стилизация карты — печать-маркер, видоискатель, зерно, виньетка */
+  /* маркер = печать студии (эмблема RATED), без диска, с указателем-стрелкой снизу */
+  .rt-map-pin { display: block; padding-bottom: 8px; transform: translate(-50%, -100%); cursor: pointer;
+    filter: drop-shadow(0 0 3px rgba(10, 10, 12, .95)) drop-shadow(0 3px 9px rgba(0, 0, 0, .6)); }
+  .rt-map-pin__badge { position: relative; display: block; width: 50px; height: 50px; }
+  .rt-map-pin__mark { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
+  /* указатель вниз — остриё на заданную точку */
+  .rt-map-pin__badge::after { content: ""; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%);
+    border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 11px solid var(--ox-500); }
+  /* пульс-кольцо — оксбладовый акцент «вы здесь»; гаснет под reduced-motion */
+  .rt-map-pin__badge::before { content: ""; position: absolute; inset: 3px; border-radius: 50%;
+    border: 3px solid var(--ox-500); animation: rt-map-pulse 2.4s cubic-bezier(0, 0, .2, 1) infinite; }
+  @keyframes rt-map-pulse { 0% { transform: scale(.86); opacity: .8; } 70% { transform: scale(1.5); opacity: 0; } 100% { opacity: 0; } }
+  /* маркер метро «М» — начало пешего маршрута */
+  .rt-metro-pin { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;
+    transform: translate(-50%, -50%); border-radius: 50%; background: var(--ox-500); color: var(--bone);
+    border: 1.5px solid var(--bone); font-family: var(--font-display); font-weight: 700; font-size: 13px; line-height: 1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .55); }
+  /* переключатель типа маршрута над картой */
+  .rt-map-modes { display: flex; gap: 8px; margin-bottom: 14px; }
+  .rt-map-mode { font-family: var(--font-body); font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--text-muted); background: transparent; border: 1px solid var(--border-hair);
+    padding: 9px 16px; cursor: pointer; transition: color .2s, border-color .2s, background .2s; }
+  .rt-map-mode:hover { color: var(--bone); }
+  .rt-map-mode[data-on="1"] { color: var(--bone); border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 16%, transparent); }
+  .rt-map-mode:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+  /* контакты: колонки могут сжиматься уже своего содержимого (иначе длинная кнопка распирает грид) */
+  .rt-contacts-grid > * { min-width: 0; }
+  /* линия маршрута: бегущие оксбладовые штрихи к студии (направленный поток, не пульс) */
+  .rt-map-frame svg path { stroke-dasharray: 9 8 !important; stroke-linecap: round;
+    filter: drop-shadow(0 0 2.5px rgba(0, 0, 0, .9)); animation: rt-route-flow 1.1s linear infinite; }
+  @keyframes rt-route-flow { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -17; } }
+
+  .rt-map-grain { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: .05; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .rt-map-vignette { position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    box-shadow: inset 0 0 55px 10px rgba(10, 10, 12, .5), inset 0 0 130px 42px rgba(10, 10, 12, .32); }
+  .rt-map-bracket { position: absolute; z-index: 4; width: 16px; height: 16px; pointer-events: none;
+    border: 1.5px solid var(--bone); opacity: .5; }
+  .rt-map-bracket--tl { top: 10px; left: 10px; border-right: 0; border-bottom: 0; }
+  .rt-map-bracket--tr { top: 10px; right: 10px; border-left: 0; border-bottom: 0; }
+  .rt-map-bracket--bl { bottom: 10px; left: 10px; border-right: 0; border-top: 0; }
+  .rt-map-bracket--br { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
+  .rt-map-zoom:hover { border-color: var(--accent) !important; color: var(--accent) !important; }
+  .rt-map-zoom:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+
   @media (prefers-reduced-motion: reduce) {
     html { scroll-snap-type: none; }
     .rt-rec-dot, .rt-eq > span { animation: none; }
+    .rt-map-pin__badge::before { animation: none; opacity: .3; }
+    .rt-map-frame svg path { animation: none !important; stroke-dasharray: none !important; }
   }
   @media (max-width: 1080px) {
     .rt-reviews-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+  /* 6-й пункт навигации («Контакты») тесно рядом с телефоном+кнопкой на узких десктопах —
+     поджимаем gap и прячем телефон (кнопка «Записаться» остаётся); телефон есть в секции «Контакты» */
+  @media (max-width: 1200px) {
+    .rt-nav { gap: 20px !important; }
+    .rt-phone { display: none !important; }
   }
   @media (max-width: 960px) {
     html { scroll-snap-type: none; }
     .rt-snap { min-height: 0 !important; }
     .rt-nav, .rt-phone, .rt-edge-label, .rt-dotnav { display: none !important; }
     .rt-about-grid, .rt-faq-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+    .rt-contacts-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+    .rt-map-frame { height: 340px !important; }
     .rt-benefits-grid { grid-template-columns: 1fr 1fr !important; }
     .rt-reviews-grid { grid-template-columns: 1fr 1fr !important; }
     .rt-footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
