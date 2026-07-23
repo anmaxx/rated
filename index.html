@@ -168,6 +168,12 @@
   @media (max-width: 1080px) {
     .rt-reviews-grid { grid-template-columns: repeat(2, 1fr) !important; }
   }
+  /* 6-й пункт навигации («Контакты») тесно рядом с телефоном+кнопкой на узких десктопах —
+     поджимаем gap и прячем телефон (кнопка «Записаться» остаётся); телефон есть в секции «Контакты» */
+  @media (max-width: 1200px) {
+    .rt-nav { gap: 20px !important; }
+    .rt-phone { display: none !important; }
+  }
   @media (max-width: 960px) {
     html { scroll-snap-type: none; }
     .rt-snap { min-height: 0 !important; }

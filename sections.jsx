@@ -1685,7 +1685,9 @@ function StudioMap() {
   const zoom = (d) => {
     const m = mapRef.current;
     if (!m) return;
-    const z = Math.max(9, Math.min(19, zoomRef.current + d));
+    // шагаем от ЖИВОГО зума карты (pinch/dblClick/смена режима меняют его мимо любого рефа)
+    const cur = typeof m.zoom === "number" ? m.zoom : zoomRef.current;
+    const z = Math.max(9, Math.min(19, cur + d));
     zoomRef.current = z;
     m.update({ location: { zoom: z, duration: 200 } });
   };
