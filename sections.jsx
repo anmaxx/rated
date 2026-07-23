@@ -108,6 +108,14 @@ function useModalMotion({ event = false } = {}) {
       exit: { opacity: 0, scale: 0.98, y: 6 },
       transition: { duration: reduced ? 0 : (event ? 0.5 : 0.3), ease: EASE_HEAVY },
     },
+    /* Панель БЕЗ масштаба — для ряда с картинкой, когда та растёт из плитки
+       (FLIP): свой scale панели наложился бы на FLIP-трансформ картинки. */
+    panelFlat: {
+      initial: reduced ? false : { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0, scale: 0.98, y: 6 },
+      transition: { duration: reduced ? 0 : 0.5, ease: EASE_HEAVY },
+    },
     /* Кнопка «Смотреть вживую» — единственная анимация лайтбокса, доставшаяся
        от прежнего кода мимо RM-гейта; заводим её сюда, чтобы гейт был один. */
     live: {
@@ -534,10 +542,18 @@ const WorkTile = React.memo(function WorkTile({ w, onOpen, onFocus, clone }) {
 });
 
 /* Просмотр работы крупно: Esc — закрыть, ←/→ — соседние работы. */
-function WorkLightbox({ index, works, onClose, onStep }) {
+/* fromRect — getBoundingClientRect нажатой плитки (или null): картинка лайтбокса
+   вырастает из неё через ручной FLIP. Почему НЕ layoutId: тот не строит связку,
+   когда источник вложен в motion-элемент (тайл — motion.button ради ховера), а у
+   цели такого предка нет — деревья проекции асимметричны (подтверждено замером).
+   FLIP этого ограничения не касается: он не связывает два элемента, а один раз
+   сдвигает цель в прямоугольник источника и анимирует к нулю. */
+function WorkLightbox({ index, works, onClose, onStep, fromRect }) {
   const closeRef = React.useRef(null);
   const closeBtnRef = React.useRef(null);        /* кнопка «Закрыть» в видео-листе */
   const anim = useModalMotion({ event: true });  /* показ работы — событие, не служебное окно */
+  const imgRef = React.useRef(null);
+  const reduced = usePrefersReducedMotion();
   const [videoOpen, setVideoOpen] = React.useState(false);
   const videoOpenRef = React.useRef(false);
   videoOpenRef.current = videoOpen;              /* всегда актуален на момент keydown */
@@ -556,6 +572,32 @@ function WorkLightbox({ index, works, onClose, onStep }) {
     if (open) setScrollLock("lightbox", true);
   }, [open]);
   React.useEffect(() => () => setScrollLock("lightbox", false), []);
+
+  /* FLIP-вход картинки из плитки. useLayoutEffect — до отрисовки: замеряем
+     конечное (естественное) положение картинки и проигрываем её из
+     прямоугольника плитки к нему.
+     Через Web Animations API напрямую на элементе, НЕ через Motion-контроллер:
+     контроллер подписывается в собственном эффекте, и `set()` из этого
+     useLayoutEffect уходил бы раньше подписки — картинка появлялась на месте.
+     WAA срабатывает сразу, а `fill:"both"` рисует первый кадр уже в плитке, без
+     проблеска. Формула каноническая, от левого-верхнего угла (transformOrigin
+     0 0): translate(Δ) scale(w0/w1) точно накладывает цель на источник.
+     Только на открытии со связкой; шаг ←/→ её рвёт (fromRect → null), там
+     обычное появление. Под reduced-motion FLIP не играем. */
+  React.useLayoutEffect(() => {
+    const el = imgRef.current;
+    if (!open || !fromRect || reduced || !el) return;
+    const t = el.getBoundingClientRect();
+    if (!t.width || !t.height) return;
+    const s = fromRect.width / t.width;
+    const dx = fromRect.left - t.left;
+    const dy = fromRect.top - t.top;
+    const anim = el.animate(
+      [{ transform: `translate(${dx}px, ${dy}px) scale(${s})` }, { transform: "none" }],
+      { duration: 500, easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "both" }
+    );
+    return () => anim.cancel();
+  }, [open, fromRect, reduced]);
 
   /* Смена работы или закрытие лайтбокса — гасим видео-лист. */
   React.useEffect(() => { setVideoOpen(false); }, [index]);
@@ -610,12 +652,17 @@ function WorkLightbox({ index, works, onClose, onStep }) {
             {/* Панель — это два существующих ряда, а не новая обёртка: лишний
                 flex-контейнер пришлось бы повторять центровкой, gap и maxWidth,
                 а раскладка лайтбокса на мобильном — самое хрупкое место. */}
-            <motion.div {...anim.panel} onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 3vw, 28px)", maxWidth: "100%" }}>
+            {/* Со связкой ряд картинки идёт без масштаба (FLIP несёт картинку сам),
+                иначе panel.scale наложился бы на FLIP-трансформ. */}
+            <motion.div {...(fromRect ? anim.panelFlat : anim.panel)} onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 3vw, 28px)", maxWidth: "100%" }}>
               <button type="button" aria-label="Предыдущая работа" onClick={() => onStep(-1)} style={nav} className="rt-lb-nav">
                 <i className="fas fa-arrow-left" aria-hidden="true"></i>
               </button>
-              <img src={w[0]} alt={w[1] + " — " + w[2]}
-                style={{ maxHeight: "72vh", maxWidth: "min(1100px, 78vw)", objectFit: "contain", display: "block", border: "1px solid var(--border-hair)" }} />
+              {/* Обычный img: FLIP-вход идёт через WAA на самом элементе (см.
+                  useLayoutEffect), Motion тут только помешал бы, переписывая
+                  transform. transformOrigin 0 0 — под каноническую формулу FLIP. */}
+              <img ref={imgRef} src={w[0]} alt={w[1] + " — " + w[2]}
+                style={{ maxHeight: "72vh", maxWidth: "min(1100px, 78vw)", objectFit: "contain", display: "block", border: "1px solid var(--border-hair)", transformOrigin: "0 0" }} />
               <button type="button" aria-label="Следующая работа" onClick={() => onStep(1)} style={nav} className="rt-lb-nav">
                 <i className="fas fa-arrow-right" aria-hidden="true"></i>
               </button>
@@ -702,9 +749,14 @@ function Works({ onBook }) {
   const trackRef = React.useRef(null);
   const [style, setStyle] = React.useState(WORK_STYLES[0]);
   const [shot, setShot] = React.useState(-1);   /* индекс работы в просмотре */
+  /* Прямоугольник нажатой плитки для FLIP-входа лайтбокса; null — связки нет
+     (клик с клавиатуры, reduced-motion, шаг ←/→). */
+  const [fromRect, setFromRect] = React.useState(null);
   /* Якорь на время перестановки: какую работу вывести в центр после неё. */
   const anchor = React.useRef(null);
   const reduced = usePrefersReducedMotion();
+  const reducedRef = React.useRef(reduced);
+  reducedRef.current = reduced;                   /* нужен в dep-free openTile */
   const reveal = useReveal();
   const { group, child } = useRevealGroup();
 
@@ -891,10 +943,20 @@ function Works({ onBook }) {
      заново на первой работе. Гейт в апдейтере, а не в обработчике: поддерево
      заморожено и обработчик держит замыкание последнего открытого рендера —
      свежий shot виден только апдейтеру. */
-  const step = (d) => setShot((i) => (i < 0 ? i : (i + d + order.length) % order.length));
+  const step = (d) => {
+    setFromRect(null);                            /* шаг рвёт связку: работа уже не та, что в плитке */
+    setShot((i) => (i < 0 ? i : (i + d + order.length) % order.length));
+  };
   /* detail === 0 — нажатие с клавиатуры: там протяжки не было и порог не применим. */
   const openTile = React.useCallback((w, e) => {
-    if ((e && e.detail === 0) || S.current.moved < DRAG_SLOP) setShot(orderRef.current.indexOf(w));
+    if (!((e && e.detail === 0) || S.current.moved < DRAG_SLOP)) return;
+    /* FLIP-вход только для клика мышью по видимой плитке: снимаем её картинку
+       (первый ребёнок кнопки, как в sweep). С клавиатуры (detail 0) и под
+       reduced-motion связки нет — обычное появление. Прямоугольник картинки, а
+       не кнопки: у кнопки есть заливка-подпись, летит именно изображение. */
+    const img = e && e.detail !== 0 && !reducedRef.current && e.currentTarget.firstElementChild;
+    setFromRect(img ? img.getBoundingClientRect() : null);
+    setShot(orderRef.current.indexOf(w));
   }, []);
 
   /* Клик по стилю: работы этого стиля собираются подряд, и первая из них встаёт
@@ -1056,7 +1118,7 @@ function Works({ onBook }) {
         })}
       </motion.div>
 
-      <WorkLightbox index={shot} works={order} onClose={() => setShot(-1)} onStep={step} />
+      <WorkLightbox index={shot} works={order} onClose={() => { setShot(-1); setFromRect(null); }} onStep={step} fromRect={fromRect} />
     </section>
   );
 }
