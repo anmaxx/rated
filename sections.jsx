@@ -381,6 +381,7 @@ function Header({ onBook }) {
 /* ------------------------------------------------------------------- Hero */
 function Hero({ onBook }) {
   const entry = useHeroEntry();
+  const reduced = usePrefersReducedMotion();
   return (
     <section id="hero" className="rt-snap" style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
@@ -390,6 +391,19 @@ function Hero({ onBook }) {
         </video>
         <div style={{ position: "absolute", inset: 0, background: "var(--scrim-hero)" }}></div>
       </div>
+
+      {/* «Проявление из темноты»: занавес поверх видео гаснет за ~0.9с. Само
+          видео при этом НЕ анимируется — оно рисуется сразу на полной
+          непрозрачности, поэтому LCP не сдвигается (в отличие от фейда самого
+          видео). Заодно движение видео на старте прикрыто чернотой и не
+          перебивает более тонкие reveal'ы секций. zIndex 0, но в DOM после
+          фонового слоя → красится над видео/скримом и под контентом (zIndex 1).
+          Под reduced-motion занавес не играем: initial:false рисует его сразу
+          прозрачным, без вспышки черноты. */}
+      <motion.div aria-hidden="true"
+        initial={reduced ? false : { opacity: 1 }} animate={{ opacity: 0 }}
+        transition={{ duration: reduced ? 0 : 0.9, ease: EASE_HEAVY }}
+        style={{ position: "absolute", inset: 0, zIndex: 0, background: "#0a0a0c", pointerEvents: "none" }} />
 
       {/* Боковая метка входит последней: она периферийная, и ведущей роли
           в первом кадре у неё нет. `transform` тут несёт раскладку (поворот),
