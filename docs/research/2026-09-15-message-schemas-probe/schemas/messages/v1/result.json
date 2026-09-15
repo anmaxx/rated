@@ -1,10 +1,115 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ratedtattoo.ru/schemas/messages/v1/result.json",
-  "title": "Result, contract_version 1 (открытая форма тела; имена внутри provider_calls[] — предварительные)",
+  "title": "Result, contract_version 1 (открытая форма тела; имена внутри provider_calls[] — предварительные); межполевые зависимости в allOf (замечание владельца 2026-09-15, P2)",
   "allOf": [
     {
       "$ref": "https://ratedtattoo.ru/schemas/messages/envelope.json"
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "const": "succeeded"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/file_descriptor"
+          },
+          "reason_code": {
+            "const": null
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "else": {
+        "type": "object",
+        "properties": {
+          "result": false
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "enum": [
+              "failed",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "reason_code": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "required": [
+          "result_candidate"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "reason_code": {
+            "enum": [
+              "result_payload_unavailable",
+              "result_delivery_deadline_exceeded"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "content_erased_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_erased_at"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "provider_calls": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "assembled_request": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "type": "object",

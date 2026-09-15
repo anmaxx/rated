@@ -221,3 +221,5 @@ writeFileSync(join(root, "gen/results-node.json"), JSON.stringify(summary, null,
 const bad = rows.filter((r) => !r.ok);
 console.log(`node: ${rows.length - bad.length}/${rows.length} совпали с ожиданием; lint: ${lintProblems.length ? lintProblems.join(", ") : "ok"}; strict без addKeyword: ${strictWithoutKeyword}`);
 for (const r of bad) console.log("  MISMATCH", r.id, "expect", r.expect, "got", r.got, "—", r.why);
+// Несовпадение или ошибка линтера — ненулевой код выхода (замечание владельца 2026-09-15, P4).
+process.exitCode = bad.length || lintProblems.length ? 1 : 0;

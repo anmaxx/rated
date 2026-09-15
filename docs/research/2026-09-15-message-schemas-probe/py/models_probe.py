@@ -1,54 +1,118 @@
-"""Что гарантирует сгенерированная модель Pydantic, а что — только общая схема (граница ответственности, пункт 1 владельца)."""
-import copy, json, sys, importlib, pathlib
-from pydantic import ValidationError
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+"""Сгенерированные модели Pydantic против общей схемы (граница ответственности, пункт 1 владельца;
+цепочка «схема → модель → сериализация → схема» — замечание владельца 2026-09-15, P3).
+
+Требования к модели (несоблюдение — ненулевой код выхода, P4):
+  (a) модель принимает всё, что приняла схема (модель не строже схемы);
+  (b) model_dump(mode="json", exclude_unset=True) снова проходит ту же схему;
+  (c) у стёртого документа удалённые ключи после сериализации не появляются.
+Справочно (не требование): что модель принимает из отклонённого схемой — граница, которую закрывает схема.
+"""
+from __future__ import annotations
+
+import importlib
+import json
+import sys
+
+from probe_lib import ROOT, build, erase, fixtures, receive, validate_doc
+from pydantic import BaseModel, ValidationError
+
 sys.path.insert(0, str(ROOT / "gen/py"))
-fx = json.loads((ROOT / "fixtures/cases.json").read_text())
-submit_mod = importlib.import_module("pkg.messages.v1.submit_job")
-result_mod = importlib.import_module("pkg.messages.v1.result")
+mods = {
+    "SubmitJob": importlib.import_module("pkg.messages.v1.submit_job"),
+    "EraseGeneration": importlib.import_module("pkg.messages.v1.erase_generation"),
+    "Result": importlib.import_module("pkg.messages.v1.result"),
+}
 doc_mod = importlib.import_module("pkg.documents.input.v1")
-common = importlib.import_module("pkg.common")
+
+
 def root_model(mod, marker):
-    # корневая модель сообщения: BaseModel с полем конверта и полем тела (marker); родитель-конверт не подходит
-    from pydantic import BaseModel
+    """Корневая модель сообщения: BaseModel с полем конверта и полем тела (marker); родитель-конверт не подходит."""
     for name in dir(mod):
         obj = getattr(mod, name)
         f = getattr(obj, "model_fields", None) if isinstance(obj, type) else None
         if f and issubclass(obj, BaseModel) and "message_type" in f and marker in f:
             return obj
     raise RuntimeError("no root model in " + mod.__name__)
-Submit, Result, Before, After = root_model(submit_mod, "prompt"), root_model(result_mod, "state"), doc_mod.Before, doc_mod.After
-print("models:", Submit.__name__, "<-", [b.__name__ for b in Submit.__bases__], "|", Result.__name__)
-def check(label, model, data, strict=True):
+
+
+MODELS = {
+    "SubmitJob": root_model(mods["SubmitJob"], "prompt"),
+    "EraseGeneration": root_model(mods["EraseGeneration"], "requested_at"),
+    "Result": root_model(mods["Result"], "state"),
+    "before": doc_mod.Before,
+    "after": doc_mod.After,
+}
+DUMP = {"mode": "json", "exclude_unset": True}
+
+
+def model_accepts(model, data):
     try:
-        model.model_validate_json(json.dumps(data), strict=strict); return f"{label}: ACCEPT"
+        return model.model_validate_json(json.dumps(data)), None
     except ValidationError as e:
-        return f"{label}: reject ({e.errors()[0]['type']} at {'/'.join(map(str, e.errors()[0]['loc']))})"
-base = fx["bases"]; s = copy.deepcopy(base["submit"]); r = copy.deepcopy(base["result"]); d = copy.deepcopy(base["doc"])
-out = []
-out.append(check("Submit valid", Submit, s))
-out.append(check("Submit created_at '1757939400' (M03, схема: reject)", Submit, {**s, "created_at": "1757939400"}))
-out.append(check("Submit created_at 1757939400 число (M04)", Submit, {**s, "created_at": 1757939400}))
-out.append(check("Submit created_at без смещения (M05)", Submit, {**s, "created_at": "2026-09-14T12:00:00"}))
-out.append(check("Submit mode='refine' (M12, схема: reject)", Submit, {**s, "mode": "refine"}))
-out.append(check("Submit ext_note (M09, открытая форма)", Submit, {**s, "ext_note": "x"}))
-out.append(check("Submit source.size '1024' строкой (M13)", Submit, {**s, "source": {"key": "k", "size": "1024", "media_type": "image/jpeg", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"}}))
-out.append(check("Submit contract_version 99 (M15, у схемы: quarantine)", Submit, {**s, "contract_version": 99}))
-out.append(check("Result valid", Result, r))
-rc = copy.deepcopy(r); rc.pop("result"); rc.update({"state": "failed", "reason_code": "result_payload_unavailable", "result_candidate": {"key": "k", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "size": 10, "media_type": "image/png"}})
-out.append(check("Result result_candidate без call_id (M24)", Result, rc))
-r2 = copy.deepcopy(r); r2["provider_calls"][0]["finished_at"] = "1757939400"
-out.append(check("Result provider_calls[0].finished_at '1757939400' (схема: reject)", Result, r2))
-r3 = copy.deepcopy(r); r3["provider_calls"][0]["usage"] = {"units": 1, "amount": 12.5, "currency": "RUB", "cost_kind": "estimated"}
-out.append(check("Result estimated без tariff_version (M30, схема: reject)", Result, r3))
-out.append(check("Before valid (D01)", Before, d))
-out.append(check("Before ext_text (D02)", Before, {**d, "ext_text": "x"}))
-out.append(check("Before studio_rules.note (D03)", Before, {**d, "studio_rules": {**d["studio_rules"], "note": "x"}}))
-da = {k: v for k, v in d.items() if k not in ("description", "negative_prompt")}
-out.append(check("After valid (D06)", After, da))
-out.append(check("After description остался (D07, схема: reject)", After, {**da, "description": "x"}))
-out.append(check("After description '' (D08, схема: reject)", After, {**da, "description": ""}))
-# классификация в json_schema_extra у сгенерированной модели
-cls = {n: (f.json_schema_extra or {}).get("ratedFieldClass") for n, f in Before.model_fields.items()}
-out.append("Before.model_fields ratedFieldClass: " + json.dumps(cls, ensure_ascii=False))
-print("\n".join(out))
+        err = e.errors()[0]
+        return None, f"{err['type']} at /{'/'.join(map(str, err['loc']))}"
+
+
+failures: list[str] = []
+info: list[str] = []
+checked = 0
+
+# (a)+(b): каждая фикстура, принятая схемой, проходит модель и после сериализации снова схему
+for c in fixtures["cases"]:
+    if c["kind"] != "validate" or c["expect"] != "accept":
+        continue
+    data = build(c)
+    if c["target"] == "message":
+        key, schema_check = data["message_type"], lambda d: receive(d)[0]
+    else:
+        key = c["target"].split(":")[1]
+        schema_check = lambda d, k=key: validate_doc(d, k)[0]
+    model = MODELS[key]
+    inst, err = model_accepts(model, data)
+    checked += 1
+    if inst is None:
+        failures.append(f"{c['id']}: схема приняла, модель отклонила ({err})")
+        continue
+    out = inst.model_dump(**DUMP)
+    if schema_check(out) != "accept":
+        failures.append(f"{c['id']}: после model_dump{DUMP} схема отклоняет: {json.dumps(out, ensure_ascii=False)[:120]}")
+    elif out != data:
+        info.append(f"{c['id']}: сериализация меняет представление (схема принимает): {json.dumps(out, ensure_ascii=False)[:100]}")
+
+# (c): стёртый документ через модель After не восстанавливает удалённые ключи
+for c in fixtures["cases"]:
+    if c["kind"] != "erase" or c["expect"] != "accept":
+        continue
+    erased = erase(build(c))
+    inst, err = model_accepts(MODELS["after"], erased)
+    checked += 1
+    if inst is None:
+        failures.append(f"{c['id']}: After отклонила стёртый документ ({err})")
+        continue
+    for label, dumped in (("exclude_unset=True", inst.model_dump(**DUMP)), ("по умолчанию", inst.model_dump(mode="json"))):
+        restored = [k for k in ("description", "negative_prompt") if k in dumped]
+        ok = validate_doc(dumped, "after")[0] == "accept" and not restored
+        line = f"{c['id']}: After → model_dump({label}) → корень after: {'accept' if ok else 'reject'}; восстановлены ключи: {restored or 'нет'}"
+        (info if label == "по умолчанию" else (info if ok else failures)).append(line)
+
+# Справочно: что модель принимает из отклонённого схемой (граница, которую закрывает схема)
+for c in fixtures["cases"]:
+    if c["kind"] != "validate" or c["expect"] not in ("reject", "quarantine") or c["target"] != "message":
+        continue
+    data = build(c)
+    if data.get("message_type") not in MODELS:
+        continue
+    inst, err = model_accepts(MODELS[data["message_type"]], data)
+    if inst is not None:
+        info.append(f"{c['id']}: схема — {c['expect']}, модель — принимает ({c['note']})")
+
+cls = {n: (f.json_schema_extra or {}).get("ratedFieldClass") for n, f in MODELS["before"].model_fields.items()}
+info.append("Before.model_fields ratedFieldClass: " + json.dumps(cls, ensure_ascii=False))
+
+print(f"models: проверено {checked} принятых схемой фикстур; требования (a)(b)(c): {'нарушений нет' if not failures else str(len(failures)) + ' нарушений'}")
+for f in failures:
+    print("  FAIL", f)
+print("справочно:")
+for i in info:
+    print("  ", i)
+sys.exit(1 if failures else 0)

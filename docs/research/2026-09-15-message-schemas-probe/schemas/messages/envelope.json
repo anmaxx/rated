@@ -17,6 +17,11 @@
     },
     "job_id": {
       "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/uuid"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Только у Result (обязателен); у команд запрещён — см. if/then/else"
     }
   },
   "required": [
@@ -37,14 +42,14 @@
   },
   "then": {
     "type": "object",
-    "properties": {
-      "revision": {
-        "type": "integer",
-        "minimum": 1
-      }
-    },
     "required": [
       "revision"
     ]
+  },
+  "else": {
+    "type": "object",
+    "properties": {
+      "revision": false
+    }
   }
 }

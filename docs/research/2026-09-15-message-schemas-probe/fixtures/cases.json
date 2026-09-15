@@ -8,10 +8,19 @@
       "negative_prompt": "текст, водяные знаки",
       "style": "blackwork",
       "parameters": {
-        "studio_rules": { "text": "Только чёрный контур", "version": "2026-09-01" },
-        "model_settings": { "model": "img-model-x", "seed": 7 },
+        "studio_rules": {
+          "text": "Только чёрный контур",
+          "version": "2026-09-01"
+        },
+        "model_settings": {
+          "model": "img-model-x",
+          "seed": 7
+        },
         "placement": "forearm",
-        "size": { "value": 12, "unit": "cm" }
+        "size": {
+          "value": 12,
+          "unit": "cm"
+        }
       },
       "deadline_at": "2026-09-15T12:30:00Z",
       "created_at": "2026-09-15T12:00:00.123Z"
@@ -47,12 +56,27 @@
           "finished_at": "2026-09-15T12:01:40Z",
           "error": null,
           "assembled_request": null,
-          "usage": { "units": 1, "amount": null, "currency": "RUB", "cost_kind": "unknown" }
+          "usage": {
+            "units": 1,
+            "amount": null,
+            "currency": "RUB",
+            "cost_kind": "unknown"
+          }
         }
       ],
       "stages": [
-        { "stage": "prepare", "sequence": 1, "started_at": "2026-09-15T12:00:30Z", "finished_at": "2026-09-15T12:00:59Z" },
-        { "stage": "generate", "sequence": 1, "started_at": "2026-09-15T12:01:00Z", "finished_at": "2026-09-15T12:01:40Z" }
+        {
+          "stage": "prepare",
+          "sequence": 1,
+          "started_at": "2026-09-15T12:00:30Z",
+          "finished_at": "2026-09-15T12:00:59Z"
+        },
+        {
+          "stage": "generate",
+          "sequence": 1,
+          "started_at": "2026-09-15T12:01:00Z",
+          "finished_at": "2026-09-15T12:01:40Z"
+        }
       ],
       "content_erased_at": null
     },
@@ -62,60 +86,795 @@
       "negative_prompt": "текст, водяные знаки",
       "style": "blackwork",
       "placement": "forearm",
-      "size": { "value": 12, "unit": "cm" },
-      "studio_rules": { "text": "Только чёрный контур", "version": "2026-09-01" },
-      "model_settings": { "model": "img-model-x", "seed": 7 }
+      "size": {
+        "value": 12,
+        "unit": "cm"
+      },
+      "studio_rules": {
+        "text": "Только чёрный контур",
+        "version": "2026-09-01"
+      },
+      "model_settings": {
+        "model": "img-model-x",
+        "seed": 7
+      }
     }
   },
   "cases": [
-    { "id": "M01", "kind": "validate", "target": "message", "base": "submit", "expect": "accept", "note": "SubmitJob без source (текстовая генерация)" },
-    { "id": "M02", "kind": "validate", "target": "message", "base": "submit", "set": { "source": { "key": "client/uploads/u1/original", "size": 1024, "media_type": "image/jpeg", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08" } }, "expect": "accept", "note": "SubmitJob с дескриптором source без kind" },
-    { "id": "M03", "kind": "validate", "target": "message", "base": "submit", "set": { "created_at": "1757939400" }, "expect": "reject", "note": "время: числовая строка (наблюдение владельца)" },
-    { "id": "M04", "kind": "validate", "target": "message", "base": "submit", "set": { "created_at": 1757939400 }, "expect": "reject", "note": "время: число" },
-    { "id": "M05", "kind": "validate", "target": "message", "base": "submit", "set": { "created_at": "2026-09-14T12:00:00" }, "expect": "reject", "note": "время: без смещения" },
-    { "id": "M06", "kind": "validate", "target": "message", "base": "submit", "set": { "created_at": "2026-09-14" }, "expect": "reject", "note": "время: дата без времени" },
-    { "id": "M07", "kind": "validate", "target": "message", "base": "submit", "set": { "created_at": "2026-09-14T12:00:00+00:00" }, "expect": "accept", "note": "время: смещение +00:00" },
-    { "id": "M08", "kind": "validate", "target": "message", "base": "submit", "set": { "created_at": "2026-09-14t12:00:00z" }, "expect": "accept", "note": "время: строчные t/z (RFC 3339 §5.6 допускает)" },
-    { "id": "M09", "kind": "validate", "target": "message", "base": "submit", "set": { "ext_note": "новое необязательное поле" }, "expect": "accept", "note": "открытая форма: неизвестное поле верхнего уровня" },
-    { "id": "M10", "kind": "validate", "target": "message", "base": "submit", "set": { "parameters.ext_flag": true }, "expect": "accept", "note": "открытая форма: неизвестное поле внутри parameters" },
-    { "id": "M11", "kind": "validate", "target": "message", "base": "submit", "set": { "source": { "kind": "upload", "key": "client/uploads/u1/original", "size": 1024, "media_type": "image/jpeg", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08" } }, "expect": "accept", "note": "открытая форма: лишний kind в source не отличим от будущего необязательного поля" },
-    { "id": "M12", "kind": "validate", "target": "message", "base": "submit", "set": { "mode": "refine" }, "expect": "reject", "note": "mode запрещён явно схемой false (B-28) — предложение" },
-    { "id": "M13", "kind": "validate", "target": "message", "base": "submit", "set": { "source": { "key": "client/uploads/u1/original", "size": "1024", "media_type": "image/jpeg", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08" } }, "expect": "reject", "note": "приведение типов выключено: size строкой" },
-    { "id": "M14", "kind": "validate", "target": "message", "base": "submit", "unset": ["prompt"], "expect": "reject", "note": "нет обязательного prompt" },
-    { "id": "M15", "kind": "validate", "target": "message", "base": "submit", "set": { "contract_version": 99 }, "expect": "quarantine", "note": "конверт верен, версия неизвестна" },
-    { "id": "M16", "kind": "validate", "target": "message", "base": "submit", "set": { "job_id": "42" }, "expect": "reject", "note": "конверт сломан: job_id не UUID (обработка некорректного сообщения известной версии открыта)" },
-    { "id": "M17", "kind": "validate", "target": "message", "base": "submit", "set": { "message_type": "Foo" }, "expect": "reject", "note": "конверт сломан: неизвестный message_type" },
-    { "id": "M18", "kind": "validate", "target": "message", "base": "submit", "set": { "parameters.size": { "value": 12, "unit": "inch" } }, "expect": "reject", "note": "единица вне перечня (предварительный перечень mm/cm)" },
-    { "id": "M19", "kind": "validate", "target": "message", "base": "erase", "expect": "accept", "note": "EraseGeneration" },
-    { "id": "M20", "kind": "validate", "target": "message", "base": "erase", "unset": ["requested_at"], "expect": "reject", "note": "EraseGeneration без requested_at" },
-    { "id": "M21", "kind": "validate", "target": "message", "base": "result", "expect": "accept", "note": "Result succeeded; call_id только внутри provider_calls[]" },
-    { "id": "M22", "kind": "validate", "target": "message", "base": "result", "unset": ["revision"], "expect": "reject", "note": "конверт: у Result обязателен revision" },
-    { "id": "M23", "kind": "validate", "target": "message", "base": "result", "unset": ["provider_calls.0.call_id"], "expect": "reject", "note": "provider_calls[] без call_id" },
-    { "id": "M24", "kind": "validate", "target": "message", "base": "result", "set": { "state": "failed", "reason_code": "result_payload_unavailable", "result_candidate": { "key": "transfer/output/x/candidate", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "size": 10, "media_type": "image/png" } }, "unset": ["result"], "expect": "reject", "note": "result_candidate без call_id" },
-    { "id": "M25", "kind": "validate", "target": "message", "base": "result", "set": { "state": "failed", "reason_code": "result_payload_unavailable", "result_candidate": { "key": "transfer/output/x/candidate", "call_id": "6d0f1a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5b", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "size": 10, "media_type": "image/png" } }, "unset": ["result"], "expect": "accept", "note": "result_candidate с call_id" },
-    { "id": "M26", "kind": "validate", "target": "message", "base": "result", "set": { "call_id": "6d0f1a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5b" }, "expect": "accept", "note": "открытая форма: call_id на верхнем уровне не требуется и не запрещён" },
-    { "id": "M27", "kind": "validate", "target": "message", "base": "result", "set": { "state": "done" }, "expect": "reject", "note": "state вне перечня" },
-    { "id": "M28", "kind": "validate", "target": "message", "base": "result", "set": { "stages.0.stage": "outbox" }, "expect": "reject", "note": "этап outbox не входит в перечень (ADR-0011 §6)" },
-    { "id": "M29", "kind": "validate", "target": "message", "base": "result", "set": { "content_erased_at": "2026-09-15T13:05:00+03:00", "provider_calls.0.assembled_request": null }, "expect": "accept", "note": "после стирания: content_erased_at со смещением, assembled_request пуст" },
-    { "id": "M30", "kind": "validate", "target": "message", "base": "result", "set": { "provider_calls.0.usage": { "units": 1, "amount": 12.5, "currency": "RUB", "cost_kind": "estimated" } }, "expect": "reject", "note": "estimated без tariff_version" },
-    { "id": "M31", "kind": "validate", "target": "message", "base": "result", "set": { "provider_calls.0.finished_at": 1757939400 }, "expect": "reject", "note": "время внутри массива: число" },
-    { "id": "D01", "kind": "validate", "target": "document:before", "base": "doc", "expect": "accept", "note": "документ до стирания" },
-    { "id": "D02", "kind": "validate", "target": "document:before", "base": "doc", "set": { "ext_text": "внезапный текст" }, "expect": "reject", "note": "закрытая форма: неизвестный ключ верхнего уровня" },
-    { "id": "D03", "kind": "validate", "target": "document:before", "base": "doc", "set": { "studio_rules.note": "вложенный неизвестный ключ" }, "expect": "reject", "note": "закрытая форма: неизвестный ключ внутри studio_rules (общий $def открыт в сообщении)" },
-    { "id": "D04", "kind": "validate", "target": "document:before", "base": "doc", "set": { "size.note": "x" }, "expect": "reject", "note": "закрытая форма: неизвестный ключ внутри size" },
-    { "id": "D05", "kind": "validate", "target": "document:before", "base": "doc", "unset": ["description"], "expect": "reject", "note": "до стирания description обязателен" },
-    { "id": "D06", "kind": "validate", "target": "document:after", "base": "doc", "unset": ["description", "negative_prompt"], "expect": "accept", "note": "после стирания: содержимого нет" },
-    { "id": "D07", "kind": "validate", "target": "document:after", "base": "doc", "unset": ["negative_prompt"], "expect": "reject", "note": "после стирания: description остался" },
-    { "id": "D08", "kind": "validate", "target": "document:after", "base": "doc", "set": { "description": "" }, "unset": ["negative_prompt"], "expect": "reject", "note": "после стирания: восстановление пустым значением запрещено" },
-    { "id": "D09", "kind": "validate", "target": "document:after", "base": "doc", "expect": "reject", "note": "документ до стирания против корня after" },
-    { "id": "D10", "kind": "validate", "target": "document:before", "base": "doc", "unset": ["description", "negative_prompt"], "expect": "reject", "note": "стёртый документ против корня before" },
-    { "id": "D11", "kind": "validate", "target": "document:after", "base": "doc", "unset": ["description", "negative_prompt"], "set": { "studio_rules.note": "x" }, "expect": "reject", "note": "после стирания вложенное закрытие тоже действует" },
-    { "id": "D12", "kind": "validate", "target": "document:before", "base": "doc", "set": { "schema_version": 2 }, "expect": "reject", "note": "чужая версия документа против обработчика v1" },
-    { "id": "D13", "kind": "validate", "target": "message", "base": "submit", "set": { "parameters.studio_rules.note": "x" }, "expect": "accept", "note": "тот же $def studio_rules в сообщении открыт" },
-    { "id": "E01", "kind": "erase", "base": "doc", "expect": "accept", "note": "до → стирание → after → повторное стирание → техническая часть цела" },
-    { "id": "E02", "kind": "erase", "base": "doc", "set": { "studio_rules.note": "x" }, "expect": "reject", "note": "стирание не легализует неизвестный вложенный ключ: остаток не проходит after" },
-    { "id": "P01", "kind": "map", "base": "submit", "set": { "ext_note": "новое поле", "parameters.ext_flag": true, "source": { "kind": "upload", "key": "client/uploads/u1/original", "size": 1024, "media_type": "image/jpeg", "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08" } }, "expect": "accept", "note": "принятое сообщение с лишними полями → документ без них, проходит before" },
-    { "id": "C01", "kind": "compat", "base": "submit", "set": { "ext_note": "новое поле" }, "expect": "accept", "note": "новая сборка шлёт ext_note: старая схема v1 принимает" },
-    { "id": "C02", "kind": "compat", "base": "submit", "expect": "accept", "note": "старая сборка шлёт без ext_note: новая схема v1-ext принимает, contract_version не менялась" }
+    {
+      "id": "M01",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "expect": "accept",
+      "note": "SubmitJob без source (текстовая генерация)"
+    },
+    {
+      "id": "M02",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "source": {
+          "key": "client/uploads/u1/original",
+          "size": 1024,
+          "media_type": "image/jpeg",
+          "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+        }
+      },
+      "expect": "accept",
+      "note": "SubmitJob с дескриптором source без kind"
+    },
+    {
+      "id": "M03",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "created_at": "1757939400"
+      },
+      "expect": "reject",
+      "note": "время: числовая строка (наблюдение владельца)"
+    },
+    {
+      "id": "M04",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "created_at": 1757939400
+      },
+      "expect": "reject",
+      "note": "время: число"
+    },
+    {
+      "id": "M05",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "created_at": "2026-09-14T12:00:00"
+      },
+      "expect": "reject",
+      "note": "время: без смещения"
+    },
+    {
+      "id": "M06",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "created_at": "2026-09-14"
+      },
+      "expect": "reject",
+      "note": "время: дата без времени"
+    },
+    {
+      "id": "M07",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "created_at": "2026-09-14T12:00:00+00:00"
+      },
+      "expect": "accept",
+      "note": "время: смещение +00:00"
+    },
+    {
+      "id": "M08",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "created_at": "2026-09-14t12:00:00z"
+      },
+      "expect": "accept",
+      "note": "время: строчные t/z (RFC 3339 §5.6 допускает)"
+    },
+    {
+      "id": "M09",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "ext_note": "новое необязательное поле"
+      },
+      "expect": "accept",
+      "note": "открытая форма: неизвестное поле верхнего уровня"
+    },
+    {
+      "id": "M10",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "parameters.ext_flag": true
+      },
+      "expect": "accept",
+      "note": "открытая форма: неизвестное поле внутри parameters"
+    },
+    {
+      "id": "M11",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "source": {
+          "kind": "upload",
+          "key": "client/uploads/u1/original",
+          "size": 1024,
+          "media_type": "image/jpeg",
+          "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+        }
+      },
+      "expect": "accept",
+      "note": "открытая форма: лишний kind в source не отличим от будущего необязательного поля"
+    },
+    {
+      "id": "M12",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "mode": "refine"
+      },
+      "expect": "reject",
+      "note": "mode запрещён явно схемой false (B-28) — предложение"
+    },
+    {
+      "id": "M13",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "source": {
+          "key": "client/uploads/u1/original",
+          "size": "1024",
+          "media_type": "image/jpeg",
+          "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+        }
+      },
+      "expect": "reject",
+      "note": "приведение типов выключено: size строкой"
+    },
+    {
+      "id": "M14",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "unset": [
+        "prompt"
+      ],
+      "expect": "reject",
+      "note": "нет обязательного prompt"
+    },
+    {
+      "id": "M15",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "contract_version": 99
+      },
+      "expect": "quarantine",
+      "note": "конверт верен, версия неизвестна"
+    },
+    {
+      "id": "M16",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "job_id": "42"
+      },
+      "expect": "reject",
+      "note": "конверт сломан: job_id не UUID (обработка некорректного сообщения известной версии открыта)"
+    },
+    {
+      "id": "M17",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "message_type": "Foo"
+      },
+      "expect": "reject",
+      "note": "конверт сломан: неизвестный message_type"
+    },
+    {
+      "id": "M18",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "parameters.size": {
+          "value": 12,
+          "unit": "inch"
+        }
+      },
+      "expect": "reject",
+      "note": "единица вне перечня (предварительный перечень mm/cm)"
+    },
+    {
+      "id": "M19",
+      "kind": "validate",
+      "target": "message",
+      "base": "erase",
+      "expect": "accept",
+      "note": "EraseGeneration"
+    },
+    {
+      "id": "M20",
+      "kind": "validate",
+      "target": "message",
+      "base": "erase",
+      "unset": [
+        "requested_at"
+      ],
+      "expect": "reject",
+      "note": "EraseGeneration без requested_at"
+    },
+    {
+      "id": "M21",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "expect": "accept",
+      "note": "Result succeeded; call_id только внутри provider_calls[]"
+    },
+    {
+      "id": "M22",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "unset": [
+        "revision"
+      ],
+      "expect": "reject",
+      "note": "конверт: у Result обязателен revision"
+    },
+    {
+      "id": "M23",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "unset": [
+        "provider_calls.0.call_id"
+      ],
+      "expect": "reject",
+      "note": "provider_calls[] без call_id"
+    },
+    {
+      "id": "M24",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "state": "failed",
+        "reason_code": "result_payload_unavailable",
+        "result_candidate": {
+          "key": "transfer/output/x/candidate",
+          "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+          "size": 10,
+          "media_type": "image/png"
+        }
+      },
+      "unset": [
+        "result"
+      ],
+      "expect": "reject",
+      "note": "result_candidate без call_id"
+    },
+    {
+      "id": "M25",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "state": "failed",
+        "reason_code": "result_payload_unavailable",
+        "result_candidate": {
+          "key": "transfer/output/x/candidate",
+          "call_id": "6d0f1a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5b",
+          "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+          "size": 10,
+          "media_type": "image/png"
+        }
+      },
+      "unset": [
+        "result"
+      ],
+      "expect": "accept",
+      "note": "result_candidate с call_id"
+    },
+    {
+      "id": "M26",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "call_id": "6d0f1a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5b"
+      },
+      "expect": "accept",
+      "note": "открытая форма: call_id на верхнем уровне не требуется и не запрещён"
+    },
+    {
+      "id": "M27",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "state": "done"
+      },
+      "expect": "reject",
+      "note": "state вне перечня"
+    },
+    {
+      "id": "M28",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "stages.0.stage": "outbox"
+      },
+      "expect": "reject",
+      "note": "этап outbox не входит в перечень (ADR-0011 §6)"
+    },
+    {
+      "id": "M29",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "content_erased_at": "2026-09-15T13:05:00+03:00",
+        "provider_calls.0.assembled_request": null
+      },
+      "expect": "accept",
+      "note": "после стирания: content_erased_at со смещением, assembled_request пуст"
+    },
+    {
+      "id": "M30",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "provider_calls.0.usage": {
+          "units": 1,
+          "amount": 12.5,
+          "currency": "RUB",
+          "cost_kind": "estimated"
+        }
+      },
+      "expect": "reject",
+      "note": "estimated без tariff_version"
+    },
+    {
+      "id": "M31",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "provider_calls.0.finished_at": 1757939400
+      },
+      "expect": "reject",
+      "note": "время внутри массива: число"
+    },
+    {
+      "id": "M32",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "created_at": "2026-09-15T12:00:00+0300"
+      },
+      "expect": "reject",
+      "note": "профиль времени: смещение без двоеточия (P1)"
+    },
+    {
+      "id": "M33",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "created_at": "2026-09-15T12:00:00+03"
+      },
+      "expect": "reject",
+      "note": "профиль времени: смещение из одних часов (P1)"
+    },
+    {
+      "id": "M34",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "created_at": "2016-12-31T23:59:60Z"
+      },
+      "expect": "reject",
+      "note": "профиль времени: добавочная секунда (P1; предложение — отклонять)"
+    },
+    {
+      "id": "M35",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "created_at": "2026-09-15T12:00:00.123456+03:00"
+      },
+      "expect": "accept",
+      "note": "профиль времени: дробная часть и смещение с двоеточием (P1)"
+    },
+    {
+      "id": "M36",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "job_id": "urn:uuid:0b6b1d2e-6f3a-4c1e-9a1f-1b2c3d4e5f60"
+      },
+      "expect": "reject",
+      "note": "профиль UUID: префикс urn:uuid: (P1)"
+    },
+    {
+      "id": "M37",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "job_id": "0B6B1D2E-6F3A-4C1E-9A1F-1B2C3D4E5F60"
+      },
+      "expect": "reject",
+      "note": "профиль UUID: верхний регистр (P1; предварительное ограничение)"
+    },
+    {
+      "id": "M38",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "unset": [
+        "result"
+      ],
+      "expect": "reject",
+      "note": "зависимости Result: succeeded без result (P2)"
+    },
+    {
+      "id": "M39",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "state": "failed",
+        "reason_code": null
+      },
+      "unset": [
+        "result"
+      ],
+      "expect": "reject",
+      "note": "зависимости Result: failed с reason_code null (P2)"
+    },
+    {
+      "id": "M40",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "content_erased_at": "2026-09-15T13:00:00Z",
+        "provider_calls.0.assembled_request": "текст клиента"
+      },
+      "expect": "reject",
+      "note": "зависимости Result: content_erased_at при непустом assembled_request (P2)"
+    },
+    {
+      "id": "M41",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "state": "failed",
+        "reason_code": "provider_error",
+        "result_candidate": {
+          "key": "transfer/output/x/candidate",
+          "call_id": "6d0f1a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5b",
+          "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+          "size": 10,
+          "media_type": "image/png"
+        }
+      },
+      "unset": [
+        "result"
+      ],
+      "expect": "reject",
+      "note": "зависимости Result: result_candidate при причине вне двух допустимых (ADR-0011 §6)"
+    },
+    {
+      "id": "M42",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "state": "cancelled",
+        "reason_code": "erased",
+        "content_erased_at": "2026-09-15T13:00:00Z"
+      },
+      "unset": [
+        "result"
+      ],
+      "expect": "accept",
+      "note": "зависимости Result: cancelled/erased после стирания, без result"
+    },
+    {
+      "id": "M43",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "state": "failed",
+        "reason_code": "provider_error"
+      },
+      "expect": "reject",
+      "note": "зависимости Result: result при state ≠ succeeded (ADR-0011 §6 «result при успехе»; предварительное ограничение)"
+    },
+    {
+      "id": "M44",
+      "kind": "validate",
+      "target": "message",
+      "base": "result",
+      "set": {
+        "state": "succeeded",
+        "reason_code": "provider_error"
+      },
+      "expect": "reject",
+      "note": "зависимости Result: succeeded с непустым reason_code (P2)"
+    },
+    {
+      "id": "M45",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "created_at": "2026-02-30T12:00:00Z"
+      },
+      "expect": "reject",
+      "note": "календарно невозможная дата: pattern пропускает, отклоняет только проверка формата (зачем нужен rfc3339-validator)"
+    },
+    {
+      "id": "M46",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "revision": 1
+      },
+      "expect": "reject",
+      "note": "конверт: revision у команды запрещён (else конверта)"
+    },
+    {
+      "id": "D01",
+      "kind": "validate",
+      "target": "document:before",
+      "base": "doc",
+      "expect": "accept",
+      "note": "документ до стирания"
+    },
+    {
+      "id": "D02",
+      "kind": "validate",
+      "target": "document:before",
+      "base": "doc",
+      "set": {
+        "ext_text": "внезапный текст"
+      },
+      "expect": "reject",
+      "note": "закрытая форма: неизвестный ключ верхнего уровня"
+    },
+    {
+      "id": "D03",
+      "kind": "validate",
+      "target": "document:before",
+      "base": "doc",
+      "set": {
+        "studio_rules.note": "вложенный неизвестный ключ"
+      },
+      "expect": "reject",
+      "note": "закрытая форма: неизвестный ключ внутри studio_rules (общий $def открыт в сообщении)"
+    },
+    {
+      "id": "D04",
+      "kind": "validate",
+      "target": "document:before",
+      "base": "doc",
+      "set": {
+        "size.note": "x"
+      },
+      "expect": "reject",
+      "note": "закрытая форма: неизвестный ключ внутри size"
+    },
+    {
+      "id": "D05",
+      "kind": "validate",
+      "target": "document:before",
+      "base": "doc",
+      "unset": [
+        "description"
+      ],
+      "expect": "reject",
+      "note": "до стирания description обязателен"
+    },
+    {
+      "id": "D06",
+      "kind": "validate",
+      "target": "document:after",
+      "base": "doc",
+      "unset": [
+        "description",
+        "negative_prompt"
+      ],
+      "expect": "accept",
+      "note": "после стирания: содержимого нет"
+    },
+    {
+      "id": "D07",
+      "kind": "validate",
+      "target": "document:after",
+      "base": "doc",
+      "unset": [
+        "negative_prompt"
+      ],
+      "expect": "reject",
+      "note": "после стирания: description остался"
+    },
+    {
+      "id": "D08",
+      "kind": "validate",
+      "target": "document:after",
+      "base": "doc",
+      "set": {
+        "description": ""
+      },
+      "unset": [
+        "negative_prompt"
+      ],
+      "expect": "reject",
+      "note": "после стирания: восстановление пустым значением запрещено"
+    },
+    {
+      "id": "D09",
+      "kind": "validate",
+      "target": "document:after",
+      "base": "doc",
+      "expect": "reject",
+      "note": "документ до стирания против корня after"
+    },
+    {
+      "id": "D10",
+      "kind": "validate",
+      "target": "document:before",
+      "base": "doc",
+      "unset": [
+        "description",
+        "negative_prompt"
+      ],
+      "expect": "reject",
+      "note": "стёртый документ против корня before"
+    },
+    {
+      "id": "D11",
+      "kind": "validate",
+      "target": "document:after",
+      "base": "doc",
+      "unset": [
+        "description",
+        "negative_prompt"
+      ],
+      "set": {
+        "studio_rules.note": "x"
+      },
+      "expect": "reject",
+      "note": "после стирания вложенное закрытие тоже действует"
+    },
+    {
+      "id": "D12",
+      "kind": "validate",
+      "target": "document:before",
+      "base": "doc",
+      "set": {
+        "schema_version": 2
+      },
+      "expect": "reject",
+      "note": "чужая версия документа против обработчика v1"
+    },
+    {
+      "id": "D13",
+      "kind": "validate",
+      "target": "message",
+      "base": "submit",
+      "set": {
+        "parameters.studio_rules.note": "x"
+      },
+      "expect": "accept",
+      "note": "тот же $def studio_rules в сообщении открыт"
+    },
+    {
+      "id": "D14",
+      "kind": "validate",
+      "target": "document:before",
+      "base": "doc",
+      "set": {
+        "model_settings.seed": 7.0
+      },
+      "expect": "accept",
+      "note": "JSON не различает 7 и 7.0: схема принимает integer 7.0 (P3) — модель не должна быть строже"
+    },
+    {
+      "id": "E01",
+      "kind": "erase",
+      "base": "doc",
+      "expect": "accept",
+      "note": "до → стирание → after → повторное стирание → техническая часть цела"
+    },
+    {
+      "id": "E02",
+      "kind": "erase",
+      "base": "doc",
+      "set": {
+        "studio_rules.note": "x"
+      },
+      "expect": "reject",
+      "note": "стирание не легализует неизвестный вложенный ключ: остаток не проходит after"
+    },
+    {
+      "id": "P01",
+      "kind": "map",
+      "base": "submit",
+      "set": {
+        "ext_note": "новое поле",
+        "parameters.ext_flag": true,
+        "source": {
+          "kind": "upload",
+          "key": "client/uploads/u1/original",
+          "size": 1024,
+          "media_type": "image/jpeg",
+          "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+        }
+      },
+      "expect": "accept",
+      "note": "принятое сообщение с лишними полями → документ без них, проходит before"
+    },
+    {
+      "id": "C01",
+      "kind": "compat",
+      "base": "submit",
+      "set": {
+        "ext_note": "новое поле"
+      },
+      "expect": "accept",
+      "note": "новая сборка шлёт ext_note: старая схема v1 принимает"
+    },
+    {
+      "id": "C02",
+      "kind": "compat",
+      "base": "submit",
+      "expect": "accept",
+      "note": "старая сборка шлёт без ext_note: новая схема v1-ext принимает, contract_version не менялась"
+    }
   ]
 }
