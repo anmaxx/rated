@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ratedtattoo.ru/schemas/messages/envelope.json",
+  "title": "Конверт сообщения очереди (вне версии контракта, ADR-0011 §6)",
+  "type": "object",
+  "properties": {
+    "message_type": {
+      "enum": [
+        "SubmitJob",
+        "EraseGeneration",
+        "Result"
+      ]
+    },
+    "contract_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "job_id": {
+      "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/uuid"
+    }
+  },
+  "required": [
+    "message_type",
+    "contract_version",
+    "job_id"
+  ],
+  "if": {
+    "type": "object",
+    "properties": {
+      "message_type": {
+        "const": "Result"
+      }
+    },
+    "required": [
+      "message_type"
+    ]
+  },
+  "then": {
+    "type": "object",
+    "properties": {
+      "revision": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "required": [
+      "revision"
+    ]
+  }
+}

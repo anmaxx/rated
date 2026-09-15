@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ratedtattoo.ru/schemas/common.json",
+  "title": "Общие листовые типы (проба, имена вне ADR — предварительные)",
+  "$defs": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 с обязательным смещением (ADR-0011 §6, S-7)"
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "media_type": {
+      "type": "string",
+      "pattern": "^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$"
+    },
+    "file_descriptor": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "media_type": {
+          "$ref": "#/$defs/media_type"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "key",
+        "size",
+        "media_type",
+        "sha256"
+      ]
+    },
+    "studio_rules": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "text",
+        "version"
+      ]
+    },
+    "size_spec": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "type": "string",
+          "enum": [
+            "mm",
+            "cm"
+          ]
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ]
+    },
+    "model_settings": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "model"
+      ]
+    },
+    "style": {
+      "type": "string",
+      "minLength": 1
+    },
+    "placement": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

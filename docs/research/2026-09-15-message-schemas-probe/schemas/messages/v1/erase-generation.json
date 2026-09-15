@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ratedtattoo.ru/schemas/messages/v1/erase-generation.json",
+  "title": "EraseGeneration, contract_version 1 (открытая форма тела)",
+  "allOf": [
+    {
+      "$ref": "https://ratedtattoo.ru/schemas/messages/envelope.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "message_type": {
+      "const": "EraseGeneration"
+    },
+    "contract_version": {
+      "const": 1
+    },
+    "requested_at": {
+      "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/timestamp"
+    }
+  },
+  "required": [
+    "requested_at"
+  ]
+}

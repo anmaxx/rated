@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ratedtattoo.ru/schemas/messages/v1-ext/submit-job.json",
+  "title": "SubmitJob, contract_version 1 после совместимого расширения (проба взаимодействия сборок): добавлено необязательное ext_note",
+  "allOf": [
+    {
+      "$ref": "https://ratedtattoo.ru/schemas/messages/envelope.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "message_type": {
+      "const": "SubmitJob"
+    },
+    "contract_version": {
+      "const": 1
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "negative_prompt": {
+      "type": "string"
+    },
+    "style": {
+      "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/style"
+    },
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "studio_rules": {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/studio_rules"
+        },
+        "model_settings": {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/model_settings"
+        },
+        "placement": {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/placement"
+        },
+        "size": {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/size_spec"
+        }
+      },
+      "required": [
+        "studio_rules",
+        "model_settings"
+      ]
+    },
+    "source": {
+      "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/file_descriptor"
+    },
+    "deadline_at": {
+      "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/timestamp"
+    },
+    "created_at": {
+      "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/timestamp"
+    },
+    "ext_note": {
+      "type": "string"
+    },
+    "mode": false
+  },
+  "required": [
+    "prompt",
+    "negative_prompt",
+    "style",
+    "parameters",
+    "deadline_at",
+    "created_at"
+  ]
+}

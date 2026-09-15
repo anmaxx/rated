@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ratedtattoo.ru/schemas/documents/input/v1.json",
+  "title": "Документ input / input_snapshot, schema_version 1 (закрытая форма, ADR-0013 §2). Корни: #before — до стирания, #after — после стирания (ADR-0013 §6)",
+  "$defs": {
+    "fields": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "ratedFieldClass": "technical"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "ratedFieldClass": "content"
+        },
+        "negative_prompt": {
+          "type": "string",
+          "ratedFieldClass": "content"
+        },
+        "style": {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/style",
+          "ratedFieldClass": "technical"
+        },
+        "placement": {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/placement",
+          "ratedFieldClass": "technical"
+        },
+        "size": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/size_spec"
+            }
+          ],
+          "unevaluatedProperties": false,
+          "ratedFieldClass": "technical"
+        },
+        "studio_rules": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/studio_rules"
+            }
+          ],
+          "unevaluatedProperties": false,
+          "ratedFieldClass": "technical"
+        },
+        "model_settings": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/model_settings"
+            }
+          ],
+          "unevaluatedProperties": false,
+          "ratedFieldClass": "technical"
+        }
+      },
+      "required": [
+        "schema_version",
+        "style",
+        "studio_rules",
+        "model_settings"
+      ]
+    },
+    "before": {
+      "$anchor": "before",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/fields"
+        }
+      ],
+      "required": [
+        "description",
+        "negative_prompt"
+      ],
+      "unevaluatedProperties": false
+    },
+    "after": {
+      "$anchor": "after",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/fields"
+        }
+      ],
+      "properties": {
+        "description": false,
+        "negative_prompt": false
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

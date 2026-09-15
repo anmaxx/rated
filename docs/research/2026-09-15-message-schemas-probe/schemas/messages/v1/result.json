@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ratedtattoo.ru/schemas/messages/v1/result.json",
+  "title": "Result, contract_version 1 (открытая форма тела; имена внутри provider_calls[] — предварительные)",
+  "allOf": [
+    {
+      "$ref": "https://ratedtattoo.ru/schemas/messages/envelope.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "message_type": {
+      "const": "Result"
+    },
+    "contract_version": {
+      "const": 1
+    },
+    "state": {
+      "enum": [
+        "awaiting_reconciliation",
+        "succeeded",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "reason_code": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "provider_error",
+        "provider_outcome_unresolved",
+        "source_missing",
+        "deadline_exceeded",
+        "result_payload_unavailable",
+        "result_delivery_deadline_exceeded",
+        "erased",
+        null
+      ]
+    },
+    "result": {
+      "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/file_descriptor"
+    },
+    "result_candidate": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/file_descriptor"
+        }
+      ],
+      "properties": {
+        "call_id": {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/uuid"
+        }
+      },
+      "required": [
+        "call_id"
+      ]
+    },
+    "provider_calls": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/provider_call"
+      }
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/stage"
+      }
+    },
+    "content_erased_at": {
+      "anyOf": [
+        {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "state",
+    "reason_code",
+    "provider_calls",
+    "stages",
+    "content_erased_at"
+  ],
+  "$defs": {
+    "nullable_timestamp": {
+      "anyOf": [
+        {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "provider_call": {
+      "type": "object",
+      "properties": {
+        "call_id": {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/uuid"
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "external_request_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state": {
+          "enum": [
+            "running",
+            "succeeded",
+            "failed",
+            "outcome_unknown"
+          ]
+        },
+        "started_at": {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/timestamp"
+        },
+        "finished_at": {
+          "$ref": "#/$defs/nullable_timestamp"
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "provider_error_code": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "http_status": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "error_message": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 1000
+            }
+          }
+        },
+        "assembled_request": {
+          "type": [
+            "string",
+            "array",
+            "object",
+            "null"
+          ]
+        },
+        "usage": {
+          "type": "object",
+          "properties": {
+            "units": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "amount": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "currency": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "cost_kind": {
+              "enum": [
+                "actual",
+                "estimated",
+                "unknown"
+              ]
+            },
+            "tariff_version": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "units",
+            "amount",
+            "currency",
+            "cost_kind"
+          ],
+          "if": {
+            "type": "object",
+            "properties": {
+              "cost_kind": {
+                "const": "estimated"
+              }
+            },
+            "required": [
+              "cost_kind"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "tariff_version": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "tariff_version"
+            ]
+          }
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "call_id",
+        "provider",
+        "model",
+        "attempt",
+        "external_request_id",
+        "state",
+        "started_at",
+        "finished_at",
+        "assembled_request",
+        "usage"
+      ]
+    },
+    "stage": {
+      "type": "object",
+      "properties": {
+        "stage": {
+          "enum": [
+            "prepare",
+            "generate",
+            "download",
+            "verify",
+            "store",
+            "reconcile"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "started_at": {
+          "$ref": "https://ratedtattoo.ru/schemas/common.json#/$defs/timestamp"
+        },
+        "finished_at": {
+          "$ref": "#/$defs/nullable_timestamp"
+        }
+      },
+      "required": [
+        "stage",
+        "sequence",
+        "started_at",
+        "finished_at"
+      ]
+    }
+  }
+}
