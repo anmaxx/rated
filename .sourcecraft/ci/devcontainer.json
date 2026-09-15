@@ -1,0 +1,6 @@
+{
+  "name": "Rated SourceCraft CI",
+  "build": {
+    "dockerfile": "Dockerfile"
+  }
+}

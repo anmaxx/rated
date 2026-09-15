@@ -1,0 +1,32 @@
+"on":
+  pull_request:
+    - workflows: [quality]
+      filter:
+        source_branches: ["**"]
+        target_branches: ["master"]
+
+  push:
+    - workflows: [quality]
+      filter:
+        branches: ["master"]
+
+workflows:
+  quality:
+    settings:
+      max_cube_duration: 20m
+    tasks:
+      - name: site-build
+        cubes:
+          - name: npm-build
+            image: docker.io/library/node:24.19.0-bookworm-slim
+            script:
+              - npm ci
+              - npm run build
+
+      - name: contract-probe
+        cubes:
+          - name: run-contract-probe
+            devcontainer:
+              workspace_folder: "./.sourcecraft/ci"
+            script:
+              - bash docs/research/2026-09-15-message-schemas-probe/run-all.sh

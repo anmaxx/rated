@@ -1,0 +1,6 @@
+codereview:
+  need_ships: 1
+  ignore_self_ship: false
+  ignore_non_reviewers_block: false
+  auto_assign: false
+  disable_trust: true
